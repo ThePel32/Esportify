@@ -1,1 +1,14 @@
-/* You can add global styles to this file, and also import other style files */
+body, html {
+    height: 100%;
+    background-color: #101625;
+}
+
+* {
+    font-family: 'Bruno Ace', sans-serif !important;
+}
+
+@font-face {
+    font-family: 'Bruno Ace';
+    src: url(../public/font/Bruno_Ace/BrunoAce-Regular.ttf);
+}
+  

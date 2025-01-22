@@ -1,0 +1,92 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #242A36;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+div {
+    background-color: #242A36;
+}
+
+#content {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start;
+    position: absolute;
+    top: 60px;
+    left: 220px;
+    width: calc(100% - 220px);
+    height: calc(50% - 60px);
+    padding: 10px;
+}
+
+#present {
+    flex: 1;
+    margin-right: 50px;
+    color: white;
+}
+
+#title {
+    padding-top: 10px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+#esporty {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #ddd;
+}
+
+.caroussel {
+    flex: 1; 
+    max-width: 380px;
+    max-height: max-content;
+    overflow: hidden;
+    background-color: #242A36;
+    padding: 0;
+    display: flex;
+}
+
+.wrapper {
+    display: flex;
+    height: 100%;
+    width: calc(300px * 7 + 10px * 6); 
+    animation: slide 10s infinite;
+    position: relative;
+    align-items: center;
+}
+
+img {
+    flex-shrink: 0;
+    width: 300px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+@keyframes slide {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    14%, 28% {
+        transform: translateX(calc(-310px));
+    }
+    42%, 56% {
+        transform: translateX(calc(-620px));
+    }
+    70%, 84% {
+        transform: translateX(calc(-930px));
+    }
+    98% {
+        transform: translateX(calc(-1240px));
+    }
+}

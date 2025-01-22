@@ -1,0 +1,52 @@
+.bruno-ace-regular {
+    font-family: "Bruno Ace", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+
+#header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #101625;
+    z-index: 1000;
+}
+
+
+#headerNav {
+    display: flex; 
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+#esportifyBtn {
+    background-color: #242A36;
+    height: 80%;
+    width: 200px;
+    padding: 3px;
+    font-size: x-large;
+    
+}
+
+#connect {
+    background-color: #7A8024;
+}
+
+
+button {
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #45a049;
+}
