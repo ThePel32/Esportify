@@ -1,1 +1,64 @@
-<p>login works!</p>
+<div class="container">
+    <div class="signup">
+        <h3>S'inscrire</h3>
+        <form class="form-container signup" action="/api/users/signup" method="post">
+            <mat-form-field class="form-contain">
+                <mat-label>Pseudo</mat-label>
+                <input type="text" matInput name="username" required>
+            </mat-form-field>
+
+            <mat-form-field class="form-contain">
+                <mat-label>Email</mat-label>
+                <input 
+                    type="email"
+                    matInput 
+                    [formControl]="signupEmailFormControl" 
+                    [errorStateMatcher]="matcher" 
+                    name="email" 
+                    required>
+                @if (signupEmailFormControl.hasError('email')) {
+                    <mat-error>Veuillez entrer un email valide</mat-error>
+                }
+                @if (signupEmailFormControl.hasError('required')) {
+                    <mat-error>l'email est <strong>requis</strong></mat-error>
+                } @else {
+                    <mat-hint>email valide</mat-hint>
+                }
+            </mat-form-field>
+            
+            <mat-form-field class="form-contain">
+                <mat-label>Password</mat-label>
+                <input type="password" matInput name="password" required>
+            </mat-form-field>
+        </form>
+        <button type="submit" class="btn signup">S'inscrire</button>
+    </div>
+
+    <div class="login">
+        <h3>Se connecter</h3>
+        <form class="form-container login" action="/api/users/login" method="post">
+            <mat-form-field class="form-contain">
+                <mat-label>Email</mat-label>
+                <input 
+                    type="email"
+                    matInput 
+                    [formControl]="loginEmailFormControl" 
+                    [errorStateMatcher]="matcher" 
+                    name="email" 
+                    required>
+                @if (loginEmailFormControl.hasError('email')) {
+                    <mat-error>Veuillez entrer un email valide</mat-error>
+                }
+                @if (loginEmailFormControl.hasError('required')) {
+                    <mat-error>l'email est <strong>requis</strong></mat-error>
+                }
+            </mat-form-field>
+            
+            <mat-form-field class="form-contain">
+                <mat-label>Password</mat-label>
+                <input type="password" matInput name="password" required>
+            </mat-form-field>
+        </form>
+        <button type="submit" class="btn">Se connecter</button>
+    </div>
+</div>
