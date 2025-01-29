@@ -1,0 +1,52 @@
+<div class="add-event-container">
+    <h3>Ajouter un événement</h3>
+    <div class="add-event-contain">
+        <mat-form-field>
+            <mat-label>Jeu</mat-label>
+            <mat-select>
+            <mat-option value="balatro">Balatro</mat-option>
+            <mat-option value="cs2">Counter Strike 2</mat-option>
+            <mat-option value="fifa">Fifa 24</mat-option>
+            <mat-option value="lol">League of Legend</mat-option>
+            <mat-option value="rocketleague">Rocket League</mat-option>
+            <mat-option value="starcraft2">Starcraft 2</mat-option>
+            <mat-option value="valorant">Valorant</mat-option>
+            <mat-option value="supermeatboy">Super Meat-Boy</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Nb participant(s)</mat-label>
+            <mat-select>
+            <mat-option value="speedrun">Speedrun</mat-option>
+            <mat-option value="1vs1">1 vs 1</mat-option>
+            <mat-option value="2vs2">2 vs 2</mat-option>
+            <mat-option value="3vs3">3 vs 3</mat-option>
+            <mat-option value="4vs4">4 vs 4</mat-option>
+            <mat-option value="5vs5">5 vs 5</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Type</mat-label>
+            <mat-select>
+            <mat-option value="fps">FPS</mat-option>
+            <mat-option value="casino">Casino</mat-option>
+            <mat-option value="sport">Sport</mat-option>
+            <mat-option value="rts">RTS</mat-option>
+            <mat-option value="moba">MOBA</mat-option>
+            <mat-option value="plateform">Plateforme</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Date souhaitée</mat-label>
+            <input matInput [matDatepicker]="datepicker">
+            <mat-hint>JJ/MM/AAAA</mat-hint>
+            <mat-datepicker-toggle matIconSuffix [for]="datepicker"/>
+            <mat-datepicker #datepicker></mat-datepicker>
+            <mat-label>Heure souhaitée</mat-label>
+            <input matInput [matTimepicker]="timepicker">
+            <mat-timepicker-toggle matIconSuffix [for]="timepicker"/>
+            <mat-timepicker #timepicker/>
+        </mat-form-field>
+    </div>
+    <button type="submit">Soumettre</button>
+</div>

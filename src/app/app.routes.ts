@@ -3,6 +3,9 @@ import { LoginComponent } from './pages/login/login.component';
 import { ContactComponent } from './pages/contact/contact.component';
 import { EventsComponent } from './pages/events/events.component';
 import { HomeComponent } from './pages/home/home.component';
+import { UserSpaceComponent } from './pages/user-space/user-space.component';
+import { UserHistoricComponent } from './pages/user-historic/user-historic.component';
+import { AuthGuard } from './guard/auth.guard';
 
 export const routes: Routes = [
     {
@@ -26,4 +29,15 @@ export const routes: Routes = [
         path: 'home',
         component: HomeComponent
     },
+    {
+        path: 'space',
+        component: UserSpaceComponent,
+        canActivate: [AuthGuard]
+    },
+    {
+        path: 'historic',
+        component: UserHistoricComponent,
+        canActivate: [AuthGuard]
+    },
+    
 ];

@@ -1,1 +1,29 @@
-<p>contact works!</p>
+<div class="contact">
+    <h3>Nous contacter</h3>
+    <form class="form-container email" action="/api/" method="post">
+        <mat-form-field class="form-contain email">
+            <mat-label>Email</mat-label>
+            <input 
+                type="email"
+                matInput 
+                [formControl]="emailFormControl" 
+                [errorStateMatcher]="matcher" 
+                name="email" 
+                required>
+            @if (emailFormControl.hasError('email')) {
+                <mat-error>Veuillez entrer un email valide</mat-error>
+            }
+            @if (emailFormControl.hasError('required')) {
+                <mat-error>l'email est <strong>requis</strong></mat-error>
+            } @else {
+                <mat-hint>email valide</mat-hint>
+            }
+        </mat-form-field>
+        
+        <mat-form-field class="form-contain message">
+            <mat-label>message</mat-label>
+            <textarea matInput placeholder="Votre message..." name="message" class="message" required></textarea>
+        </mat-form-field>
+    </form>
+    <button type="submit" class="btn post">Envoyer</button>
+</div>

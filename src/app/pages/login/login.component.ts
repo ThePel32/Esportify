@@ -1,11 +1,17 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
+import { SigninComponent } from '../../components/signin/signin.component';
+import { SignupComponent } from '../../components/signup/signup.component';
+import {MatDividerModule} from '@angular/material/divider';
 
 @Component({
-  selector: 'app-login',
-  imports: [],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  selector: 'login.component',
+  styleUrl: 'login.component.css',
+  templateUrl: 'login.component.html',
+  imports: [
+    SignupComponent,
+    SigninComponent,
+    MatDividerModule
+  ],
 })
 export class LoginComponent {
-
 }

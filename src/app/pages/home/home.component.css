@@ -1,4 +1,4 @@
-/* * {
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -16,14 +16,12 @@ div {
 }
 
 #content {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: flex-start;
-    position: absolute;
-    top: 60px;
-    left: 220px;
-    width: calc(100% - 220px);
-    height: calc(50% - 60px);
+    /* display: flex;  */
+    /* justify-content: space-between;  */
+    /* align-items: flex-start;  */
+    /* position: absolute;  */
+    /* width: calc(100% - 220px);
+    height: calc(50% - 60px); */
     padding: 10px;
 }
 
@@ -48,7 +46,7 @@ div {
 
 .caroussel {
     flex: 1; 
-    max-width: 380px;
+    width: 350px;
     max-height: max-content;
     overflow: hidden;
     background-color: #242A36;
@@ -56,18 +54,24 @@ div {
     display: flex;
 }
 
+.carousel-images {
+    display: flex;
+    animation: slide 14s infinite; 
+    transition: transform 1.5s ease-in-out;
+}
+
 .wrapper {
     display: flex;
     height: 100%;
     width: calc(300px * 7 + 10px * 6); 
-    animation: slide 10s infinite;
+    animation: slide 20s infinite;
     position: relative;
     align-items: center;
 }
 
 img {
     flex-shrink: 0;
-    width: 300px;
+    width: 350px;
     height: 200px;
     object-fit: cover;
     border-radius: 4px;
@@ -77,16 +81,26 @@ img {
     0%, 100% {
         transform: translateX(0);
     }
-    14%, 28% {
-        transform: translateX(calc(-310px));
+    14% {
+        transform: translateX(calc(-350px));
     }
-    42%, 56% {
-        transform: translateX(calc(-620px));
+    28% {
+        transform: translateX(calc(-700px));
     }
-    70%, 84% {
-        transform: translateX(calc(-930px));
+    42% {
+        transform: translateX(calc(-1050px)); 
+    }
+    56% {
+        transform: translateX(calc(-1400px));
+    }
+    70% {
+        transform: translateX(calc(-1750px));
+    }
+    84% {
+        transform: translateX(calc(-2100px));
     }
     98% {
-        transform: translateX(calc(-1240px));
+        transform: translateX(calc(-2450px));
     }
-} */
+}
+

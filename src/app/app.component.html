@@ -1,3 +1,5 @@
+@let isLoggedIn = isLoggedIn$ | async;
+
 <mat-toolbar>
     <a href="/home" class="btnNav">Esportify</a>
     <span class="example-spacer"></span>
@@ -8,18 +10,19 @@
         <div class="sideNav">
             <div class="menuNav">
                 <a href="/events" class="btnNav">Événements</a>
-                <a href="/" class="btnNav">Mon espace</a>
-                <a href="/" class="btnNav">Historique</a>
+                @if(isLoggedIn){
+                    <a href="/space" class="btnNav">Mon espace</a>
+                    <a href="/historic" class="btnNav">Historique</a>
+                }
             </div>
             <div class="contactBtn">
                 <a href="/contact" class="btnNav">Contact</a>
             </div>
         </div>        
     </mat-drawer>
-    <mat-drawer-content><router-outlet></router-outlet></mat-drawer-content>
+    <mat-drawer-content>
+        <div class="main">
+            <router-outlet></router-outlet>
+        </div>
+    </mat-drawer-content>
 </mat-drawer-container>
-
-
-
-
- 

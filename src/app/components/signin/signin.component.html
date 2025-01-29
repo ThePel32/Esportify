@@ -1,0 +1,32 @@
+<div class="login">
+    <h3>Se connecter</h3>
+    <form class="form-container login" action="/api/users/login" method="post">
+        <mat-form-field class="form-contain">
+            <mat-label>Email</mat-label>
+            <input 
+                type="email"
+                matInput 
+                [formControl]="loginEmailFormControl" 
+                [errorStateMatcher]="matcher" 
+                name="email" 
+                required>
+            @if (loginEmailFormControl.hasError('email')) {
+                <mat-error>Veuillez entrer un email valide</mat-error>
+            }
+            @if (loginEmailFormControl.hasError('required')) {
+                <mat-error>l'email est <strong>requis</strong></mat-error>
+            }
+        </mat-form-field>
+        
+        <mat-form-field class="form-contain">
+            <mat-label>Password</mat-label>
+            <input 
+            type="password"
+            [formControl]="loginPasswordFormControl" 
+            matInput 
+            name="password" 
+            required>
+        </mat-form-field>
+    </form>
+    <button type="submit" class="btn" (click)="signup()">Se connecter</button>
+</div>
