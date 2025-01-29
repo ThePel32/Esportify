@@ -28,9 +28,8 @@ export class SigninErrorStateMatcher implements ErrorStateMatcher {
 export class SigninComponent {
   constructor (
     private auth: AuthService
-  ) {
+  ) {}
 
-  }
   loginEmailFormControl = new FormControl('', [
       Validators.required,
       Validators.email
@@ -41,11 +40,18 @@ export class SigninComponent {
   ])
     matcher = new SigninErrorStateMatcher();
 
-    signup(): void {
+    signin(): void {
       this.auth.signin({
         email: this.loginEmailFormControl.getRawValue() as string, 
         password: this.loginPasswordFormControl.getRawValue() as string
-      }).pipe().subscribe();
+      }).pipe().subscribe({
+        next: response => {
+          console.log('Connexion réussie', response);
+        },
+        error: err => {
+          console.error('Erreur lors de la connexion', err)
+        }
+      });
     }
 }
 

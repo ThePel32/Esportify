@@ -3,6 +3,8 @@ import { FormControl, FormGroupDirective, FormsModule, NgForm, ReactiveFormsModu
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { AuthService } from '../../service/auth.service';
+
 
 export class SignupErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -24,9 +26,12 @@ export class SignupErrorStateMatcher implements ErrorStateMatcher {
 })
 
 export class SignupComponent {
+  constructor (
+    private auth: AuthService
+  ){}
+
   signupUsernameFormControl = new FormControl('', [
-    Validators.required, 
-    Validators.email
+    Validators.required,
   ]);
 
   signupEmailFormControl = new FormControl('', [
@@ -35,10 +40,24 @@ export class SignupComponent {
   ]);
   
   signupPasswordFormControl = new FormControl('', [
-    Validators.required, 
-    Validators.email
+    Validators.required,
   ]);
 
   matcher = new SignupErrorStateMatcher();
+
+  signup(): void {
+    this.auth.signup({
+      username: this.signupUsernameFormControl.getRawValue() as string,
+      email: this.signupEmailFormControl.getRawValue() as string,
+      password: this.signupPasswordFormControl.getRawValue() as string
+    }).subscribe({
+      next: response => {
+        console.log('Inscription réussie', response);
+      },
+      error: err => {
+        console.error('Erreur lors de l\'inscription', err);
+      }
+    })
+  }
 }
 

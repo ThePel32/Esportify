@@ -1,9 +1,9 @@
 <div class="signup">
     <h3>S'inscrire</h3>
-    <form class="form-container signup" action="/api/users/signup" method="post">
+    <form class="form-container signup" action="/api/users/signup" method="post"(ngSubmit)="signup()">
         <mat-form-field class="form-contain">
             <mat-label>Pseudo</mat-label>
-            <input type="text" matInput name="username" required>
+            <input type="text" matInput name="username" required [formControl]="signupUsernameFormControl" required>
         </mat-form-field>
 
         <mat-form-field class="form-contain">
@@ -27,8 +27,8 @@
         
         <mat-form-field class="form-contain">
             <mat-label>Password</mat-label>
-            <input type="password" matInput name="password" required>
+            <input type="password" matInput name="password" [formControl]="signupPasswordFormControl" required>
         </mat-form-field>
     </form>
-    <button type="submit" class="btn signup">S'inscrire</button>
+    <button type="submit" class="btn signup" (click)="signup()">S'inscrire</button>
 </div>
