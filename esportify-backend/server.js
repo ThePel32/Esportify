@@ -9,7 +9,10 @@ const verifyToken = require("./app/middleware/auth.js");
 const app = express();
 
 const corsOptions = {
-  origin: "http://localhost:3000"
+  origin: "http://localhost:4200",
+  allowedHeaders: '*',
+    credentials: true,
+    methods: ['POST', 'PUT', 'DELETE', 'GET']
 };
 
 app.use(cors(corsOptions));
@@ -17,7 +20,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
-  console.log('Requête reçue avec les en-têtes suivants:', req.headers);
   next();
 });
 

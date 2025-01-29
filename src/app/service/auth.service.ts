@@ -1,5 +1,5 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-// import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 // const API_LOGIN = 'http://localhost:3000/api/users';
@@ -13,10 +13,10 @@ export class AuthService {
         password: '',
     });
 
-    private apiUrl = '/api/users';
+    private apiUrl = 'http://localhost:3000/api/users';
 
 
-    // constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {}
 
     isAutheticated() {
         return !!localStorage.getItem('current-user');
@@ -36,7 +36,7 @@ export class AuthService {
 //         return this.http.post(`${this.apiUrl}/users/signup`, data);
 //     }
 
-//     login(data: { email: any; password: any}): Observable<any> {
-//         return this.http.post(`${this.apiUrl}/users/login`, data);
-//     }
+    signin(data: { email: string; password: string}): Observable<any> {
+        return this.http.post(`${this.apiUrl}/login`, data);
+    }
 }

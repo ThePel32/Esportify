@@ -74,8 +74,7 @@ exports.login = (req, res) => {
         });
       }
     } else {
-      // console.log("data", data);
-      // console.log("req", req.body.password)
+
       const passwordIsValid = bcrypt.compareSync(req.body.password, data.password);
 
       if (!passwordIsValid) {
