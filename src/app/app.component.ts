@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService } from './service/auth.service';
 import { CommonModule } from '@angular/common';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-root',
@@ -17,7 +18,8 @@ import { CommonModule } from '@angular/common';
     MatToolbarModule, 
     MatButtonModule, 
     MatIconModule,
-    CommonModule,   
+    CommonModule,
+    MatSnackBarModule
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'

@@ -1,18 +1,15 @@
 <mat-card *ngIf="submittedEvent" class="event-card">
-    
     <img *ngIf="submittedEvent" [src]="gameOptions[submittedEvent.jeu]" alt="{{ submittedEvent.jeu }}">
-
     <div class="card-content">
         <mat-card-header>
-            <mat-card-title>{{ gameNames[submittedEvent.jeu]  | titlecase }}</mat-card-title>
-            <mat-card-subtitle><strong>Tournois </strong>{{ submittedEvent.type | titlecase }}</mat-card-subtitle>
+            <mat-card-title>{{ gameNames[submittedEvent.jeu] | titlecase }}</mat-card-title>
+            <mat-card-subtitle><strong>Tournoi :</strong> {{ submittedEvent.type | titlecase }}</mat-card-subtitle>
         </mat-card-header>
-        
-            <mat-card-content>
-                <p><strong>Nb de joueurs :</strong> {{ submittedEvent.nbParticipants }}</p>
-                <p><strong>Début :</strong> {{ submittedEvent.dateDebut | date:'dd/MM/yyyy' }} à {{ submittedEvent.heureDebut | date:'HH:mm' }}</p>
-                <p><strong>Fin :</strong> {{ submittedEvent.dateFin | date:'dd/MM/yyyy' }} à {{ submittedEvent.heureFin | date:'HH:mm' }}</p>
-            </mat-card-content>
+        <mat-card-content>
+            <p><strong>Nb de joueurs : </strong>{{ currentParticipants }}/{{ submittedEvent.nbParticipants }}</p>
+            <p><strong>Début :</strong> {{ submittedEvent.dateDebut | date:'dd/MM/yyyy' }} à {{ submittedEvent.heureDebut | date:'HH:mm' }}</p>
+            <p><strong>Fin :</strong> {{ submittedEvent.dateFin | date:'dd/MM/yyyy' }} à {{ submittedEvent.heureFin | date:'HH:mm' }}</p>
+        </mat-card-content>
     </div>
 </mat-card>
 
@@ -29,18 +26,22 @@
                         </mat-option>
                     </mat-select>
                 </mat-form-field>
+                
+                                <mat-form-field>
+                                    <mat-label>Type</mat-label>
+                                    <mat-select formControlName="type">
+                                        <mat-option *ngFor="let n of eventTypeOptions" [value]="n">
+                                            {{ n }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
 
                 <mat-form-field class="participant">
                     <mat-label>Nb participant(s)</mat-label>
                     <mat-select formControlName="nbParticipants">
-                        <mat-option *ngFor="let n of participantsOptions" [value]="n">{{ n }}</mat-option>
-                    </mat-select>
-                </mat-form-field>
-
-                <mat-form-field>
-                    <mat-label>Type</mat-label>
-                    <mat-select formControlName="type">
-                        <mat-option *ngFor="let n of eventTypeOptions" [value]="n">{{ n }}</mat-option>
+                        <mat-option *ngFor="let n of filteredParticipantsOptions" [value]="n">
+                            {{ n }}
+                        </mat-option>
                     </mat-select>
                 </mat-form-field>
             </div>
@@ -48,8 +49,8 @@
             <div class="add-event-date">
                 <mat-form-field>
                     <mat-label>Date de début</mat-label>
-                    <input matInput [matDatepicker]="startDatePicker" formControlName="dateDebut">
-                    <mat-datepicker-toggle matIconSuffix [for]="startDatePicker"/>
+                    <input matInput [matDatepicker]="startDatePicker" formControlName="dateDebut" [matDatepickerFilter]="dateFilter">
+                    <mat-datepicker-toggle matIconSuffix [for]="startDatePicker"></mat-datepicker-toggle>
                     <mat-datepicker #startDatePicker></mat-datepicker>
                 </mat-form-field>
 
@@ -62,8 +63,8 @@
 
                 <mat-form-field>
                     <mat-label>Date de fin</mat-label>
-                    <input matInput [matDatepicker]="endDatePicker" formControlName="dateFin">
-                    <mat-datepicker-toggle matIconSuffix [for]="endDatePicker"/>
+                    <input matInput [matDatepicker]="endDatePicker" formControlName="dateFin" [matDatepickerFilter]="dateFilter">
+                    <mat-datepicker-toggle matIconSuffix [for]="endDatePicker"></mat-datepicker-toggle>
                     <mat-datepicker #endDatePicker></mat-datepicker>
                 </mat-form-field>
 
@@ -79,3 +80,6 @@
         <button mat-raised-button color="primary" type="submit">Soumettre</button>
     </div>
 </form>
+
+
+
