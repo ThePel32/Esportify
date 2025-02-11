@@ -4,6 +4,7 @@ const usersRouter = require("./app/routes/users.routes");
 const gameRouter = require("./app/routes/game.routes");
 const shopRouter = require("./app/routes/shop.routes");
 const saleRouter = require("./app/routes/sale.routes");
+const eventsRouter = require("./app/routes/events.routes")
 const verifyToken = require("./app/middleware/auth.js");
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/shop', shopRouter);
 app.use('/api/sale', saleRouter);
+app.use('/api/events', eventsRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Bienvenue sur Esportify." });

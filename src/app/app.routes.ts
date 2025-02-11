@@ -6,6 +6,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { UserSpaceComponent } from './pages/user-space/user-space.component';
 import { UserHistoricComponent } from './pages/user-historic/user-historic.component';
 import { AuthGuard } from './guard/auth.guard';
+import { AddEventComponent } from './components/add-event/add-event.component';
 
 export const routes: Routes = [
     {
@@ -39,5 +40,9 @@ export const routes: Routes = [
         component: UserHistoricComponent,
         canActivate: [AuthGuard]
     },
-    
+    {
+        path: 'add-event',
+        component: AddEventComponent,
+        // canActivate: [AuthGuard]
+    },
 ];

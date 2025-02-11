@@ -32,11 +32,18 @@ export class AuthService {
         return this.userProfile.value;
     }
 
-//     signup(data: { username: any; email: string; password: any;}): Observable<any> {
-//         return this.http.post(`${this.apiUrl}/users/signup`, data);
-//     }
-
-    signin(data: { email: string; password: string}): Observable<any> {
+    signin(data: { 
+        email: string; 
+        password: string;
+    }): Observable<any> {
         return this.http.post(`${this.apiUrl}/login`, data);
+    }
+
+    signup(data: { 
+        username: string;
+        email: string;
+        password: string;
+    }): Observable<any> {
+        return this.http.post(`${this.apiUrl}/signup`, data)
     }
 }
