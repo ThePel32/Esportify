@@ -1,5 +1,3 @@
-/* CARD */
-
 .event-card {
     width: 100vh;
     display: flex;
@@ -46,9 +44,6 @@ mat-card-content p {
     padding: 5px 10px;
 }
 
-
-/* FORMULAIRE */
-
 .add-event-container {
     background-color: #242A36;
     color: white;
@@ -60,6 +55,7 @@ mat-card-content p {
     font-size: 0.9rem;
     justify-content: space-between
 }
+
 h3 {
     display: flex;
     justify-content: flex-start;
@@ -88,6 +84,7 @@ button {
     border: none;
     cursor: pointer;
 }
+
 .add-event-game {
     display: flex;
     flex-direction: column;
@@ -103,7 +100,6 @@ button:hover {
     flex-direction: column;
 }
 
-
 .event-card img {
     height: 20vh;
     width: auto;
@@ -114,10 +110,9 @@ button:hover {
 .success-snackbar {
     background-color: green;
     color: white;
-  }
-  
-  .error-snackbar {
+}
+
+.error-snackbar {
     background-color: red;
     color: white;
-  }
-  
+}

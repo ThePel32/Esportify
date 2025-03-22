@@ -1,278 +1,252 @@
 const User = require("../models/users.model.js");
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-// const nodemailer = require('nodemailer');
-// const crypto = require('crypto');
-
-// const transporter = nodemailer.createTransport({
-//   service: 'gmail',
-//   auth: {
-//     user: 'boutique.gamestore@gmail.com',
-//     pass: 'hjmq lhfy nwob ngrt '
-//   }
-// });
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 exports.create = (req, res) => {
-  if (!req.body) {
-    return res.status(400).send({
-      message: "Content can not be empty!"
-    });
-  }
-
-  const user = new User({
-    username: req.body.username,
-    role: req.body.role,
-    email: req.body.email,
-    password: req.body.password,
-    created_at: req.body.created_at,
-  });
-
-  User.create(user, (err, data) => {
-    if (err)
-      return res.status(500).send({
-        message: err.message || "Some error occurred while creating the User."
-      });
-    else res.send(data);
-  });
-};
-
-exports.signup = (req, res) => {
-  if (!req.body) {
-    return res.status(400).send({
-      message: "Content can not be empty!"
-    });
-  }
-
-  const user = new User({
-    role: req.body.role || 'user',
-    username: req.body.username,
-    email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 10),
-    created_at: new Date(),
-  });
-
-  User.create(user, (err, data) => {
-    if (err)
-      return res.status(500).send({
-        message: err.message || "Some error occurred while creating the user."
-      });
-    else res.send(data);
-  });
-};
-
-exports.login = (req, res) => {
-
-  User.findByEmail(req.body.email, (err, data) => {
-    if (err) {
-      if (err.kind === 'not_found') {
-        return res.status(404).send({
-          message: `Not found User with email ${req.body.email}.`
+    if (!req.body) {
+        return res.status(400).send({
+        message: "Content can not be empty!"
         });
-      } else {
+    }
+
+    const user = new User({
+        username: req.body.username,
+        role: "user",
+        email: req.body.email,
+        password: req.body.password,
+        created_at: req.body.created_at,
+    });
+
+    User.create(user, (err, data) => {
+        if (err)
         return res.status(500).send({
-          message: "Error retrieving User with email " + req.body.email
+            message: err.message || "Some error occurred while creating the User."
         });
-      }
-    } else {
-
-      const passwordIsValid = bcrypt.compareSync(req.body.password, data.password);
-
-      if (!passwordIsValid) {
-        return res.status(401).send({
-          accessToken: null,
-          message: "Invalid Password!"
-        });
-      }
-
-      const token = jwt.sign({ id: data.id }, '1a2z3e4r5t6y7u8i9o0p', {
-        expiresIn: 86400
-      });
-
-      res.status(200).send({
-        id: data.id,
-        username: data.username,
-        email: data.email,
-        accessToken: token
-      });
-    }
-  });
+        else res.send(data);
+    });
 };
 
-// exports.forgotPassword = (req, res) => {
-//   const email = req.body.email;
 
-//   User.findByEmail(email, (err, user) => {
-//     if(err){
+exports.signup = async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
 
-//       return res.status(404).send({message: 'User not found'});
-//     }
-
-//     const token = crypto.randomBytes(20).toString('hex');
-
-//     user.resetPasswordToken = token;
-//     user.resetPasswordExpires = Date.now() + 3600000;
-
-//     User.updateById(user.id, user, (err) => {
-//       if(err){
-//         return res.status(500).send({message: 'Error updating user'});
-//       }
-
-//       const mailOptions = {
-//         from: 'boutique.gamestore@gmail.com',
-//         to: email,
-//         subject: 'Réinitialisation du mot de passe',
-//         text: `Vous recevez ce message parce que vous (ou quelqu'un d'autre) avez demandé la réinitialisation du mot de passe de votre compte.\n\n
-//     Veuillez cliquer sur le lien suivant, ou le copier dans votre navigateur pour compléter le processus :\n\n
-//     http://localhost:3000/reset-password/${token}\n\n
-//     Si vous n'avez pas demandé cela, veuillez ignorer cet email et votre mot de passe restera inchangé.\n`
-//       };
-
-//       transporter.sendMail(mailOptions, (error) => {
-//         if(error){
-//           return res.status(500).send({message: 'Error sending email'});
-//         }
-//         res.status(200).send({message: 'Email sent'});
-//       });
-//     });
-//   });
-// };
-
-// exports.resetPassword = (req, res) => {
-//   const {token, newPassword} = req.body;
-
-//   User.findByResetToken(token, (err, user) => {
-//     if (err || !user || user.resetPasswordExpires < Date.now()){
-//       return res.status(400).send({message: 'Password reset token is invalid or has expired.'});
-//     }
-
-//     user.password = bcrypt.hashSync(newPassword, 10);
-//     user.resetPasswordToken = null;
-//     user.resetPasswordExpires = null;
-
-//     User.updateById(user.id, user, (err) => {
-//       if (err){
-//         return res.status(500).send({message: 'Error updating password'});
-//       }
-//       res.status(200).send({message: 'Password has been updated'});
-//     });
-//   });
-// };
-
-exports.logout = (req, res) => {
-  const token = req.headers["x-access-token"];
-  
-  if (!token) {
-    return res.status(400).send({ message: "No token provided." });
-  }
-    delete req.headers["x-access-token"];
-  
-  if (req.headers["x-access-token"]) {
-    return res.status(500).send({ message: "Failed to delete token." });
-  }
-  res.status(200).send({ message: "Logout successful." });
-};
-
-exports.getUserProfile = (req, res) => {
-  const token = req.headers["x-access-token"];
-  if (!token) {
-    return res.status(403).send({ message: "no token provided!" });
-  }
-
-  jwt.verify(token, '1a2z3e4r5t6y7u8i9o0p', (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ message: "Unauthorized!" });
-    }
-
-    User.findById(decoded.id, (err, user) => {
-      if (err) {
-        if (err.kind === "not_found") {
-          res.status(404).send({ message: "User not found" });
-        } else {
-          res.status(500).send({ message: "Error retrieving user." });
+        if (!username || !email || !password) {
+            return res.status(400).send({ message: "All fields are required!" });
         }
-      } else {
-        res.status(200).send(user);
-      }
-    });
-  });
-};
 
-exports.findAll = (req, res) => {
-  const role = req.query.role;
-
-  User.getAll(role, (err, data) => {
-    if (err)
-      return res.status(500).send({
-        message: err.message || "Some error occurred while retrieving users."
-      });
-    else res.send(data);
-  });
-};
-
-exports.findOne = (req, res) => {
-  User.findById(req.params.id, (err, data) => {
-    if (err) {
-      if (err.kind === "not_found") {
-        return res.status(404).send({
-          message: `Not found User with id ${req.params.id}.`
-        });
-      } else {
-        return res.status(500).send({
-          message: "Error retrieving User with id " + req.params.id
-        });
-      }
-    } else res.send(data);
-  });
-};
-
-exports.update = (req, res) => {
-  if (!req.body) {
-    return res.status(400).send({
-      message: "Content can not be empty!"
-    });
-  }
-
-  User.updateById(
-    req.params.id,
-    new User(req.body),
-    (err, data) => {
-      if (err) {
-        if (err.kind === "not_found") {
-          return res.status(404).send({
-            message: `Not found User with id ${req.params.id}.`
-          });
-        } else {
-          return res.status(500).send({
-            message: "Error updating User with id " + req.params.id
-          });
+        const existingUser = await User.findByEmail(email);
+        if (existingUser) {
+            return res.status(400).send({ message: "Email already in use!" });
         }
-      } else res.send(data);
+
+        const hashedPassword = bcrypt.hashSync(password, 10);
+        const newUser = { username, role: "user", email, password: hashedPassword, created_at: new Date() };
+        const userData = await User.create(newUser);
+
+        res.status(201).send({ message: "User registered successfully!", user: userData });
+
+    } catch (error) {
+        res.status(500).send({ message: error.message || "Error during signup." });
     }
-  );
 };
 
-exports.delete = (req, res) => {
-  User.remove(req.params.id, (err, data) => {
-    if (err) {
-      if (err.kind === "not_found") {
-        return res.status(404).send({
-          message: `Not found User with id ${req.params.id}.`
+exports.login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).send({ message: "Email and password are required!" });
+        }
+
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).send({ message: "User not found!" });
+        }
+
+        const passwordIsValid = bcrypt.compareSync(password, user.password);
+        if (!passwordIsValid) {
+            return res.status(401).send({ message: "Invalid password!" });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        res.status(200).send({
+            message: "Login successful!",
+            token,
+            user: { id: user.id, username: user.username, email: user.email, role: user.role }
         });
-      } else {
-        return res.status(500).send({
-          message: "Could not delete User with id " + req.params.id
-        });
-      }
-    } else res.send({ message: `User was deleted successfully!` });
-  });
+
+    } catch (error) {
+        res.status(500).send({ message: error.message || "Error during login." });
+    }
 };
 
-exports.deleteAll = (req, res) => {
-  User.removeAll((err, data) => {
-    if (err)
-      return res.status(500).send({
-        message: err.message || "Some error occurred while removing all users."
-      });
-    else res.send({ message: `All Users were deleted successfully!` });
-  });
+exports.refreshToken = async (req, res) => {
+    try {
+        const oldToken = req.headers["authorization"]?.split(" ")[1];
+        if (!oldToken) {
+            console.log("❌ Aucun token reçu pour refresh !");
+            return res.status(403).send({ message: "No token provided!" });
+        }
+
+        console.log("🔍 Token reçu pour refresh :", oldToken);
+
+        jwt.verify(oldToken, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) {
+                console.log("❌ Erreur de validation du token dans refreshToken :", err.message);
+                return res.status(401).send({ message: "Unauthorized or token expired!" });
+            }
+
+            console.log("✅ Token valide, génération d'un nouveau token...");
+
+            const newToken = jwt.sign(
+                { id: decoded.id, role: decoded.role },
+                process.env.JWT_SECRET,
+                { expiresIn: "7d" }
+            );
+
+            console.log("✅ Nouveau token généré :", newToken);
+
+            res.status(200).send({ token: newToken });
+        });
+
+    } catch (error) {
+        console.log("❌ Erreur interne dans refreshToken :", error.message);
+        res.status(500).send({ message: error.message || "Error during token refresh." });
+    }
+};
+
+
+exports.getUserProfile = async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(403).send({ message: "No user ID found!" });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ message: "User not found" });
+        }
+        res.status(200).json({
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        });
+
+    } catch (error) {
+        res.status(500).send({ message: "Error retrieving user profile" });
+    }
+};
+
+
+exports.findAll = async (req, res) => {
+    try {
+        const users = await User.getAll();
+
+        const formattedUsers = users.map(({ id, username, email, role, created_at }) => ({
+            id,
+            username,
+            email,
+            role,
+            created_at
+        }));
+
+        res.status(200).json(formattedUsers);
+    } catch (error) {
+        res.status(500).send({ message: "Erreur lors de la récupération des utilisateurs." });
+    }
+};
+
+
+exports.findOne = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).send({ message: `User not found with id ${req.params.id}.` });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).send({ message: "Error retrieving user." });
+    }
+};
+
+exports.update = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedData = req.body;
+
+        const updatedUser = await User.updateById(id, updatedData);
+        if (!updatedUser) {
+            return res.status(404).send({ message: `User not found with id ${id}.` });
+        }
+
+        res.status(200).json({ message: "User updated successfully!", updatedUser });
+    } catch (error) {
+        res.status(500).send({ message: "Error updating user." });
+    }
+};
+
+exports.updateRole = async (req, res) => {
+    const userId = req.params.id; 
+    const newRole = req.body.role;
+
+    if (!newRole) {
+        return res.status(400).send({ message: "Le rôle est requis !" });
+    }
+
+    try {
+        const updatedUser = await User.findByIdAndUpdate(userId, { role: newRole });
+        if (!updatedUser) {
+            return res.status(404).send({ message: "Utilisateur non trouvé" });
+        }
+        res.status(200).send(updatedUser);
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour du rôle:", error);
+        res.status(500).send({ message: "Erreur lors de la mise à jour du rôle" });
+    }
+};
+
+exports.delete = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deleted = await User.remove(id);
+        if (!deleted) {
+            return res.status(404).send({ message: `User not found with id ${id}.` });
+        }
+        res.status(200).json({ message: "User deleted successfully!" });
+    } catch (error) {
+        res.status(500).send({ message: "Error deleting user." });
+    }
+};
+
+exports.deleteAll = async (req, res) => {
+    try {
+        await User.removeAll();
+        res.status(200).json({ message: "All users deleted successfully!" });
+    } catch (error) {
+        res.status(500).send({ message: "Error deleting all users." });
+    }
+};
+
+
+module.exports = {
+    signup: exports.signup,
+    login: exports.login,
+    refreshToken: exports.refreshToken,
+    getUserProfile: exports.getUserProfile,
+    findAll: exports.findAll,
+    findOne: exports.findOne,
+    update: exports.update,
+    updateRole: exports.updateRole,
+    create: exports.create,
+    delete: exports.delete,
+    deleteAll: exports.deleteAll
 };

@@ -1,10 +1,10 @@
-@let isLoggedIn = isLoggedIn$ | async;
-
 <mat-toolbar>
     <a href="/home" class="btnNav">Esportify</a>
-    <span></span>
-    <a href="/connexion" class="btnNav">Connexion</a>
+    <span *ngIf="isLoggedIn">Bonjour {{ pseudo }} !</span>
+    <a *ngIf="isLoggedIn" (click)="logout()" href="/home" class="btnNav">Deconnexion</a>
+    <a *ngIf="!isLoggedIn" href="/connexion" class="btnNav">Connexion</a>
 </mat-toolbar>
+
 <mat-drawer-container>
     <mat-drawer mode="side" opened>
         <div class="sideNav">

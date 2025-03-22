@@ -1,125 +1,139 @@
-// const bcrypt = require("bcrypt");
-const sql = require("./db.js");
+const db = require("./db.js");
 
-const User = function(user) {
-  this.role = user.role;
-  this.username = user.username;
-  this.email = user.email;
-  this.password = user.password;
-  this.created_at = user.created_at;
-};
+const User = {
+    create: (newUser) => {
+        return new Promise((resolve, reject) => {
+            db.query("INSERT INTO users SET ?", newUser, (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve({ id: res.insertId, ...newUser });
+                }
+            });
+        });
+    },
 
-User.create = (newUser, result) => {
-  sql.query("INSERT INTO users SET ?", newUser, (err, res) => {
-    if (err) {
-      result(err, null);
-      return;
-    }
-    result(null, { id: res.insertId, ...newUser });
-  });
-};
+    findById: (id) => {
+        return new Promise((resolve, reject) => {
+            db.query("SELECT * FROM users WHERE id = ?", [id], (err, res) => {
+                if (err) {
+                    reject(err);
+                } else if (res.length) {
+                    resolve(res[0]);
+                } else {
+                    reject({ kind: "not_found" });
+                }
+            });
+        });
+    },
 
-User.findById = (id, result) => {
-  sql.query("SELECT * FROM users WHERE id = ?", [id], (err, res) => {
-    if (err) {
-      result(err, null);
-      return;
-    }
-    if (res.length) {
-      result(null, res[0]);
-      return;
-    }
-    result({ kind: "not_found" }, null);
-  });
-};
+    findByEmail: (email) => {
+        console.log("🔍 Recherche de l'utilisateur avec l'email :", email);
+        return new Promise((resolve, reject) => {
+            db.query("SELECT * FROM users WHERE LOWER(email) = LOWER(?)", [email], (err, results) => {
+                if (err) {
+                    console.error("Erreur SQL :", err);
+                    reject(err);
+                } else if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(results[0]);
+                }
+            });
+        });
+    },
 
+    findByResetToken: (token) => {
+        return new Promise((resolve, reject) => {
+            db.query("SELECT * FROM users WHERE resetPasswordToken = ?", [token], (err, res) => {
+                if (err) {
+                    reject(err);
+                } else if (res.length) {
+                    resolve(res[0]);
+                } else {
+                    reject({ kind: "not_found" });
+                }
+            });
+        });
+    },
 
-User.findByEmail = (email, result) => {
-  sql.query("SELECT * FROM users WHERE email = ?", [email], (err, res) => {
-    if (err) {
-      result(err, null);
-      return;
-    }
-    if (res.length) {
-      result(null, res[0]);
-      return;
-    }
-    result({ kind: "not_found" }, null);
-  });
-};
+    getAll: (role) => {
+        return new Promise((resolve, reject) => {
+            let query = "SELECT * FROM users";
+            let params = [];
 
-User.findByResetToken = (token, result) => {
-  sql.query(`SELECT * FROM users WHERE resetPasswordToken = ?`, [token], (err, res) => {
-    if(err){
-      console.log("error: ", err);
-      result(err, null);
-      return;
-    }
+            if (role) {
+                query += " WHERE role LIKE ?";
+                params.push(`%${role}%`);
+            }
 
-    if(res.length){
-      console.log("found user: ", res[0]);
-      result(null, res[0]);
-      return;
-    }
+            db.query(query, params, (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
+            });
+        });
+    },
 
-    result({kind: "not_found"}, null);
-  });
-};
+    updateById: (id, userData) => {
+        return new Promise((resolve, reject) => {
+            db.query(
+                "UPDATE users SET role = ?, username = ?, email = ?, password = ?, created_at = ? WHERE id = ?",
+                [userData.role, userData.username, userData.email, userData.password, userData.created_at, id],
+                (err, res) => {
+                    if (err) {
+                        reject(err);
+                    } else if (res.affectedRows == 0) {
+                        reject({ kind: "not_found" });
+                    } else {
+                        resolve({ id, ...userData });
+                    }
+                }
+            );
+        });
+    },
 
-User.getAll = (role, result) => {
-  let query = "SELECT * FROM users";
-  if (role) {
-    query += ` WHERE role LIKE '%${role}%'`;
-  }
-  sql.query(query, (err, res) => {
-    if (err) {
-      result(null, err);
-      return;
-    }
-    result(null, res);
-  });
-};
+    findByIdAndUpdate: (id, updateData) => {
+        return new Promise((resolve, reject) => {
+            db.query("UPDATE users SET role = ? WHERE id = ?", [updateData.role, id], (err, res) => {
+                if (err) {
+                    reject(err);
+                } else if (res.affectedRows == 0) {
+                    reject({ kind: "not_found" });
+                } else {
+                    resolve({ id, role: updateData.role });
+                }
+            });
+        });
+    },
 
-User.updateById = (id, user, result) => {
-  sql.query(
-    "UPDATE users SET role = ?, username = ?, email = ?, password = ?, created_at = ?, WHERE id = ?",
-    [user.role, user.username, user.email, user.password, user.created_at, id],
-    (err, res) => {
-      if (err) {
-        result(null, err);
-        return;
-      }
-      if (res.affectedRows == 0) {
-        result({ kind: "not_found" }, null);
-        return;
-      }
-      result(null, { id: id, ...user });
-    }
-  );
-};
+    remove: (id) => {
+        return new Promise((resolve, reject) => {
+            db.query("DELETE FROM users WHERE id = ?", [id], (err, res) => {
+                if (err) {
+                    reject(err);
+                } else if (res.affectedRows == 0) {
+                    reject({ kind: "not_found" });
+                } else {
+                    resolve({ message: "User deleted successfully" });
+                }
+            });
+        });
+    },
 
-User.remove = (id, result) => {
-  sql.query("DELETE FROM users WHERE id = ?", id, (err, res) => {
-    if (err) {
-      result(null, err);
-      return;
+    removeAll: () => {
+        return new Promise((resolve, reject) => {
+            db.query("DELETE FROM users", (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve({ message: "All users deleted successfully" });
+                }
+            });
+        });
     }
-    if (res.affectedRows == 0) {
-      result({ kind: "not_found" }, null);
-      return;
-    }
-    result(null, res);
-  });
-};
-
-User.removeAll = (result) => {
-  sql.query("DELETE FROM users", (err, res) => {
-    if (err) {
-      result(null, err);
-      return;
-    }
-    result(null, res);
-  });
 };
 
 module.exports = User;

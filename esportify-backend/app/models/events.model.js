@@ -6,88 +6,122 @@ const Event = function(event) {
     this.date_time = event.date_time;
     this.max_players = event.max_players;
     this.organizer_id = event.organizer_id;
-    this.state = event.state;
+    this.state = event.state || "pending";
     this.images = event.images;
-    this.created_at = event.created_at;
-    this.updated_at = event.updated_at;
+    this.duration = event.duration;
+    this.created_at = new Date();
+    this.updated_at = new Date();
 };
 
 Event.create = (newEvent, result) => {
     sql.query("INSERT INTO events SET ?", newEvent, (err, res) => {
-        if(err){
+        if (err) {
             result(err, null);
             return;
         }
-        result(null, {id: res.insertId, ...newEvent});
+        result(null, { id: res.insertId, ...newEvent });
     });
 };
 
 Event.findById = (id, result) => {
-    sql.query(`SELECT * FROM events WHERE id = ${id}`, (err, res) => {
-        if(err){
-            result=(err, null);
+    sql.query("SELECT * FROM events WHERE id = ?", [id], (err, res) => {
+        if (err) {
+            result(err, null);
             return;
         }
-        if(res.length){
+        if (res.length) {
             result(null, res[0]);
             return;
         }
-        result({kind: "not_found"}, null);
+        result({ kind: "not_found" }, null);
     });
 };
 
-Event.getAll = (title, result) => {
-    let query = "SELECT * FROM events";
+Event.getByState = (state, result) => {
+    console.log("📌 Vérification de la requête getByState");
+    console.log("🔍 État recherché (valeur brute) :", state);
 
-    if(title){
-        query +=`WHERE title LIKE '%${title}%'`;
-    }
+    let query = "SELECT * FROM events WHERE state = ?";
+    console.log("🔹 Requête SQL exécutée :", query, "avec paramètre :", `"${state}"`);
 
-    sql.query(query, (err, res) => {
-        if(err){
-            result(null, err);
+    sql.query(query, [state], (err, res) => {
+        if (err) {
+            console.error("❌ Erreur lors de l'exécution de la requête SQL :", err);
+            result(err, null);
             return;
         }
+        console.log("✅ Nombre d'événements trouvés :", res.length);
+        console.log("✅ Détails des événements :", JSON.stringify(res, null, 2));
         result(null, res);
+    });
+};
+
+Event.getAll = (title, state, result) => {
+    let query = `
+        SELECT events.*, 
+        (SELECT COUNT(*) FROM event_participants WHERE event_participants.event_id = events.id) AS nb_participants,
+        GROUP_CONCAT(DISTINCT CONCAT('{"id":', users.id, ',"username":"', users.username, '"}')) AS participants
+        FROM events
+        LEFT JOIN event_participants ON events.id = event_participants.event_id
+        LEFT JOIN users ON event_participants.user_id = users.id
+        WHERE events.state = ?
+        GROUP BY events.id
+    `;
+
+    sql.query(query, [state], (err, res) => {
+        if (err) {
+            console.error("❌ Erreur SQL dans getAll:", err);
+            result(err, null);
+            return;
+        }
+
+        const events = res.map(event => ({
+            ...event,
+            participants: event.participants ? JSON.parse(`[${event.participants}]`) : []
+        }));
+
+        console.log("✅ Événements récupérés avec participants :", events);
+        result(null, events);
     });
 };
 
 Event.updateById = (id, event, result) => {
     sql.query(
-        "UPDATE events SET title = ?, description = ?, date_time = ?, max_players = ?, organizer_id = ?, state = ?, images = ?, created_at = ?, updated_at = ?",
+        "UPDATE events SET title = ?, description = ?, date_time = ?, max_players = ?, organizer_id = ?, state = ?, images = ?, updated_at = ? WHERE id = ?",
         [
             event.title, 
             event.description, 
             event.date_time, 
             event.max_players, 
             event.organizer_id, 
-            event.state, 
+            event.state,
             event.images, 
-            event.created_at, 
-            event.updated_at
+            event.duration,
+            new Date(),
+            id
         ],
         (err, res) => {
-            if(err){
+            if (err) {
                 result(null, err);
                 return;
-            };
-            if(res.affectedRows == 0){
-                result({kind: "not_found"}, null);
+            }
+            if (res.affectedRows == 0) {
+                result({ kind: "not_found" }, null);
                 return;
             }
-            result(null, {id: id, ...event});
+            result(null, { id: id, ...event });
         }
     );
 };
 
 Event.remove = (id, result) => {
-    sql.query("DELETE FROM events WHERE id = ?", id, (err, res) => {
-        if(err){
+    sql.query("DELETE FROM events WHERE id = ?", [id], (err, res) => {
+        if (err) {
             result(null, err);
             return;
         }
-        if(res.affectedRows == 0){
-            result({kind: "not_found"}, null);
+        if (res.affectedRows == 0) {
+            result({ kind: "not_found" }, null);
             return;
         }
         result(null, res);
@@ -95,8 +129,8 @@ Event.remove = (id, result) => {
 };
 
 Event.removeAll = (result) => {
-    sql.query("DELETED FROM events", (err, res) => {
-        if(err){
+    sql.query("DELETE FROM events", (err, res) => {
+        if (err) {
             result(null, err);
             return;
         }
@@ -104,4 +138,4 @@ Event.removeAll = (result) => {
     });
 };
 
-module.exports = Event; 
+module.exports = Event;
