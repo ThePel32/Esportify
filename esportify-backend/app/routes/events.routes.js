@@ -1,12 +1,27 @@
 const express = require("express");
 const router = express.Router();
 const events = require("../controllers/events.controller.js");
+const verifyToken = require("../middleware/auth.js");
+const authorize = require("../middleware/authorize.js");
 
-router.post("/", events.create);
+console.log("🔍 Vérification de l'import events :", events);
+
+router.post("/", authorize(["admin", "organizer"]), events.create);
+
 router.get("/", events.findAll);
+
 router.get("/:id", events.findOne);
-router.put("/:id", events.update);
-router.delete("/:id", events.delete);
-router.delete("/", events.deleteAll);
+
+router.put("/:id", authorize(["organizer", "admin"]), events.update);
+
+router.delete("/:id", authorize(["admin"]), events.delete);
+router.delete("/", authorize(["admin"]), events.deleteAll);
+
+router.put("/:id/validate", authorize(["admin"]), events.validate);
+
+router.post("/:id/join", authorize(["user", "organizer", "admin"]), events.joinEvent);
+router.post("/:id/leave", authorize(["user", "organizer", "admin"]), events.leaveEvent);
+
+router.delete("/:id/remove/:userId", authorize(["admin"]), events.removeParticipant);
 
 module.exports = router;

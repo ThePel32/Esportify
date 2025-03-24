@@ -1,6 +1,6 @@
 <div class="contact">
     <h3>Nous contacter</h3>
-    <form class="form-container email" action="/api/" method="post">
+    <form class="form-container email" (ngSubmit)="sendMessage()">
         <mat-form-field class="form-contain email">
             <mat-label>Email</mat-label>
             <input 
@@ -10,20 +10,15 @@
                 [errorStateMatcher]="matcher" 
                 name="email" 
                 required>
-            @if (emailFormControl.hasError('email')) {
-                <mat-error>Veuillez entrer un email valide</mat-error>
-            }
-            @if (emailFormControl.hasError('required')) {
-                <mat-error>l'email est <strong>requis</strong></mat-error>
-            } @else {
-                <mat-hint>email valide</mat-hint>
-            }
+            <mat-error *ngIf="emailFormControl.hasError('email')">Veuillez entrer un email valide</mat-error>
+            <mat-error *ngIf="emailFormControl.hasError('required')">L'email est <strong>requis</strong></mat-error>
         </mat-form-field>
         
         <mat-form-field class="form-contain message">
             <mat-label>message</mat-label>
-            <textarea matInput placeholder="Votre message..." name="message" class="message" required></textarea>
+            <textarea matInput [formControl]="messageFormControl" name="message" requires></textarea>
+            <mat-error *ngIf="messageFormControl.hasError('required')">Le message est requis</mat-error>
         </mat-form-field>
     </form>
-    <button type="submit" class="btn post">Envoyer</button>
+    <button type="submit" class="btn post" (click)="sendMessage()" [disabled]="emailFormControl.invalid || messageFormControl.invalid">Envoyer</button>
 </div>

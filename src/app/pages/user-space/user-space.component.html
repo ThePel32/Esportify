@@ -1,1 +1,34 @@
-<p>user-space works!</p>
+    <div *ngIf="isAdmin">
+        <h3>Liste des utilisateurs</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pseudo</th>
+                    <th>Email</th>
+                    <th>Rôle</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let user of users">
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>
+                        <select (change)="changeRole(user, $event)">
+                            <option value="user" [selected]="user.role === 'user'">Utilisateur</option>
+                            <option value="organizer" [selected]="user.role === 'organizer'">Organisateur</option>
+                            <option value="admin" [selected]="user.role === 'admin'">Administrateur</option>
+                        </select>
+                                                    
+                        <button (click)="deleteUser(user.id)">
+                            Supprimer
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p>user-space works !</p>

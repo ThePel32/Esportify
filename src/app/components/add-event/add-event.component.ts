@@ -1,17 +1,18 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatTimepickerModule } from '@angular/material/timepicker';
 import { MatCardModule } from '@angular/material/card';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { MAT_DATE_LOCALE, DateAdapter } from '@angular/material/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
-
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { EventService } from '../../service/event.service';
+import { AuthService } from '../../service/auth.service';
+import { EventBusService } from '../../service/event-bus.service';
 
 @Component({
   selector: 'app-add-event',
@@ -26,29 +27,23 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatSelectModule,
     MatDatepickerModule,
     MatTimepickerModule,
-    ReactiveFormsModule,
     MatCardModule,
+    ReactiveFormsModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-event.component.html',
   styleUrl: './add-event.component.css'
 })
 export class AddEventComponent {
+  @Output() eventAdded = new EventEmitter<void>();
+
   eventForm: FormGroup;
   submittedEvent: any = null;
   currentParticipants: number = 0;
+  minDate: Date = new Date();
+  hourOptions: string[] = [];
+  durationOptions: number[] = [];
 
-  allParticipantsOptions: number[] = this.generateParticipantsOptions();
-  filteredParticipantsOptions: number[] = [];
-  eventTypeOptions: string[] = [
-    "Speedrun",
-    "1 vs 1",
-    "2 vs 2",
-    "3 vs 3",
-    "4 vs 4",
-    "5 vs 5",
-    "Battle Royale",
-  ];
 
   gameOptions: { [key: string]: string } = {
     balatro: 'img/Balatro.jpg',
@@ -74,129 +69,137 @@ export class AddEventComponent {
     pubg: "PUBG",
   };
 
-  today = new Date();
+  participantOptions: number[] = [];
 
-  constructor(private fb: FormBuilder, private snackBar: MatSnackBar) {
+
+  constructor(
+    private fb: FormBuilder, 
+    private snackBar: MatSnackBar, 
+    private eventService: EventService,
+    private authService: AuthService,
+    private dateAdapter: DateAdapter<Date>,
+    private eventBus: EventBusService,
+  ) {
+    this.dateAdapter.setLocale('fr-FR');
+
     this.eventForm = this.fb.group({
       jeu: ['', Validators.required],
       nbParticipants: ['', Validators.required],
-      type: ['', Validators.required],
-      dateDebut: ['', Validators.required],
-      heureDebut: ['', Validators.required],
-      dateFin: ['', Validators.required],
-      heureFin: ['', Validators.required],
-    },
-    // { validators: this.validateEndTime }
-    );
-
-    this.eventForm.get('type')?.valueChanges.subscribe(type => {
-      this.updateParticipantsOptions(type);
+      description: ['', Validators.required],
+      date: ['', [Validators.required, this.dateValidator.bind(this)]],
+      heureDebut: ['', [Validators.required, this.hourValidator.bind(this)]],
+      duration: ['', Validators.required],
     });
 
-    this.eventForm.get('dateDebut')?.valueChanges.subscribe(() => {
-      this.updateEndDateConstraints();
-    });
-
-    this.eventForm.get('dateFin')?.valueChanges.subscribe(() => {
-      this.updateEndTimeConstraints();
-    });
+    this.participantOptions = this.generateParticipantsOptions();
+    this.durationOptions = this.generateDurationOptions();
+    this.generateHourOptions();
   }
+
+  generateHourOptions() {
+    for (let h = 0; h < 24; h++) {
+      for (let m of [0, 30]) {
+        const hour = h.toString().padStart(2, '0');
+        const min = m.toString().padStart(2, '0');
+        this.hourOptions.push(`${hour}:${min}`);
+      }
+    }
+  }
+
+  generateDurationOptions(): number[] {
+    const options: number[] = [];
+    for (let i = 1; i <= 24; i++) {
+      options.push(i);
+    }
+    return options;
+  }
+  
 
   generateParticipantsOptions(): number[] {
-    const participants = [];
+    const options: number[] = [];
     
-    for (let i = 2; i <= 20; i += 1) {
-      participants.push(i);
-    }
+    for (let i = 2; i <= 20; i += 1) options.push(i);
+    for (let i = 30; i <= 100; i += 10) options.push(i);
     
-    for (let i = 30; i <= 100; i += 10) {
-      participants.push(i);
-    }
+    return options;
+  }
+
+  dateValidator(control: any) {
+    if (!control.value) return null;
     
-    return participants;
+    const selectedDate = new Date(control.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selectedDate >= today ? null : { invalidDate: true };
   }
 
-  dateFilter = (d: Date | null): boolean => {
-    const date = (d || new Date());
-    return date >= this.today;
-  };
+  hourValidator(control: any) {
+    if (!control.value || !this.eventForm.get('date')?.value) return null;
 
-  updateParticipantsOptions(type: string) {
-    if (!type) return;
+    const selectedDate = new Date(this.eventForm.get('date')?.value);
+    const today = new Date();
+    
+    if (selectedDate.toDateString() === today.toDateString()) {
+      const [selectedHour, selectedMinute] = control.value.split(':').map(Number);
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
 
-    if (type === "Battle Royale") {
-      this.filteredParticipantsOptions = [...this.allParticipantsOptions];
-    } else if (type === "Speedrun"){
-      this.filteredParticipantsOptions = [...this.allParticipantsOptions];
-    } else if (type === "1 vs 1") {
-      this.filteredParticipantsOptions = this.allParticipantsOptions.filter(n => n % 2 === 0);
-    } else {
-      const playersPerTeam = parseInt(type.split(' ')[0], 10);
-      const totalPlayersRequired = playersPerTeam * 2;
-      this.filteredParticipantsOptions = this.allParticipantsOptions.filter(n => n % totalPlayersRequired === 0);
+      const selectedTime = new Date();
+      selectedTime.setHours(selectedHour, selectedMinute, 0);
+
+      return selectedTime >= now ? null : { invalidHour: true };
     }
 
-    if (!this.filteredParticipantsOptions.includes(this.eventForm.get('nbParticipants')?.value)) {
-      this.eventForm.get('nbParticipants')?.setValue('');
-    }
-  }
-
-  updateEndDateConstraints() {
-    const dateDebut = this.eventForm.get('dateDebut')?.value;
-    if (dateDebut) {
-      this.eventForm.get('dateFin')?.setValidators([
-        Validators.required,
-        (control) => new Date(control.value) < new Date(dateDebut) ? { invalidEndDate: true } : null
-      ]);
-      this.eventForm.get('dateFin')?.updateValueAndValidity();
-    }
-  }
-
-  updateEndTimeConstraints() {
-    const dateDebut = this.eventForm.get('dateDebut')?.value;
-    const heureDebut = this.eventForm.get('heureDebut')?.value;
-
-    if (dateDebut && heureDebut) {
-      this.eventForm.get('heureFin')?.setValidators([
-        Validators.required,
-        (control) => control.value <= heureDebut ? { invalidEndTime: true } : null
-      ]);
-      this.eventForm.get('heureFin')?.updateValueAndValidity();
-    }
-  }
-
-  validateTournament(group: FormGroup) {
-    const type = group.get('type')?.value;
-    const nbParticipants = group.get('nbParticipants')?.value;
-
-    if (!type || !nbParticipants) return null;
-    if (type.includes('vs')) {
-      const playersPerTeam = parseInt(type.split(' ')[0], 10);
-      const totalPlayersRequired = playersPerTeam * 2;
-
-      if (nbParticipants % totalPlayersRequired !== 0) {
-        return { invalidParticipants: true };
-      }
-    } else if (type === "1 vs 1" && nbParticipants % 2 !== 0) {
-      return { invalidParticipants: true };
-    }
     return null;
+  }
+
+  get canAddEvent(): boolean {
+    return this.authService.hasRole('admin') || this.authService.hasRole('organizer');
   }
 
   onSubmit() {
     if (this.eventForm.valid) {
-      this.submittedEvent = { ...this.eventForm.value };
-      this.snackBar.open('Événement soumis avec succès !', 'Fermer', {
-        duration: 3000,
-        verticalPosition: 'top',
-        horizontalPosition: 'center'
-      });
-    } else {
-      this.snackBar.open('Erreur de validation. Veuillez vérifier les champs.', 'Fermer', {
-        duration: 3000,
-        verticalPosition: 'top',
-        horizontalPosition: 'center'
+      const selectedGame = this.eventForm.value.jeu;
+      const gameImage = this.gameOptions[selectedGame];
+  
+      const dateOnly = new Date(this.eventForm.value.date);
+      const [hours, minutes] = this.eventForm.value.heureDebut.split(':').map(Number);
+  
+      const localDateTime = new Date(
+        dateOnly.getFullYear(),
+        dateOnly.getMonth(),
+        dateOnly.getDate(),
+        hours,
+        minutes,
+        0,
+        0
+      );
+  
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const formattedDateTime = `${localDateTime.getFullYear()}-${pad(localDateTime.getMonth() + 1)}-${pad(localDateTime.getDate())} ${pad(localDateTime.getHours())}:${pad(localDateTime.getMinutes())}:00`;
+  
+      const formData = {
+        title: selectedGame,
+        description: this.eventForm.value.description,
+        date_time: formattedDateTime,
+        max_players: this.eventForm.value.nbParticipants,
+        state: 'pending',
+        images: gameImage,
+        duration: this.eventForm.value.duration,
+      };
+  
+      this.eventService.addEvent(formData).subscribe({
+        next: () => {
+          this.snackBar.open('Événement soumis avec succès !', 'Fermer', { duration: 3000 });
+          this.eventForm.reset();
+          this.eventAdded.emit();
+          this.eventBus.emitRefreshEvents();
+        },
+        error: () => {
+          this.snackBar.open('Erreur lors de l\'ajout de l\'événement.', 'Fermer', { duration: 3000 });
+        }
       });
     }
   }
+  
 }

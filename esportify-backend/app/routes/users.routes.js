@@ -1,19 +1,26 @@
 const express = require("express");
-const router = express.Router(); 
+const router = express.Router();
 const users = require("../controllers/users.controller.js");
+
+const verifyToken = require("../middleware/auth.js");
+const authorize = require("../middleware/authorize.js");
+
+
 
 router.post('/signup', users.signup);
 router.post('/login', users.login);
-router.post('/logout', users.logout);
-// router.post('/forgot-password', users.forgotPassword);
-// router.post('/reset-password', users.forgotPassword);
-router.get('/profile', users.getUserProfile);
+router.post('/refresh-token', users.refreshToken);
 
-router.post("/", users.create);
-router.get("/", users.findAll);
-router.get("/:id",  users.findOne);
-router.put("/:id", users.update);
-router.delete("/:id", users.delete);
-router.delete("/", users.deleteAll);
+router.get('/profile', verifyToken, users.getUserProfile);
+
+router.get('/all', verifyToken, authorize(["admin"]), users.findAll);
+router.patch("/:id/role", verifyToken, authorize(["admin"]), users.updateRole);
+router.post("/", verifyToken, authorize(["admin"]), users.create);
+router.get("/:id", verifyToken, authorize(["admin"]), users.findOne);
+router.put("/:id", verifyToken, authorize(["admin"]), users.update);
+router.delete("/:id", verifyToken, authorize(["admin"]), users.delete);
+router.delete("/", verifyToken, authorize(["admin"]), users.deleteAll);
+
+console.log("✅ Routes utilisateurs chargées !");
 
 module.exports = router;

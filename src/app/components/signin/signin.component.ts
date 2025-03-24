@@ -4,6 +4,8 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../service/auth.service';
+import { map } from 'rxjs';
+import { Router } from '@angular/router';
 
 export class SigninErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -27,7 +29,8 @@ export class SigninErrorStateMatcher implements ErrorStateMatcher {
 
 export class SigninComponent {
   constructor (
-    private auth: AuthService
+    private auth: AuthService,
+    private router: Router 
   ) {}
 
   loginEmailFormControl = new FormControl('', [
@@ -44,13 +47,22 @@ export class SigninComponent {
       this.auth.signin({
         email: this.loginEmailFormControl.getRawValue() as string, 
         password: this.loginPasswordFormControl.getRawValue() as string
-      }).pipe().subscribe({
+      }).pipe(
+        map((response) => {
+          console.log(response)
+          
+          this.auth.saveUserToLocalStorage(response);
+          this.auth.userProfile.next(response);
+          this.router.navigate(["home"]);
+        })
+      ).subscribe({
         next: response => {
           console.log('Connexion réussie', response);
         },
         error: err => {
           console.error('Erreur lors de la connexion', err)
         }
+        
       });
     }
 }

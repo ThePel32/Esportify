@@ -1,3 +1,4 @@
+import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { Component, OnInit } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -7,6 +8,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService } from './service/auth.service';
 import { CommonModule } from '@angular/common';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -19,18 +21,43 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatButtonModule, 
     MatIconModule,
     CommonModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    NgxDaterangepickerMd
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit{
-  isLoggedIn$: any; 
+  isLoggedIn: any;
+  pseudo: string = '';
   constructor (
     private auth: AuthService,
-    
+    private cdRef: ChangeDetectorRef    
   ) {}
+
   ngOnInit(): void {
-    this.isLoggedIn$ = this.auth.loadUserFromLocalStorage();
+    this.auth.userProfile.subscribe(user => {
+      if (user) {
+        this.isLoggedIn = this.auth.isAuthenticated();
+        
+        this.pseudo = user?.user?.username || user?.username || '';
+
+        console.log("Utilisateur connecté :", user);
+        console.log("Pseudo affiché :", this.pseudo);
+      } else {
+        this.isLoggedIn = false;
+        this.pseudo = '';
+      }
+
+      this.cdRef.detectChanges();
+    });
+
+    this.auth.loadUserFromLocalStorage();
+  }
+
+  logout() {
+    this.auth.logout();
+    this.isLoggedIn = false;
+    this.pseudo = '';
   }
 }
