@@ -53,7 +53,6 @@ export class EventsComponent implements OnInit {
 
   loadEvents() {
     this.eventService.getEvents('validated').subscribe((events: Event[]) => {
-      console.log('Événements validés reçus :', events);
     
       this.upcomingEvents = events.map(event => ({
         ...event,
@@ -69,7 +68,6 @@ export class EventsComponent implements OnInit {
 
     if (this.isAdmin) {
         this.eventService.getEvents('pending').subscribe((events: Event[]) => {
-            console.log('Événements en attente reçus :', events); 
             this.pendingEvents = events;
         });
     }

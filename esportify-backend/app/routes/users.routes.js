@@ -21,6 +21,5 @@ router.put("/:id", verifyToken, authorize(["admin"]), users.update);
 router.delete("/:id", verifyToken, authorize(["admin"]), users.delete);
 router.delete("/", verifyToken, authorize(["admin"]), users.deleteAll);
 
-console.log("✅ Routes utilisateurs chargées !");
 
 module.exports = router;

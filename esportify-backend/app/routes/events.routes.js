@@ -4,7 +4,6 @@ const events = require("../controllers/events.controller.js");
 const verifyToken = require("../middleware/auth.js");
 const authorize = require("../middleware/authorize.js");
 
-console.log("🔍 Vérification de l'import events :", events);
 
 router.post("/", authorize(["admin", "organizer"]), events.create);
 

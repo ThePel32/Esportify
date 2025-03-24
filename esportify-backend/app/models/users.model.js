@@ -28,7 +28,6 @@ const User = {
     },
 
     findByEmail: (email) => {
-        console.log("🔍 Recherche de l'utilisateur avec l'email :", email);
         return new Promise((resolve, reject) => {
             db.query("SELECT * FROM users WHERE LOWER(email) = LOWER(?)", [email], (err, results) => {
                 if (err) {
