@@ -44,11 +44,9 @@ export class UserSpaceComponent implements OnInit {
 
 changeRole(user: any, event: Event): void {
   const newRole = (event.target as HTMLSelectElement).value;
-  console.log(`Changement de rôle pour l'utilisateur ${user.id} vers ${newRole}`);
 
   this.userService.updateUserRole(user.id, { role: newRole }).subscribe(
       (response) => {
-          console.log("Rôle mis à jour avec succès:", response);
           user.role = newRole;
       },
       (error) => {
@@ -58,10 +56,8 @@ changeRole(user: any, event: Event): void {
 }
 
   deleteUser(userId: number): void {
-    console.log(`Suppression de l'utilisateur: ${userId}`);
     this.userService.deleteUser(userId).subscribe(
       () => {
-        console.log('Utilisateur supprimé avec succès');
         this.users = this.users.filter(user => user.id !== userId);
       },
       (error) => {

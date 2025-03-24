@@ -14,7 +14,6 @@ export class EventService {
 
     private handleError(error: HttpErrorResponse) {
         if (error.status === 401) {
-            console.log("🔄 Token expiré, tentative de rafraîchissement...");
             return this.refreshTokenAndRetry(error);
         }
     
@@ -31,12 +30,9 @@ export class EventService {
             })
         }).pipe(
             switchMap(response => {
-                console.log("✅ NOUVEAU TOKEN REÇU ET STOCKÉ :", response.token);
                 localStorage.setItem("token", response.token); 
-                console.log("✅ Nouveau token stocké dans localStorage :", response.token);
 
                 const storedToken = localStorage.getItem("token");
-                console.log("✅ Token stocké dans localStorage après rafraîchissement :", storedToken);
 
                 const updatedHeaders = new HttpHeaders({
                     "Authorization": `Bearer ${response.token}`
@@ -103,8 +99,6 @@ export class EventService {
     
         if (!token) {
             console.error("❌ Aucun token trouvé dans localStorage !");
-        } else {
-            console.log("✅ Token récupéré (au moment de l'envoi) :", token);
         }
     
         return new HttpHeaders({

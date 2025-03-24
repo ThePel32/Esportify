@@ -91,19 +91,15 @@ exports.refreshToken = async (req, res) => {
     try {
         const oldToken = req.headers["authorization"]?.split(" ")[1];
         if (!oldToken) {
-            console.log("❌ Aucun token reçu pour refresh !");
             return res.status(403).send({ message: "No token provided!" });
         }
 
-        console.log("🔍 Token reçu pour refresh :", oldToken);
 
         jwt.verify(oldToken, process.env.JWT_SECRET, (err, decoded) => {
             if (err) {
-                console.log("❌ Erreur de validation du token dans refreshToken :", err.message);
                 return res.status(401).send({ message: "Unauthorized or token expired!" });
             }
 
-            console.log("✅ Token valide, génération d'un nouveau token...");
 
             const newToken = jwt.sign(
                 { id: decoded.id, role: decoded.role },
@@ -111,13 +107,11 @@ exports.refreshToken = async (req, res) => {
                 { expiresIn: "7d" }
             );
 
-            console.log("✅ Nouveau token généré :", newToken);
 
             res.status(200).send({ token: newToken });
         });
 
     } catch (error) {
-        console.log("❌ Erreur interne dans refreshToken :", error.message);
         res.status(500).send({ message: error.message || "Error during token refresh." });
     }
 };

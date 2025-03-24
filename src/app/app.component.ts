@@ -42,8 +42,6 @@ export class AppComponent implements OnInit{
         
         this.pseudo = user?.user?.username || user?.username || '';
 
-        console.log("Utilisateur connecté :", user);
-        console.log("Pseudo affiché :", this.pseudo);
       } else {
         this.isLoggedIn = false;
         this.pseudo = '';

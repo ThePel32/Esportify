@@ -52,7 +52,6 @@ export class SignupComponent {
       password: this.signupPasswordFormControl.getRawValue() as string
     }).subscribe({
       next: response => {
-        console.log('Inscription réussie', response);
       },
       error: err => {
         console.error('Erreur lors de l\'inscription', err);

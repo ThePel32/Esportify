@@ -36,7 +36,6 @@ exports.create = (req, res) => {
                 console.error("❌ Erreur lors de la création de l'événement :", err);
                 return res.status(500).send({ message: err.message || "Erreur lors de la création de l'événement." });
             }
-            console.log("✅ Événement créé avec succès :", data);
             res.send(data);
         });
     });
@@ -46,7 +45,6 @@ exports.findAll = (req, res) => {
     const title = req.query.title || "";
     const state = req.query.state || "";
 
-    console.log("📢 Paramètres reçus - title :", title, ", state :", state);
 
     Event.getAll(title, state, (err, events) => {
         if (err) {
@@ -54,7 +52,6 @@ exports.findAll = (req, res) => {
             return res.status(500).send({ message: err.message || "Erreur lors de la récupération des événements." });
         }
 
-        console.log("✅ Événements trouvés avant envoi :", JSON.stringify(events, null, 2));
         
         if (!Array.isArray(events)) {
             console.error("❌ Problème : 'events' n'est pas un tableau !");
@@ -82,7 +79,6 @@ exports.findOne = (req, res) => {
 exports.validate = (req, res) => {
     const eventId = req.params.id;
 
-    console.log(`📢 Validation de l'événement ID : ${eventId}`);
 
     sql.query(
         "UPDATE events SET state = ?, updated_at = ? WHERE id = ?",
@@ -98,7 +94,6 @@ exports.validate = (req, res) => {
                 return res.status(404).send({ message: "Événement non trouvé." });
             }
 
-            console.log("✅ Événement validé avec succès !");
             res.send({ message: "Événement validé avec succès." });
         }
     );
@@ -108,7 +103,6 @@ exports.joinEvent = (req, res) => {
     const userId = req.user.id;
     const eventId = req.params.id;
 
-    console.log(`📢 Tentative d'inscription de l'utilisateur ID: ${userId} à l'événement ID: ${eventId}`);
 
     Event.findById(eventId, (err, event) => {
         if (err || !event) {
@@ -126,7 +120,6 @@ exports.joinEvent = (req, res) => {
                 }
 
                 const nbParticipants = result[0].nb_participants;
-                console.log(`👥 Nombre de participants actuels : ${nbParticipants} / ${event.max_players}`);
 
                 if (nbParticipants >= event.max_players) {
                     console.warn("⚠️ L'événement est déjà complet !");
@@ -141,7 +134,6 @@ exports.joinEvent = (req, res) => {
                             console.error("❌ Erreur lors de l'inscription :", err);
                             return res.status(500).send({ message: "Erreur lors de l'inscription à l'événement." });
                         }
-                        console.log("✅ Inscription réussie !");
                         res.send({ message: "Inscription réussie !" });
                     }
                 );

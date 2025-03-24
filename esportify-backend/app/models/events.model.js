@@ -38,11 +38,8 @@ Event.findById = (id, result) => {
 };
 
 Event.getByState = (state, result) => {
-    console.log("📌 Vérification de la requête getByState");
-    console.log("🔍 État recherché (valeur brute) :", state);
 
     let query = "SELECT * FROM events WHERE state = ?";
-    console.log("🔹 Requête SQL exécutée :", query, "avec paramètre :", `"${state}"`);
 
     sql.query(query, [state], (err, res) => {
         if (err) {
@@ -50,8 +47,6 @@ Event.getByState = (state, result) => {
             result(err, null);
             return;
         }
-        console.log("✅ Nombre d'événements trouvés :", res.length);
-        console.log("✅ Détails des événements :", JSON.stringify(res, null, 2));
         result(null, res);
     });
 };
@@ -80,7 +75,6 @@ Event.getAll = (title, state, result) => {
             participants: event.participants ? JSON.parse(`[${event.participants}]`) : []
         }));
 
-        console.log("✅ Événements récupérés avec participants :", events);
         result(null, events);
     });
 };
