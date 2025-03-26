@@ -103,7 +103,6 @@ exports.joinEvent = (req, res) => {
     const userId = req.user.id;
     const eventId = req.params.id;
 
-
     Event.findById(eventId, (err, event) => {
         if (err || !event) {
             console.error("❌ Événement introuvable ou erreur :", err);
@@ -111,36 +110,53 @@ exports.joinEvent = (req, res) => {
         }
 
         sql.query(
-            "SELECT COUNT(*) AS nb_participants FROM event_participants WHERE event_id = ?",
-            [eventId],
+            "SELECT * FROM event_participants WHERE event_id = ? AND user_id = ?",
+            [eventId, userId],
             (err, result) => {
                 if (err) {
-                    console.error("❌ Erreur lors du comptage des participants :", err);
-                    return res.status(500).send({ message: "Erreur lors du comptage des participants." });
+                    console.error("❌ Erreur SQL :", err);
+                    return res.status(500).send({ message: "Erreur interne." });
                 }
 
-                const nbParticipants = result[0].nb_participants;
-
-                if (nbParticipants >= event.max_players) {
-                    console.warn("⚠️ L'événement est déjà complet !");
-                    return res.status(400).send({ message: "L'événement est complet." });
+                if (result.length > 0) {
+                    console.warn("⚠️ L'utilisateur est déjà inscrit !");
+                    return res.status(409).send({ message: "Déjà inscrit à l'événement." });
                 }
 
                 sql.query(
-                    "INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)",
-                    [eventId, userId],
-                    (err) => {
+                    "SELECT COUNT(*) AS nb_participants FROM event_participants WHERE event_id = ?",
+                    [eventId],
+                    (err, countRes) => {
                         if (err) {
-                            console.error("❌ Erreur lors de l'inscription :", err);
-                            return res.status(500).send({ message: "Erreur lors de l'inscription à l'événement." });
+                            console.error("❌ Erreur lors du comptage des participants :", err);
+                            return res.status(500).send({ message: "Erreur lors du comptage des participants." });
                         }
-                        res.send({ message: "Inscription réussie !" });
+
+                        const nbParticipants = countRes[0].nb_participants;
+
+                        if (nbParticipants >= event.max_players) {
+                            console.warn("⚠️ L'événement est déjà complet !");
+                            return res.status(400).send({ message: "L'événement est complet." });
+                        }
+
+                        sql.query(
+                            "INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)",
+                            [eventId, userId],
+                            (err) => {
+                                if (err) {
+                                    console.error("❌ Erreur lors de l'inscription :", err);
+                                    return res.status(500).send({ message: "Erreur lors de l'inscription à l'événement." });
+                                }
+                                res.send({ message: "Inscription réussie !" });
+                            }
+                        );
                     }
                 );
             }
         );
     });
 };
+
 
 exports.update = (req, res) => {
     if (!req.body) {
@@ -165,6 +181,26 @@ exports.leaveEvent = (req, res) => {
         if (err) return res.status(500).send({ message: "Erreur lors de la désinscription." });
         res.send({ message: "Désinscription réussie !" });
     });
+};
+
+exports.confirmJoin = (req, res) => {
+    const userId = req.user.id;
+    const eventId = req.params.id;
+
+    sql.query(
+        'UPDATE event_participants SET has_joined = true WHERE event_id = ? AND user_id = ?',
+        [eventId, userId],
+        (err, result) => {
+            if (err) {
+                console.error("❌ Erreur DB :", err);
+                return res.status(500).send({ message: "Erreur serveur" });
+            }
+            if (result.affectedRows === 0) {
+                return res.status(404).send({ message: "Aucune participation trouvée pour mise à jour." });
+            }
+            res.send({ message: "Présence confirmée !" });
+        }
+    );
 };
 
 exports.removeParticipant = (req, res) => {

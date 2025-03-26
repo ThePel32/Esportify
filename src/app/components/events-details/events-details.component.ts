@@ -2,16 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../service/event.service';
 import { Event } from '../../models/event.model';
-import { MatCardModule } from '@angular/material/card'; // ✅ Importation MatCard
-import { MatButtonModule } from '@angular/material/button'; // ✅ Importation MatButton
-import { CommonModule } from '@angular/common'; // ✅ Pour *ngIf et *ngFor
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-events-details',
   standalone: true,
   templateUrl: './events-details.component.html',
   styleUrls: ['./events-details.component.css'],
-  imports: [CommonModule, MatCardModule, MatButtonModule] // ✅ Ajout ici
+  imports: [CommonModule, MatCardModule, MatButtonModule]
 })
 export class EventsDetailsComponent implements OnInit {
   event: Event | null = null;

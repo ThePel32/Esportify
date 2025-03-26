@@ -1,5 +1,5 @@
 <mat-toolbar>
-    <a href="/home" class="btnNav">Esportify</a>
+    <a href="/home" class="homeBtnNav">Esportify</a>
     <span *ngIf="isLoggedIn">Bonjour {{ pseudo }} !</span>
     <a *ngIf="isLoggedIn" (click)="logout()" href="/home" class="btnNav">Deconnexion</a>
     <a *ngIf="!isLoggedIn" href="/connexion" class="btnNav">Connexion</a>

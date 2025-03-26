@@ -1,32 +1,41 @@
-<div id="content">
-    <div id="present">
-        <div id="title"><h2>LA PLATEFORME D'ÉVÈNEMENTS E-SPORT</h2></div>
-        <div id="esporty"><h3>Bienvenue sur Esportify, la plateforme révolutionnaire dédiée aux compétitions et 
-            événements e-sport ! </h3>
-            
-            <p>Fondée en 2021, Esportify a rapidement conquis le monde du e-sport grâce à son 
-            engagement envers les joueurs et les organisateurs de tournois.</p>
-            
-            <p>Notre mission est simple : offrir une expérience fluide, immersive et accessible pour tous les passionnés 
-            de jeux vidéo.</p>
+<div class="homepage-container">
+    <div class="intro">
+        <div class="intro-text">
+            <h2>LA PLATEFORME D'ÉVÈNEMENTS E-SPORT</h2>
+            <p>Bienvenue sur Esportify, la plateforme révolutionnaire dédiée aux compétitions et événements e-sport !</p>
+            <p>Fondée en 2021, Esportify a rapidement conquis le monde du e-sport grâce à son engagement envers les joueurs...</p>
+            <p>Rejoignez la communauté d’Esportify et faites partie de l’évolution du e-sport !</p>
+        </div>
 
-            <p>Rejoignez la communauté d’Esportify et faites partie de l’évolution du e-sport ! Que vous soyez joueur, 
-            organisateur ou simple passionné, notre plateforme est conçue pour répondre à vos besoins.</p>
+        <div class="slider-container">
+            <div class="slider-track"
+                [style.transform]="'translateX(-' + currentSlideIndex * 100 + '%)'"
+                [class.no-transition]="currentSlideIndex === slideImages.length">
+            <img *ngFor="let img of clonedSlideImages" [src]="img" class="slide-img" alt="image jeu" />
+            </div>
         </div>
     </div>
-
-    <div class="caroussel">
-        <div class="wrapper">
-            <img src="img/Balatro.jpg" alt="balatro">
-            <img src="img/CS2.png" alt="Counter Strike 2">
-            <img src="img/fifa.png" alt="Fifa">
-            <img src="img/LoL.png" alt="League of Legends">
-            <img src="img/rocketLeague.png" alt="Rocket League">
-            <img src="img/starcraft2.png" alt="StarCraft 2">
-            <img src="img/valorant.png" alt="Valorant">
-            <img src="img/pubg.jpg" alt="PUBG">
-            <img src="img/supermeatboy.jpg" alt="Super meat Boy" srcset="">
+    <div class="homepage-event">
+        <div class="currentEvent-columns">
+            <div class="event-list">
+                <h3>En cours</h3>
+                <ul>
+                <li *ngFor="let event of ongoingEvents">
+                    {{ event.title }} - {{ event.date_time | date: 'dd-MM-yyyy à HH:mm' }}
+                </li>
+                </ul>
+            </div>
+        </div>
+        <div class="nextEvent-columns">
+            <div class="event-list">
+                <h3>À venir</h3>
+                <ul>
+                <li *ngFor="let event of upcomingEvents">
+                    {{ event.title }} - {{ event.date_time | date: 'dd-MM-yyyy à HH:mm' }}
+                </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
-<span></span>
+  

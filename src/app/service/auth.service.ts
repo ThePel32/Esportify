@@ -13,6 +13,10 @@ export class AuthService {
         this.loadUserFromLocalStorage();
     }
 
+    isLoggedIn(): boolean {
+        return !!localStorage.getItem('current-user');
+    }
+
     getRole(): string {
         if (this.userProfile.value) {
             return this.userProfile.value.role || '';

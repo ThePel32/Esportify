@@ -55,7 +55,11 @@ Event.getAll = (title, state, result) => {
     let query = `
         SELECT events.*, 
         (SELECT COUNT(*) FROM event_participants WHERE event_participants.event_id = events.id) AS nb_participants,
-        GROUP_CONCAT(DISTINCT CONCAT('{"id":', users.id, ',"username":"', users.username, '"}')) AS participants
+        GROUP_CONCAT(DISTINCT CONCAT(
+        '{"id":', users.id, 
+        ',"username":"', users.username, 
+        '","has_joined":', IFNULL(event_participants.has_joined, false),
+        '}')) AS participants
         FROM events
         LEFT JOIN event_participants ON events.id = event_participants.event_id
         LEFT JOIN users ON event_participants.user_id = users.id
@@ -72,8 +76,13 @@ Event.getAll = (title, state, result) => {
 
         const events = res.map(event => ({
             ...event,
-            participants: event.participants ? JSON.parse(`[${event.participants}]`) : []
-        }));
+            participants: event.participants
+                ? JSON.parse(`[${event.participants}]`).map(p => ({
+                    ...p,
+                    has_joined: !!p.has_joined
+                    }))
+                : []
+            }));
 
         result(null, events);
     });

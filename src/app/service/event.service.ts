@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpRequest } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
+import { Event } from '../models/event.model';
 
 
 @Injectable({
@@ -56,14 +57,18 @@ export class EventService {
 
     }
 
-    getEvents(status?: string): Observable<any> {
+    getEvents(status?: string): Observable<Event[]> {
         let url = this.apiUrl;
         if (status) url += `?state=${status}`;
         return this.http.get<any>(url, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
 
-    getEventById(eventId: number): Observable<any> {
+    getEventById(eventId: number): Observable<Event> {
         return this.http.get<any>(`${this.apiUrl}/${eventId}`, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
+    }
+
+    getEventsByState(state: string): Observable<Event[]> {
+        return this.http.get<Event[]>(`${this.apiUrl}?state=${state}`);
     }
 
     addEvent(eventData: any): Observable<any> {
@@ -93,6 +98,16 @@ export class EventService {
     deleteEvent(eventId: number): Observable<any> {
         return this.http.delete<any>(`${this.apiUrl}/${eventId}`, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
+
+
+    confirmJoin(eventId: number) {
+        const token = localStorage.getItem('token');
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+
+        return this.http.post(`${this.apiUrl}/${eventId}/confirm-join`, {}, { headers });
+    }
+
+
 
     private getAuthHeaders(): HttpHeaders {
         const token = localStorage.getItem('token');

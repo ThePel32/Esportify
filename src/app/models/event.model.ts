@@ -1,13 +1,19 @@
-export class Event {
-    id: number = 0;
-    title: string = "";
-    description: string = "";
-    date_time: string = "";
-    max_players: number = 0;
-    organizer_id: number = 0;
-    state: string = "";
-    images: string = "";
-    duration: number = 0;
-    nb_participants: number = 0;
-    participants: { id: number; username: string }[] = [];
+export interface Participant {
+    id: number;
+    username: string;
+    has_joined?: boolean;
+}
+
+export interface Event {
+    id: number ;
+    title: string;
+    description: string;
+    date_time: string;
+    max_players: number;
+    organizer_id: number;
+    state: string;
+    images: string;
+    duration: number;
+    nb_participants: number;
+    participants: { id: number; username: string; has_joined?: boolean }[];
 }

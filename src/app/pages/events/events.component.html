@@ -1,6 +1,5 @@
 <div class="tab-container">
   <mat-tab-group mat-stretch-tabs="true">
-
     <mat-tab label="Ajout d'événement" *ngIf="canAddEvent">
       <app-add-event></app-add-event>
     </mat-tab>
@@ -21,7 +20,7 @@
             <ul *ngIf="event.participants && event.participants.length > 0">
               <li *ngFor="let participant of event.participants">
                     {{ participant.username }}
-                </li>
+              </li>
             </ul>
 
             <p><strong>Organisateur :</strong> ID: {{ event.organizer_id }}</p>
@@ -32,10 +31,9 @@
           </mat-card-actions>
         </mat-card>
       </div>
-  </mat-tab>
+    </mat-tab>
 
     <mat-tab label="Liste d'événements">
-      
       <h3>Événements à venir</h3>
       <div *ngIf="selectedEvent; else eventList">
         <mat-card class="event-details-card">
@@ -52,19 +50,38 @@
                 {{ participant.username }}
               </li>
             </ul>
+            <p><strong>Participants présents :</strong> {{ getConfirmedCount(selectedEvent) }}/{{ selectedEvent.participants.length }}</p>
+            <ul *ngIf="getConfirmedCount(selectedEvent) > 0">
+              <li *ngFor="let participant of selectedEvent.participants">
+                <ng-container *ngIf="participant.has_joined">
+                  {{ participant.username }}
+                </ng-container>
+              </li>
+            </ul>
             <p><strong>Durée :</strong> {{ selectedEvent.duration }} heures</p>
             <p><strong>Organisateur :</strong> ID: {{ selectedEvent.organizer_id }}</p>
           </mat-card-content>
           <mat-card-actions>
-            <ng-container *ngIf="selectedEvent.participants.length < selectedEvent.max_players; else completLabel">
-              <button mat-raised-button color="primary" *ngIf="!isUserRegistered(selectedEvent)" (click)="joinEvent(selectedEvent.id)">
-                S'inscrire
-              </button>
+            <ng-container *ngIf="isConnected">
+              <ng-container *ngIf="selectedEvent.participants.length < selectedEvent.max_players; else completLabel">
+                <button mat-raised-button color="primary"
+                  *ngIf="!isUserRegistered(selectedEvent) && !hasStarted(selectedEvent.date_time)"
+                  (click)="joinEvent(selectedEvent.id)">
+                  S'inscrire
+                </button>
+              </ng-container>
             </ng-container>
+              <ng-container *ngIf="isUserRegistered(selectedEvent) && hasStarted(selectedEvent.date_time)">
+                <button mat-raised-button color="accent"
+                  *ngIf="getActionButtonType(selectedEvent) === 'join' && !hasUserJoined(selectedEvent)"
+                  (click)="confirmPresence(selectedEvent.id)">
+                  Rejoindre
+                </button>
+                <span *ngIf="hasUserJoined(selectedEvent)" class="joined-label">Rejoint !</span>
+              </ng-container>
             <ng-template #completLabel>
               <span class="full-event-label">Complet</span>
             </ng-template>
-            
             <button mat-raised-button color="warn" *ngIf="isUserRegistered(selectedEvent)" (click)="leaveEvent(selectedEvent.id)">Se désinscrire</button>
             <button mat-raised-button color="accent" (click)="closeDetails()">Retour</button>
           </mat-card-actions>
@@ -83,16 +100,28 @@
               <p><strong>Participants :</strong> {{ getParticipantsCount(event) }}</p>
             </mat-card-content>
             <mat-card-actions>
-              <ng-container *ngIf="event.participants.length < event.max_players; else completLabel">
-                <button mat-raised-button color="primary" *ngIf="!isUserRegistered(event)" (click)="joinEvent(event.id)">
-                  S'inscrire
-                </button>
-              </ng-container>
-              <ng-template #completLabel>
-                <span class="full-event-label">Complet</span>
-              </ng-template>
+              <ng-container *ngIf="isConnected">
+                <ng-container *ngIf="!isUserRegistered(event) && event.participants.length < event.max_players">
+                  <button mat-raised-button color="primary" (click)="joinEvent(event.id)">
+                    S'inscrire
+                  </button>
+                </ng-container>
               
-              <button mat-raised-button color="warn" *ngIf="isUserRegistered(event)" (click)="leaveEvent(event.id)">Se désinscrire</button>
+                <ng-container *ngIf="isUserRegistered(event)">
+                  <ng-container *ngIf="!hasUserJoined(event) && hasStarted(event.date_time)">
+                    <button mat-raised-button color="accent" (click)="confirmPresence(event.id)">
+                      Rejoindre
+                    </button>
+                  </ng-container>
+                  <span *ngIf="hasUserJoined(event)">Rejoint !</span>
+                  <button mat-raised-button color="warn" (click)="leaveEvent(event.id)">
+                    Se désinscrire
+                  </button>
+                </ng-container>
+              </ng-container>
+              <ng-container *ngIf="!isUserRegistered(event) && event.participants.length >= event.max_players">
+                <span class="full-event-label">Complet</span>
+              </ng-container>
               <button mat-raised-button (click)="showDetails(event)">Voir détails</button>
             </mat-card-actions>
           </mat-card>
@@ -109,31 +138,24 @@
             <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}" class="event-image">
             <mat-card-content>
               <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
-              <p><strong>Participants :</strong> {{ getParticipantsCount(event) }}</p>
-
+              <p><strong>Participants présents :</strong> {{ getConfirmedCount(event) }}/{{ event.participants.length }}</p>
               <ul *ngIf="event.participants && event.participants.length > 0"></ul>
-
             </mat-card-content>
             <mat-card-actions>
               <mat-card-actions>
-                <button 
-                  mat-raised-button 
-                  color="accent" 
-                  *ngIf="isUserRegistered(event)" 
-                  (click)="confirmPresence(event.id)">
-                  Rejoindre
-                </button>
-                <button 
-                  mat-raised-button 
-                  (click)="showDetails(event)">
-                  Voir détails
-                </button>
+                <ng-container *ngIf="isUserRegistered(event)">
+                  <ng-container *ngIf="!hasUserJoined(event)">
+                    <button mat-raised-button color="accent" (click)="confirmPresence(event.id)">
+                      Rejoindre
+                    </button>
+                  </ng-container>
+                  <span *ngIf="hasUserJoined(event)" class="joined-label">Rejoint !</span>
+                </ng-container>                               
+                <button mat-raised-button (click)="showDetails(event)">Voir détails</button>
               </mat-card-actions>
-                          </mat-card-actions>
+            </mat-card-actions>
           </mat-card>
         </div>
-
     </mat-tab>
-
   </mat-tab-group>
 </div>

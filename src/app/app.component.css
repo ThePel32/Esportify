@@ -13,6 +13,20 @@ mat-toolbar {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+mat-toolbar a.homeBtnNav {
+    background-color: #242A36;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+    width: 16%;
+    padding: 10px 0;
+    font-weight: bold;
+    font-size: 30px;
+}
+
+mat-toolbar a.homeBtnNav:hover {
+    background-color: #7A8024;
+}
 
 mat-toolbar a.btnNav {
     background-color: #7A8024;
