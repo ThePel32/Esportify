@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const verifyToken = require("./app/middleware/auth.js");
 const eventsController = require('./app/controllers/events.controller.js');
+const eventBanRoutes = require('./app/routes/eventBan.routes');
 
 const usersRouter = require("./app/routes/users.routes");
 const gameRouter = require("./app/routes/game.routes");
@@ -35,6 +36,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(eventBanRoutes);
+
 app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/shop', shopRouter);
@@ -45,6 +48,9 @@ app.use('/api/events', verifyToken, (req, res, next) => {
   console.log(`[${req.method}] ${req.url} - Token validé :`, req.headers.authorization || "No Token");
   next();
 }, eventsRouter);
+
+app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
+
 
 app.get('/api/events/pending', (req, res) => {
   Event.getByState('pending', (err, events) => {

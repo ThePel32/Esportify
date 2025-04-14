@@ -18,4 +18,5 @@ export interface Event {
     nb_participants: number;
     participants: { id: number; username: string; has_joined?: boolean }[];
     started?: boolean;
+    isBanned?: boolean;
 }

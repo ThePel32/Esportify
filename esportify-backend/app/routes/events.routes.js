@@ -4,7 +4,6 @@ const events = require("../controllers/events.controller.js");
 const verifyToken = require("../middleware/auth.js");
 const authorize = require("../middleware/authorize.js");
 
-
 router.post("/", authorize(["admin", "organizer"]), events.create);
 
 router.get("/", events.findAll);
@@ -25,7 +24,8 @@ router.post("/:id/confirm-join", authorize(["user", "organizer", "admin"]), even
 
 router.post("/:id/leave", authorize(["user", "organizer", "admin"]), events.leaveEvent);
 
-router.delete("/:id/remove/:userId", authorize(["admin"]), events.removeParticipant);
+router.delete("/:id/kick/:userId", authorize(["admin", "organizer"]), events.kickParticipant);
+
 
 router.patch("/:id/start", authorize(["organizer", "admin"]), events.startEvent);
 
