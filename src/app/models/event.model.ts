@@ -11,9 +11,11 @@ export interface Event {
     date_time: string;
     max_players: number;
     organizer_id: number;
+    organizer_name: string;
     state: string;
     images: string;
     duration: number;
     nb_participants: number;
     participants: { id: number; username: string; has_joined?: boolean }[];
+    started?: boolean;
 }

@@ -27,4 +27,12 @@ router.post("/:id/leave", authorize(["user", "organizer", "admin"]), events.leav
 
 router.delete("/:id/remove/:userId", authorize(["admin"]), events.removeParticipant);
 
+router.patch("/:id/start", authorize(["organizer", "admin"]), events.startEvent);
+
+router.get("/history", events.getHistory);
+router.get("/history/user/:userId", events.getUserHistory);
+router.get('/history/all', authorize(["admin", "organizer", "user"]), events.getAllEndedEvents);
+
+
+
 module.exports = router;

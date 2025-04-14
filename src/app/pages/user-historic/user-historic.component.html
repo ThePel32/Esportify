@@ -1,1 +1,36 @@
-<p>user-historic works!</p>
+<div class="historic-wrapper">
+    <div class="historic-section">
+      <h2>Mes événements</h2>
+      <div class="scrollable-list">
+        <mat-card *ngFor="let event of userEvents" class="historic-card">
+          <h3>{{ event.title }}</h3>
+          <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}">
+          <mat-card-content>
+            <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+            <p><strong>Durée :</strong> {{ event.duration }}h</p>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">📄 Détails</button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </div>
+  
+    <div class="historic-section">
+      <h2>Tous les événements</h2>
+      <div class="scrollable-list">
+        <mat-card *ngFor="let event of allEndedEvents" class="historic-card">
+          <h3>{{ event.title }}</h3>
+          <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}">
+          <mat-card-content>
+            <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+            <p><strong>Durée :</strong> {{ event.duration }}h</p>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">📄 Détails</button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+  

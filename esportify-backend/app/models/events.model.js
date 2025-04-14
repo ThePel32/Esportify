@@ -1,4 +1,4 @@
-const sql = require("./db.js");
+const sql = require("../config/db.js");
 
 const Event = function(event) {
     this.title = event.title;
@@ -7,6 +7,7 @@ const Event = function(event) {
     this.max_players = event.max_players;
     this.organizer_id = event.organizer_id;
     this.state = event.state || "pending";
+    this.started = event.started || false;
     this.images = event.images;
     this.duration = event.duration;
     this.created_at = new Date();
@@ -43,7 +44,7 @@ Event.getByState = (state, result) => {
 
     sql.query(query, [state], (err, res) => {
         if (err) {
-            console.error("❌ Erreur lors de l'exécution de la requête SQL :", err);
+            console.error("Erreur lors de l'exécution de la requête SQL :", err);
             result(err, null);
             return;
         }
@@ -51,46 +52,57 @@ Event.getByState = (state, result) => {
     });
 };
 
-Event.getAll = (title, state, result) => {
-    let query = `
+    Event.getAll = (title, state, result) => {
+        const query = `
         SELECT events.*, 
-        (SELECT COUNT(*) FROM event_participants WHERE event_participants.event_id = events.id) AS nb_participants,
-        GROUP_CONCAT(DISTINCT CONCAT(
-        '{"id":', users.id, 
-        ',"username":"', users.username, 
-        '","has_joined":', IFNULL(event_participants.has_joined, false),
-        '}')) AS participants
+            organizer.username AS organizer_name,
+            GROUP_CONCAT(DISTINCT CONCAT(
+            '{"id":', users.id,
+            ',"username":"', users.username,
+            '","has_joined":', IFNULL(event_participants.has_joined, 0),
+            '}'
+            )) AS participants
         FROM events
         LEFT JOIN event_participants ON events.id = event_participants.event_id
         LEFT JOIN users ON event_participants.user_id = users.id
+        JOIN users AS organizer ON events.organizer_id = organizer.id
         WHERE events.state = ?
         GROUP BY events.id
-    `;
-
-    sql.query(query, [state], (err, res) => {
+        `;
+    
+        sql.query(query, [state], (err, res) => {
         if (err) {
-            console.error("❌ Erreur SQL dans getAll:", err);
-            result(err, null);
-            return;
+            console.error("Erreur SQL dans getAll:", err);
+            return result(err, null);
         }
-
-        const events = res.map(event => ({
+    
+        const cleaned = res.map(event => {
+            let participants = [];
+    
+            if (typeof event.participants === 'string' && event.participants.trim() !== '') {
+            try {
+                participants = JSON.parse(`[${event.participants}]`).map(p => ({
+                ...p,
+                has_joined: p.has_joined === 1 || p.has_joined === true
+                }));
+            } catch (parseError) {
+                console.error("Erreur de parsing JSON participants:", parseError);
+            }
+            }
+    
+            return {
             ...event,
-            participants: event.participants
-                ? JSON.parse(`[${event.participants}]`).map(p => ({
-                    ...p,
-                    has_joined: !!p.has_joined
-                    }))
-                : []
-            }));
-
-        result(null, events);
-    });
-};
+            participants
+            };
+        });
+    
+        result(null, cleaned);
+        });
+    };
 
 Event.updateById = (id, event, result) => {
     sql.query(
-        "UPDATE events SET title = ?, description = ?, date_time = ?, max_players = ?, organizer_id = ?, state = ?, images = ?, updated_at = ? WHERE id = ?",
+        "UPDATE events SET title = ?, description = ?, date_time = ?, max_players = ?, organizer_id = ?, state = ?, images = ?, duration = ?,started = ?, updated_at = ? WHERE id = ?",
         [
             event.title, 
             event.description, 
@@ -100,6 +112,7 @@ Event.updateById = (id, event, result) => {
             event.state,
             event.images, 
             event.duration,
+            event.started,
             new Date(),
             id
         ],
@@ -140,5 +153,57 @@ Event.removeAll = (result) => {
         result(null, res);
     });
 };
+
+Event.startById = (id, result) => {
+    sql.query(
+        "UPDATE events SET started = true, updated_at = ? WHERE id = ?",
+        [new Date(), id],
+        (err, res) => {
+            if (err) {
+                console.error("Erreur SQL dans startById :", err); // <--- Ajout temporaire
+                result(err, null);
+                return;
+            }
+            
+            if (res.affectedRows == 0) {
+                return;
+            }
+            result(null, {id: id, started: true})
+        }
+    );
+};
+
+// Tous les événements terminés
+Event.getFinishedEvents = (result) => {
+    const now = new Date();
+    sql.query(
+        `SELECT e.*, u.username as organizer_name
+            FROM events e
+            LEFT JOIN users u ON e.organizer_id = u.id
+            WHERE DATE_ADD(e.date_time, INTERVAL e.duration HOUR) < ? AND e.state = 'validated'`,
+        [now],
+        (err, res) => {
+            if (err) return result(err, null);
+        result(null, res);
+        }
+    );
+};
+
+Event.getUserFinishedEvents = (userId, result) => {
+    const now = new Date();
+    sql.query(
+        `SELECT e.*, u.username as organizer_name
+        FROM events e
+        LEFT JOIN users u ON e.organizer_id = u.id
+        INNER JOIN event_participants ep ON ep.event_id = e.id
+        WHERE ep.user_id = ? AND DATE_ADD(e.date_time, INTERVAL e.duration HOUR) < ? AND e.state = 'validated'`,
+        [userId, now],
+        (err, res) => {
+            if (err) return result(err, null);
+            result(null, res);
+        }
+    );
+};
+
 
 module.exports = Event;

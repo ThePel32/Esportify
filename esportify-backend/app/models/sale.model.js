@@ -1,4 +1,4 @@
-const sql = require("./db.js");
+const sql = require("../config/db");
 
 const Sale = function(sale){
     this.date = sale.date;
@@ -73,7 +73,6 @@ Sale.remove = (id, result) => {
             return;
         }
         if(res.affectedRows == 0){
-            // not found sale with the id
             result({kind: "not_found"}, null);
             return;
         }

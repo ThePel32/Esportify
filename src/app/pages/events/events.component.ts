@@ -10,6 +10,11 @@ import { AuthService } from '../../service/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Event } from '../../models/event.model';
 import { EventBusService } from '../../service/event-bus.service';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-events',
@@ -21,92 +26,199 @@ import { EventBusService } from '../../service/event-bus.service';
     MatTabsModule,
     NgFor,
     NgIf,
-    AddEventComponent
+    AddEventComponent,
+    FormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatOptionModule,
+    RouterModule
   ],
   templateUrl: './events.component.html',
-  styleUrl: './events.component.css'
+  styleUrls: ['./events.component.css']
 })
 export class EventsComponent implements OnInit {
   upcomingEvents: Event[] = [];
   ongoingEvents: Event[] = [];
   pendingEvents: Event[] = [];
   validatedEvents: Event[] = [];
-  selectedEvent: Event | null = null;
   userId: number | null = null;
   isAdmin: boolean = false;
+  isOrganizer: boolean = false;
   hasJoined: boolean = false;
-  
+  selectedGames: string[] = [];
+  selectedGenres: string[] = [];
+  eventsToStart: Event[] = [];
+  genreOptions: string[] = [
+    'FPS/TPS',
+    'Sport',
+    'MOBA',
+    'RTS',
+    'Cartes',
+    'Plateforme'
+  ];
 
+  gameOptions: { [key: string]: string } = {
+    balatro: 'img/Balatro.jpg',
+    Cs2: 'img/CS2.png',
+    fifa: 'img/fifa.png',
+    lol: 'img/LoL.png',
+    rocketleague: 'img/rocketLeague.png',
+    starcraft2: 'img/starcraft2.png',
+    supermeatboy: 'img/supermeatboy.jpg',
+    valorant: 'img/valorant.png',
+    pubg: 'img/pubg.jpg'
+  };
+
+  gameNames: { [key: string]: string } = {
+    balatro: "Balatro",
+    Cs2: "Counter Strike 2",
+    fifa: "Fifa 24",
+    lol: "League of Legends",
+    rocketleague: "Rocket League",
+    starcraft2: "Starcraft 2",
+    supermeatboy: "Super Meat Boy",
+    valorant: "Valorant",
+    pubg: "PUBG"
+  };
+
+  GameGenres: { [key: string]: string } = {
+    cs2: 'FPS/TPS',
+    valorant: 'FPS/TPS',
+    pubg: 'FPS/TPS',
+    fifa: 'Sport',
+    rocketleague: 'Sport',
+    lol: 'MOBA',
+    starcraft2: 'RTS',
+    balatro: 'Cartes',
+    supermeatboy: 'Plateforme'
+  };
+
+  selectedTabIndex: number = 0;
 
   constructor(
     private eventService: EventService,
     private authService: AuthService,
     private eventBus: EventBusService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const tabParam = params['tab'];
+      if (tabParam === 'liste') {
+        this.selectedTabIndex = 3;
+      }
+    });
+
     this.authService.userProfile.subscribe(profile => {
       this.userId = profile?.id || null;
       this.isAdmin = this.authService.hasRole('admin');
+      this.isOrganizer = this.authService.hasRole('organizer');
       this.loadEvents();
     });
-  
+    
     this.eventBus.refreshEvents$.subscribe(() => {
       this.loadEvents();
     });
+    
   }
-  
+
   get isConnected(): boolean {
     return this.authService.isLoggedIn();
   }
-  
+
+  isEventStarted(event: Event): boolean {
+    return event.started === true;
+  }
 
   loadEvents() {
     const now = new Date();
-  
+
     this.eventService.getEvents('validated').subscribe((events: Event[]) => {
-      const nonTermines = events
-        .map(e => ({ ...e, participants: e.participants || [] }))
-        .filter(event => {
-          const start = new Date(event.date_time);
-          const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
-          return end > now;
-        });
-    
-      this.upcomingEvents = nonTermines.filter(event => new Date(event.date_time) > now);
-      this.ongoingEvents = nonTermines.filter(event => new Date(event.date_time) <= now);
+      console.log("✅ Tous les événements validés récupérés :", events);
+      const allEvents = events.map(e => ({
+        ...e,
+        participants: e.participants || []
+      }));
+
+      const nonTermines = allEvents.filter(event => {
+        const start = new Date(event.date_time);
+        const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
+        return end > now;
+      });
+
+      this.upcomingEvents = nonTermines.filter(e => new Date(e.date_time) > now);
+      this.ongoingEvents = nonTermines.filter(e => {
+        const start = new Date(e.date_time);
+        const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
+        const inProgress = e.started && start <= now && end > now;
+      
+        console.log(`🕒 EVENT "${e.title}" - Start: ${start.toISOString()} | End: ${end.toISOString()} | Now: ${now.toISOString()} | Started: ${e.started} => ${inProgress ? '✅ EN COURS' : '❌ PAS EN COURS'}`);
+      
+        return inProgress;
+      });
+      
+      
+      
+
+      this.eventsToStart = nonTermines.filter(e => {
+        const eventTime = new Date(e.date_time);
+        const diffInMs = eventTime.getTime() - now.getTime();
+        return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
+      });
+
+      if (this.selectedGames && this.selectedGames.length > 0 && !this.selectedGames.includes('ALL')) {
+        this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGames.includes(e.title));
+        this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGames.includes(e.title));
+      }
+
+      if (this.selectedGenres && this.selectedGenres.length > 0 && !this.selectedGenres.includes('ALL')) {
+        this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
+        this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
+      }
     });
-    
-  
+
     if (this.isAdmin) {
       this.eventService.getEvents('pending').subscribe((events: Event[]) => {
         this.pendingEvents = events;
       });
     }
   }
-  
+
+  showStartButton(dateTime: string): boolean {
+    const now = new Date();
+    const start = new Date(dateTime);
+    const diff = start.getTime() - now.getTime();
+    return diff <= 30 * 60 * 1000 && diff >= 0;
+  }
+
+  startEvent(eventId: number) {
+    this.eventService.startEvent(eventId).subscribe({
+      next: () => {
+        this.snackBar.open("Événement démarré avec succès !", "Fermer", { duration: 3000 });
+        this.loadEvents();
+      },
+      error: () => {
+        this.snackBar.open("Erreur lors du démarrage de l'événement.", "Fermer", { duration: 3000 });
+      }
+    });
+  }
+
+  applyFilter() {
+    this.loadEvents();
+  }
 
   getActionButtonType(event: Event): 'register' | 'join' | null {
     const hasStarted = new Date(event.date_time) <= new Date();
     const isRegistered = this.isUserRegistered(event);
-
     if (!hasStarted && !isRegistered) return 'register';
     if (hasStarted && isRegistered) return 'join';
-
     return null;
   }
 
   trackById(index: number, event: Event): number {
     return event.id;
-  }
-
-  showDetails(event: Event) {
-    this.selectedEvent = event;
-  }
-
-  closeDetails() {
-    this.selectedEvent = null;
   }
 
   formatDate(dateString: string): string {
@@ -136,13 +248,15 @@ export class EventsComponent implements OnInit {
     return `${event.participants?.length ?? 0}/${event.max_players}`;
   }
 
+  getParticipantsOnly(event: Event): number {
+    return event.participants?.length ?? 0;
+  }
+
   hasStarted(dateTime: string): boolean {
     return new Date(dateTime) <= new Date();
   }
 
   joinEvent(eventId: number) {
-    console.log('Tentative d\'inscription à l’événement ID :', eventId);
-
     this.eventService.joinEvent(eventId).subscribe({
       next: () => {
         this.snackBar.open('Inscription réussie !', 'Fermer', { duration: 3000 });
@@ -160,33 +274,22 @@ export class EventsComponent implements OnInit {
     this.eventService.leaveEvent(eventId).subscribe(() => {
       this.snackBar.open('Désinscription réussie !', 'Fermer', { duration: 3000 });
       this.loadEvents();
-      if (this.selectedEvent && this.selectedEvent.id === eventId) {
-        this.selectedEvent.participants = this.selectedEvent.participants.filter(p => p.id !== this.userId);
-      }
     });
   }
 
   confirmPresence(eventId: number) {
     this.eventService.confirmJoin(eventId).subscribe(() => {
       this.snackBar.open('Présence confirmée !', 'Fermer', { duration: 3000 });
-
-      if (this.selectedEvent && this.selectedEvent.id === eventId) {
-        const participant = this.selectedEvent.participants.find(p => p.id === this.userId);
-        if (participant) {
-          (participant as any).has_joined = true;
-        }
-      }
-  
       this.loadEvents();
     });
   }
 
-  getConfirmedCount(event: Event): number {
-    return event.participants?.filter(p => p.has_joined)?.length ?? 0;
+  hasUserJoined(event: Event): boolean {
+    return event.participants?.some(p => p.id === this.userId && p.has_joined == true) || false;
   }
 
-  hasUserJoined(event: Event): boolean {
-    return event.participants?.some(p => p.id === this.userId && p.has_joined === true) || false;
+  getConfirmedCount(event: Event): number {
+    return event.participants?.filter(p => p.has_joined === true).length || 0;
   }
 
   get canAddEvent(): boolean {

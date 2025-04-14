@@ -9,33 +9,44 @@
 
         <div class="slider-container">
             <div class="slider-track"
-                [style.transform]="'translateX(-' + currentSlideIndex * 100 + '%)'"
-                [class.no-transition]="currentSlideIndex === slideImages.length">
-            <img *ngFor="let img of clonedSlideImages" [src]="img" class="slide-img" alt="image jeu" />
+            [style.transform]="'translateX(-' + currentSlideIndex * 100 + '%)'"
+            [class.no-transition]="noTransition">
+                <img *ngFor="let img of clonedSlideImages" [src]="img" class="slide-img" alt="image jeu" />
             </div>
+
         </div>
     </div>
     <div class="homepage-event">
         <div class="currentEvent-columns">
-            <div class="event-list">
-                <h3>En cours</h3>
-                <ul>
-                <li *ngFor="let event of ongoingEvents">
-                    {{ event.title }} - {{ event.date_time | date: 'dd-MM-yyyy à HH:mm' }}
-                </li>
-                </ul>
+          <div class="event-list">
+            <h3>En cours</h3>
+            <ul>
+              <li *ngFor="let event of ongoingEvents.slice(0, 10)">
+                {{ event.title }} - {{ event.date_time | date: 'dd-MM-yyyy à HH:mm' }}
+              </li>
+            </ul>
+            <div class="voir-tout">
+                <a [routerLink]="['/events']" [queryParams]="{ tab: 'liste' }">voir tout</a>
+
             </div>
+          </div>
         </div>
+      
         <div class="nextEvent-columns">
-            <div class="event-list">
-                <h3>À venir</h3>
-                <ul>
-                <li *ngFor="let event of upcomingEvents">
-                    {{ event.title }} - {{ event.date_time | date: 'dd-MM-yyyy à HH:mm' }}
-                </li>
-                </ul>
+          <div class="event-list">
+            <h3>À venir</h3>
+            <ul>
+              <li *ngFor="let event of upcomingEvents.slice(0, 10)">
+                {{ event.title }} - {{ event.date_time | date: 'dd-MM-yyyy à HH:mm' }}
+              </li>
+            </ul>
+            <div class="voir-tout">
+                <a [routerLink]="['/events']" [queryParams]="{ tab: 'liste' }">voir tout</a>
+
             </div>
+          </div>
         </div>
-    </div>
+      </div>
+      
 </div>
   

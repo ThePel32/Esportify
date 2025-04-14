@@ -1,0 +1,176 @@
+<div class="event-room" *ngIf="eventData">
+    <!-- Partie gauche : Infos -->
+    <div class="event-info">
+        <div class="header">
+            <img *ngIf="eventData.images" [src]="eventData.images" alt="image du jeu" />
+            <div class="details">
+                <p><strong>Date :</strong> {{ eventData.date_time | date:'dd/MM/yyyy à HH:mm' }}</p>
+                <p><strong>Organisateur :</strong> {{ eventData.organizer_name || 'Inconnu' }}</p>
+                <p><strong>Durée :</strong> {{ eventData.duration }} heure(s)</p>
+                <p><strong>Description :</strong> {{ eventData.description }}</p>
+                <p><strong>Participants :</strong></p>
+                <ul *ngIf="eventData.participants.length > 0">
+                    <li *ngFor="let p of eventData.participants">
+                        {{ p.username }} <span *ngIf="p.has_joined"></span>
+                    </li>
+                </ul>
+            </div>
+        </div>  
+
+
+        <div class="score-section" *ngIf="isOver()">
+            <button
+                *ngIf="canEnterScore"
+                mat-raised-button
+                color="accent"
+                (click)="openScoreDialog()">
+                🎯 Entrer un score
+            </button>
+
+            <div class="score-display" *ngIf="isOver()">
+                <div class="score-left">
+                  <h3>Ton score</h3>
+                  <ng-container *ngIf="userScore; else noScore">
+                    <!-- CS2 / Valorant -->
+                    <ng-container *ngIf="['cs2', 'valorant'].includes(getGameType())">
+                      <p><strong>Kills :</strong> {{ userScore.metadata?.kills }}</p>
+                      <p><strong>Manches :</strong> {{ userScore.metadata?.score }} - {{ userScore.metadata?.score_opponent }}</p>
+                      <p><strong>Résultat :</strong> {{ userScore.result === 'win' ? '✅ Gagné' : '❌ Perdu' }}</p>
+                    </ng-container>
+              
+                    <!-- FIFA / Rocket League -->
+                    <ng-container *ngIf="['fifa', 'rocketleague'].includes(getGameType())">
+                      <p><strong>Score :</strong> {{ userScore.metadata?.score }} - {{ userScore.metadata?.score_opponent }}</p>
+                      <p><strong>Résultat :</strong> {{ userScore.result === 'win' ? '✅ Gagné' : '❌ Perdu' }}</p>
+                    </ng-container>
+              
+                    <!-- PUBG -->
+                    <ng-container *ngIf="getGameType() === 'pubg'">
+                      <p><strong>Kills :</strong> {{ userScore.metadata?.kills }}</p>
+                      <p><strong>Placement :</strong> {{ userScore.metadata?.place }}ᵉ</p>
+                      <p><strong>Résultat :</strong> {{ userScore.result === 'win' ? '✅ Gagné' : '❌ Perdu' }}</p>
+                    </ng-container>
+              
+                    <!-- Autres jeux -->
+                    <ng-container *ngIf="!['cs2', 'valorant', 'fifa', 'rocketleague', 'pubg'].includes(getGameType())">
+                      <p><strong>Score :</strong>
+                        {{ userScore.metadata?.points || userScore.metadata?.time || userScore.metadata?.final || userScore.metadata?.kills || userScore.score }}
+                      </p>
+                      <p><strong>Résultat :</strong> {{ userScore.result === 'win' ? '✅ Gagné' : '❌ Perdu' }}</p>
+                    </ng-container>
+                  </ng-container>
+                  <ng-template #noScore>
+                    <p>Aucun score enregistré.</p>
+                  </ng-template>
+                </div>
+              
+                <div class="score-right">
+                  <h3>Top 10</h3>
+                  <ul>
+                    <li *ngFor="let s of topScores">
+                      <!-- CS2 / Valorant -->
+                      <ng-container *ngIf="['cs2', 'valorant'].includes(getGameType())">
+                        {{ s.username }} : {{ s.metadata?.score }}-{{ s.metadata?.score_opponent }}
+                      </ng-container>
+              
+                      <!-- FIFA / Rocket League -->
+                      <ng-container *ngIf="['fifa', 'rocketleague'].includes(getGameType())">
+                        {{ s.username }} : {{ s.metadata?.score }}-{{ s.metadata?.score_opponent }}
+                      </ng-container>
+              
+                      <!-- PUBG -->
+                      <ng-container *ngIf="getGameType() === 'pubg'">
+                        {{ s.username }} : {{ s.metadata?.place }}ᵉ place
+                      </ng-container>
+              
+                      <!-- Autres -->
+                      <ng-container *ngIf="!['cs2', 'valorant', 'fifa', 'rocketleague', 'pubg'].includes(getGameType())">
+                        {{ s.username }} :
+                        {{ s.metadata?.points || s.metadata?.time || s.metadata?.final || s.metadata?.kills || s.score }}
+                      </ng-container>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+        </div>
+    </div>
+
+    <!-- Partie droite : Chat -->
+    <div class="chat-section">
+        <h3>Chat</h3>
+        <div class="chat-messages">
+            <p>(À intégrer avec socket.io)</p>
+        </div>
+        <div class="chat-input">
+            <input type="text" placeholder="Écris ton message..." />
+            <button>Envoyer</button>
+        </div>
+    </div>
+
+    <!-- OVERLAY pour entrer un score -->
+    <div *ngIf="showScoreOverlay">
+        <div class="overlay-backdrop" (click)="closeScoreOverlay()"></div>
+        <div class="score-overlay">
+            <h3>Entrer le score</h3>
+    
+            <!-- FIFA / Rocket League -->
+            <div *ngIf="['fifa', 'rocketleague'].includes(getGameType())">
+            <label>Score final (ex: 3-1)</label>
+            <input type="text" [(ngModel)]="score.final" />
+            </div>
+    
+            <!-- Super Meat Boy -->
+            <div *ngIf="getGameType() === 'supermeatboy'">
+            <label>Temps (mm:ss)</label>
+            <input type="text" [(ngModel)]="score.time" />
+            </div>
+    
+            <!-- PUBG -->
+            <div *ngIf="getGameType() === 'pubg'">
+            <label>Kills</label>
+            <input type="number" [(ngModel)]="score.kills" />
+            <label>Placement final</label>
+            <input type="number" [(ngModel)]="score.place" />
+            </div>
+    
+            <!-- CS2 / Valorant -->
+            <div *ngIf="['cs2', 'valorant'].includes(getGameType())">
+            <label>Rounds gagnés</label>
+            <input type="number" [(ngModel)]="score.roundsWon" />
+            <label>Rounds perdus</label>
+            <input type="number" [(ngModel)]="score.roundsLost" />
+            </div>
+    
+            <!-- LoL -->
+            <div *ngIf="getGameType() === 'lol'">
+            <label>Kills</label>
+            <input type="number" [(ngModel)]="score.kills" />
+            <label>Assists</label>
+            <input type="number" [(ngModel)]="score.assists" />
+            <label>Morts</label>
+            <input type="number" [(ngModel)]="score.deaths" />
+            </div>
+    
+            <!-- Starcraft2 -->
+            <div *ngIf="getGameType() === 'starcraft2'">
+            <label>Résultat</label>
+            <select [(ngModel)]="score.result">
+                <option value="win">Victoire</option>
+                <option value="loss">Défaite</option>
+            </select>
+            </div>
+    
+            <!-- Balatro -->
+            <div *ngIf="getGameType() === 'balatro'">
+            <label>Score</label>
+            <input type="number" [(ngModel)]="score.points" />
+            </div>
+    
+            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+            <button (click)="submitScore()">✅ Valider</button>
+            <button (click)="closeScoreOverlay()">Annuler</button>
+            </div>
+        </div>
+    </div>
+</div>

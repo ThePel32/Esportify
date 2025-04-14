@@ -1,4 +1,4 @@
-const sql = require("./db.js");
+const sql = require("../config/db");
 
 const Shop = function(shop) {
     this.name = shop.name;
@@ -57,7 +57,6 @@ Shop.updateById = (id, shop, result) => {
                 return;
             }
             if(res.affectedRows == 0){
-                // not found shop with the id
                 result({kind: "not_found"}, null);
                 return;
             }
@@ -73,7 +72,6 @@ Shop.remove = (id, result) => {
             return;
         }
         if(res.affectedRows == 0){
-            // not found shop with the id
             result({kind: "not_found"}, null);
             return;
         }

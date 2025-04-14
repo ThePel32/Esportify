@@ -35,6 +35,10 @@
     height: 100%;
 }
 
+.slider-track.no-transition {
+    transition: none !important;
+}
+
 .slide-img {
     width: 100%;
     flex-shrink: 0;
@@ -68,3 +72,19 @@
     list-style-type: disc;
     padding-left: 20px;
 }
+
+.voir-tout {
+    text-align: right;
+    margin-top: 8px;
+  }
+  
+  .voir-tout a {
+    color: #a2b037;
+    font-weight: bold;
+    text-decoration: none;
+  }
+  
+  .voir-tout a:hover {
+    text-decoration: underline;
+  }
+  

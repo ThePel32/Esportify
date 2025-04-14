@@ -10,6 +10,7 @@ const shopRouter = require("./app/routes/shop.routes");
 const saleRouter = require("./app/routes/sale.routes");
 const eventsRouter = require("./app/routes/events.routes");
 const contactRouter = require("./app/routes/contact.routes.js");
+const scoreRouter = require("./app/routes/scores.routes.js")
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/shop', shopRouter);
 app.use('/api/sale', saleRouter);
+app.use('/api/scores', scoreRouter)
 
 app.use('/api/events', verifyToken, (req, res, next) => {
   console.log(`[${req.method}] ${req.url} - Token validé :`, req.headers.authorization || "No Token");
@@ -65,7 +67,7 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-const sql = require("./app/models/db.js");
+const sql = require("./app/config/db.js");
 
 sql.query("SELECT * FROM events WHERE state = ?", ["pending"], (err, res) => {
     if (err) {

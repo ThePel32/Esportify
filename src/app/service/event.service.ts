@@ -18,7 +18,7 @@ export class EventService {
             return this.refreshTokenAndRetry(error);
         }
     
-        console.error("❌ Erreur API :", error);
+        console.error("Erreur API :", error);
         return throwError(() => new Error('Erreur de connexion au serveur.'));
     }
     
@@ -50,7 +50,7 @@ export class EventService {
         return this.http.request(updatedRequest);
     }),
     catchError(err => {
-        console.error("❌ Échec du rafraîchissement du token :", err);
+        console.error("Échec du rafraîchissement du token :", err);
         return throwError(() => new Error("Erreur lors du rafraîchissement du token."));
     })
 );
@@ -83,6 +83,10 @@ export class EventService {
         return this.http.put<any>(`${this.apiUrl}/${eventId}/validate`, {}, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
 
+    startEvent(eventId: number) {
+        return this.http.patch(`${this.apiUrl}/${eventId}/start`, {});
+    }
+
     joinEvent(eventId: number): Observable<any> {
         return this.http.post<any>(`${this.apiUrl}/${eventId}/join`, {}, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
@@ -107,13 +111,31 @@ export class EventService {
         return this.http.post(`${this.apiUrl}/${eventId}/confirm-join`, {}, { headers });
     }
 
+    getUserHistory(userId: number): Observable<Event[]> {
+        return this.http.get<Event[]>(`${this.apiUrl}/history/user/${userId}`, {
+            headers: this.getAuthHeaders()
+        }).pipe(catchError(this.handleError));
+    }
 
+    getAllHistory(): Observable<Event[]> {
+        return this.http.get<Event[]>(`${this.apiUrl}/history/all`, {
+            headers: this.getAuthHeaders()
+        }).pipe(catchError(this.handleError));
+    }
+
+    getHistoricForUser(userId: number): Observable<Event[]> {
+        return this.http.get<Event[]>(`${this.apiUrl}/history/user/${userId}`, { headers: this.getAuthHeaders() });
+    }
+
+    getAllEndedEvents(): Observable<Event[]> {
+        return this.http.get<Event[]>(`${this.apiUrl}/history/all`, { headers: this.getAuthHeaders() });
+    }
 
     private getAuthHeaders(): HttpHeaders {
         const token = localStorage.getItem('token');
     
         if (!token) {
-            console.error("❌ Aucun token trouvé dans localStorage !");
+            console.error("Aucun token trouvé dans localStorage !");
         }
     
         return new HttpHeaders({

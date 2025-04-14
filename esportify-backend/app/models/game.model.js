@@ -1,4 +1,4 @@
-const sql = require("./db.js");
+const sql = require("../config/db");
 
 const Game = function(game) {
     this.name = game.name;
