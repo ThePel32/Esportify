@@ -69,26 +69,36 @@
               <h3>En cours</h3>
               <div class="scrollable-cards">
                 <div *ngIf="ongoingEvents.length === 0">Aucun événement en cours.</div>
-                <mat-card *ngFor="let event of ongoingEvents" class="event-card">
-                  <img *ngIf="event.images" [src]="event.images" class="event-image">
-                  <div class="event-content-wrapper">
+
+                <ng-container *ngFor="let event of ongoingEvents">
+                  <mat-card *ngIf="event.isBanned" class="event-card banned">
                     <mat-card-content>
-                      <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
-                      <p><strong>Participants présents :</strong> {{ getConfirmedCount(event) }}/{{ event.participants.length }}</p>
+                      <p><strong>{{ event.title }}</strong></p>
+                      <p class="banned-message">🚫 Vous avez été banni de cet événement.</p>
                     </mat-card-content>
-                  </div>
-                  <div class="event-content-right">
-                    <mat-card-actions>
-                      <ng-container *ngIf="isUserRegistered(event)">
-                        <ng-container *ngIf="!hasUserJoined(event)">
-                          <button mat-raised-button color="warn" (click)="confirmPresence(event.id)">Rejoindre</button>
+                  </mat-card>
+
+                  <mat-card *ngIf="!event.isBanned" class="event-card">
+                    <img *ngIf="event.images" [src]="event.images" class="event-image">
+                    <div class="event-content-wrapper">
+                      <mat-card-content>
+                        <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+                        <p><strong>Participants présents :</strong> {{ getConfirmedCount(event) }}/{{ event.participants.length }}</p>
+                      </mat-card-content>
+                    </div>
+                    <div class="event-content-right">
+                      <mat-card-actions>
+                        <ng-container *ngIf="isUserRegistered(event)">
+                          <ng-container *ngIf="!hasUserJoined(event)">
+                            <button mat-raised-button color="warn" (click)="confirmPresence(event.id)">Rejoindre</button>
+                          </ng-container>
+                          <span *ngIf="hasUserJoined(event)">Rejoint !</span>
+                          <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Accéder</button>
                         </ng-container>
-                        <span *ngIf="hasUserJoined(event)">Rejoint !</span>
-                      </ng-container>
-                      <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Accéder</button>
-                    </mat-card-actions>
-                  </div>
-                </mat-card>
+                      </mat-card-actions>
+                    </div>
+                  </mat-card>
+                </ng-container>
               </div>
             </div>
 
@@ -96,35 +106,45 @@
               <h3>À venir</h3>
               <div class="scrollable-cards">
                 <div *ngIf="upcomingEvents.length === 0">Aucun événement à venir.</div>
-                <mat-card *ngFor="let event of upcomingEvents" class="event-card">
-                  <img *ngIf="event.images" [src]="event.images" class="event-image">
-                  <div class="event-content-wrapper">
+
+                <ng-container *ngFor="let event of upcomingEvents">
+                  <mat-card *ngIf="event.isBanned" class="event-card banned">
                     <mat-card-content>
-                      <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
-                      <p><strong>Participants :</strong> {{ getParticipantsCount(event) }}</p>
+                      <p><strong>{{ event.title }}</strong></p>
+                      <p class="banned-message">🚫 Vous avez été banni de cet événement.</p>
                     </mat-card-content>
-                  </div>
-                  <div class="event-content-right">
-                    <mat-card-actions>
-                      <ng-container *ngIf="isConnected">
-                        <ng-container *ngIf="!isUserRegistered(event) && event.participants.length < event.max_players">
-                          <button mat-raised-button color="primary" (click)="joinEvent(event.id)">S'inscrire</button>
-                        </ng-container>
-                        <ng-container *ngIf="isUserRegistered(event)">
-                          <ng-container *ngIf="!hasUserJoined(event) && hasStarted(event.date_time)">
-                            <button mat-raised-button color="warn" (click)="confirmPresence(event.id)">Rejoindre</button>
+                  </mat-card>
+
+                  <mat-card *ngIf="!event.isBanned" class="event-card">
+                    <img *ngIf="event.images" [src]="event.images" class="event-image">
+                    <div class="event-content-wrapper">
+                      <mat-card-content>
+                        <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+                        <p><strong>Participants :</strong> {{ getParticipantsCount(event) }}</p>
+                      </mat-card-content>
+                    </div>
+                    <div class="event-content-right">
+                      <mat-card-actions>
+                        <ng-container *ngIf="isConnected">
+                          <ng-container *ngIf="!isUserRegistered(event) && event.participants.length < event.max_players">
+                            <button mat-raised-button color="primary" (click)="joinEvent(event.id)">S'inscrire</button>
                           </ng-container>
-                          <span *ngIf="hasUserJoined(event)">Rejoint !</span>
-                          <button mat-raised-button color="warn" (click)="leaveEvent(event.id)">Se désinscrire</button>
+                          <ng-container *ngIf="isUserRegistered(event)">
+                            <ng-container *ngIf="!hasUserJoined(event) && hasStarted(event.date_time)">
+                              <button mat-raised-button color="warn" (click)="confirmPresence(event.id)">Rejoindre</button>
+                            </ng-container>
+                            <span *ngIf="hasUserJoined(event)">Rejoint !</span>
+                            <button mat-raised-button color="warn" (click)="leaveEvent(event.id)">Se désinscrire</button>
+                          </ng-container>
                         </ng-container>
-                      </ng-container>
-                      <ng-container *ngIf="!isUserRegistered(event) && event.participants.length >= event.max_players">
-                        <span class="full-event-label">Complet</span>
-                      </ng-container>
-                      <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Accéder</button>
-                    </mat-card-actions>
-                  </div>
-                </mat-card>
+                        <ng-container *ngIf="!isUserRegistered(event) && event.participants.length >= event.max_players">
+                          <span class="full-event-label">Complet</span>
+                        </ng-container>
+                        <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Accéder</button>
+                      </mat-card-actions>
+                    </div>
+                  </mat-card>
+                </ng-container>
               </div>
             </div>
           </div>

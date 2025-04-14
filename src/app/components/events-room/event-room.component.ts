@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../service/event.service';
 import { AuthService } from '../../service/auth.service';
 import { Event } from '../../models/event.model';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ScoreService } from '../../service/score.service';
 import { ScoreEntryDialogComponent } from '../score-entry-dialog/score-entry-dialog.component';
+import { ParticipantActionDialogComponent } from '../participant-action-dialog/participant-action-dialog.component';
 import { Score } from '../../models/score.model';
 
 @Component({
@@ -20,13 +22,14 @@ import { Score } from '../../models/score.model';
 export class EventRoomComponent implements OnInit {
   eventId!: number;
   eventData!: Event;
-  isLoading: boolean = true;
+  isLoading = true;
+  isBanned = false;
   userId: number | null = null;
-  isAdmin: boolean = false;
-  isOrganizer: boolean = false;
-  gameType: string = '';
+  isAdmin = false;
+  isOrganizer = false;
+  gameType = '';
   score: any = {};
-  showScoreOverlay: boolean = false;
+  showScoreOverlay = false;
   userScore: Score | null = null;
   topScores: Score[] = [];
   eventScores: any[] = [];
@@ -36,16 +39,37 @@ export class EventRoomComponent implements OnInit {
     private eventService: EventService,
     private authService: AuthService,
     private dialog: MatDialog,
-    private scoreService: ScoreService
+    private scoreService: ScoreService,
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.eventId = Number(this.route.snapshot.paramMap.get('id'));
-
     this.userId = this.authService.userProfile.value?.id || null;
+
+    if (this.userId) {
+      this.eventService.isUserBanned(this.eventId, this.userId).subscribe({
+        next: (res) => {
+          this.isBanned = res === true;
+          if (this.isBanned) {
+            this.snackBar.open('🚫 Vous avez été banni de cet événement.', 'Fermer', { duration: 4000 });
+            this.router.navigate(['/events'], { queryParams: { tab: 'liste' } });
+          } else {
+            this.initRoom();
+          }
+        },
+        error: (err) => {
+          console.error("Erreur lors de la vérification du bannissement :", err);
+          this.initRoom();
+        }
+      });
+    }
+  }
+
+  initRoom(): void {
     this.isAdmin = this.authService.hasRole('admin');
     this.isOrganizer = this.authService.hasRole('organizer');
-
     this.loadEvent();
     this.loadScores();
     this.loadUserScore();
@@ -64,7 +88,7 @@ export class EventRoomComponent implements OnInit {
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('Erreur lors du fetch de l’event :', err);
+        console.error('Erreur lors du chargement de l’événement :', err);
         this.isLoading = false;
       }
     });
@@ -89,7 +113,7 @@ export class EventRoomComponent implements OnInit {
           this.userScore = null;
           return;
         }
-  
+
         const metadata = typeof score.metadata === 'string' ? JSON.parse(score.metadata) : score.metadata;
         this.userScore = {
           ...score,
@@ -102,7 +126,7 @@ export class EventRoomComponent implements OnInit {
       }
     });
   }
-  
+
   loadTopScores(): void {
     this.scoreService.getTopScoresForEvent(this.eventId).subscribe({
       next: (scores) => {
@@ -116,7 +140,6 @@ export class EventRoomComponent implements OnInit {
             } as Score;
           })
           .sort((a, b) => {
-            // Pour CS2/Valorant, trier par manches gagnées
             if (['cs2', 'valorant'].includes(this.gameType)) {
               return (b.metadata.roundsWon || 0) - (a.metadata.roundsWon || 0);
             }
@@ -128,42 +151,23 @@ export class EventRoomComponent implements OnInit {
       }
     });
   }
-  
-  // Fonction utilitaire pour déterminer le score principal à afficher/trier
+
   getMainScoreFromMetadata(metadata: any): number {
     const type = this.gameType;
-  
-    if (['cs2', 'valorant'].includes(type)) {
-      return metadata.roundsWon || 0;
-    }
-  
-    if (type === 'pubg') {
-      return metadata.place || 100;
-    }
-  
+    if (['cs2', 'valorant'].includes(type)) return metadata.roundsWon || 0;
+    if (type === 'pubg') return metadata.place || 100;
     if (['fifa', 'rocketleague'].includes(type)) {
-      const scoreStr = metadata.score || '';
-      const parts = scoreStr.split('-');
+      const parts = (metadata.score || '').split('-');
       return parseInt(parts[0], 10) || 0;
     }
-  
     if (type === 'supermeatboy') {
       const [min, sec] = (metadata.time || '0:0').split(':').map(Number);
       return (min || 0) * 60 + (sec || 0);
     }
-  
-    if (type === 'lol') {
-      return metadata.kills || 0;
-    }
-  
-    if (type === 'balatro') {
-      return metadata.points || 0;
-    }
-  
+    if (type === 'lol') return metadata.kills || 0;
+    if (type === 'balatro') return metadata.points || 0;
     return 0;
   }
-  
-  
 
   getGameType(): string {
     return this.gameType;
@@ -176,6 +180,10 @@ export class EventRoomComponent implements OnInit {
     return new Date() > end;
   }
 
+  get canEnterScore(): boolean {
+    return this.isAdmin || this.isOrganizer;
+  }
+
   openScoreDialog(): void {
     const dialogRef = this.dialog.open(ScoreEntryDialogComponent, {
       width: '400px',
@@ -184,24 +192,40 @@ export class EventRoomComponent implements OnInit {
         gameType: this.gameType,
       }
     });
-  
 
     dialogRef.afterClosed().subscribe((result: string | undefined) => {
-      if (result === 'success') {
-        this.loadScores();
+      if (result === 'success') this.loadScores();
+    });
+  }
+
+  openParticipantMenu(participant: any): void {
+    const dialogRef = this.dialog.open(ParticipantActionDialogComponent, {
+      width: '300px',
+      data: {
+        userId: participant.id,
+        username: participant.username,
+        canModerate: this.canEnterScore
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.action === 'kick') {
+        this.eventService.kickParticipant(this.eventId, result.userId).subscribe(() => {
+          this.eventData.participants = this.eventData.participants.filter(p => p.id !== result.userId);
+        });
+      } else if (result?.action === 'ban') {
+        this.eventService.banUser(this.eventId, result.userId).subscribe(() => {
+          this.eventData.participants = this.eventData.participants.filter(p => p.id !== result.userId);
+        });
       }
     });
   }
 
-  get canEnterScore(): boolean {
-    return this.isAdmin || this.isOrganizer;
-  }
-
-  openScoreOverlay() {
+  openScoreOverlay(): void {
     this.showScoreOverlay = true;
   }
 
-  closeScoreOverlay() {
+  closeScoreOverlay(): void {
     this.showScoreOverlay = false;
   }
 

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
-const Event = require("../models/events.model.js");
-const sql = require("../config/db.js");
+const Event = require('../models/events.model.js');
+const sql = require('../config/db.js');
+const EventBan = require('../models/eventBan.model.js')
 
 exports.create = (req, res) => {
     if (!req.body) {
@@ -66,7 +67,6 @@ exports.findOne = (req, res) => {
             return res.status(500).send({ message: `Erreur lors de la récupération de l'événement avec l'ID ${eventId}.` });
         }
 
-        // 🔽 Nouvelle requête pour récupérer les participants
         sql.query(
             `SELECT users.id, users.username, ep.has_joined
             FROM event_participants ep
@@ -79,7 +79,6 @@ exports.findOne = (req, res) => {
                     return res.status(500).send({ message: "Erreur lors de la récupération des participants." });
                 }
 
-                // 🔗 Ajout des participants dans l'objet event
                 event.participants = participants;
                 res.send(event);
             }
@@ -113,9 +112,19 @@ exports.joinEvent = (req, res) => {
     const userId = req.user.id;
     const eventId = req.params.id;
 
-    Event.findById(eventId, (err, event) => {
+    Event.findById(eventId, async (err, event) => {
         if (err || !event) {
             return res.status(404).send({ message: "Événement introuvable." });
+        }
+
+        try {
+            const isBanned = await EventBan.isUserBanned(eventId, userId);
+            if (isBanned) {
+                return res.status(403).send({ message: "Vous êtes banni de cet événement." });
+            }
+        } catch (error) {
+            console.error("Erreur lors de la vérification du bannissement :", error);
+            return res.status(500).send({ message: "Erreur serveur lors de la vérification du bannissement." });
         }
 
         sql.query(
@@ -192,34 +201,54 @@ exports.confirmJoin = (req, res) => {
     const eventId = req.params.id;
 
     sql.query(
-        'UPDATE event_participants SET has_joined = true WHERE event_id = ? AND user_id = ?',
+        "SELECT * FROM event_bans WHERE event_id = ? AND user_id = ?",
         [eventId, userId],
-        (err, result) => {
+        (err, banResults) => {
             if (err) {
-                console.error("Erreur DB :", err);
+                console.error("Erreur lors de la vérification du bannissement :", err);
                 return res.status(500).send({ message: "Erreur serveur" });
             }
-            if (result.affectedRows === 0) {
-                return res.status(404).send({ message: "Aucune participation trouvée pour mise à jour." });
+
+            if (banResults.length > 0) {
+                return res.status(403).send({ message: "Vous êtes banni de cet événement." });
             }
-            res.send({ message: "Présence confirmée !" });
+
+            sql.query(
+                'UPDATE event_participants SET has_joined = true WHERE event_id = ? AND user_id = ?',
+                [eventId, userId],
+                (err, result) => {
+                    if (err) {
+                        console.error("Erreur DB :", err);
+                        return res.status(500).send({ message: "Erreur serveur" });
+                    }
+                    if (result.affectedRows === 0) {
+                        return res.status(404).send({ message: "Aucune participation trouvée pour mise à jour." });
+                    }
+                    res.send({ message: "Présence confirmée !" });
+                }
+            );
         }
     );
 };
 
-exports.removeParticipant = (req, res) => {
+
+exports.kickParticipant = (req, res) => {
     const { id, userId } = req.params;
+    sql.query(
+        "DELETE FROM event_participants WHERE event_id = ? AND user_id = ?",
+        [id, userId],
+        (err, result) => {
+            if (err) return res.status(500).send({ message: "Erreur lors du kick du participant." });
 
-    sql.query("DELETE FROM event_participants WHERE event_id = ? AND user_id = ?", [id, userId], (err, result) => {
-        if (err) return res.status(500).send({ message: "Erreur lors de la suppression du participant." });
-
-        if (result.affectedRows === 0) {
+            if (result.affectedRows === 0) {
             return res.status(404).send({ message: "Le participant n'existe pas ou n'est pas inscrit à cet événement." });
-        }
+            }
 
-        res.send({ message: "Participant retiré avec succès !" });
-    });
+            res.send({ message: "Participant kické avec succès !" });
+        }
+    );
 };
+
 
 exports.delete = (req, res) => {
     Event.remove(req.params.id, (err) => {
@@ -248,7 +277,6 @@ exports.startEvent = (req, res) => {
     });
   };
 
-// Tous les événements terminés
 exports.getHistory = (req, res) => {
     Event.getFinishedEvents((err, events) => {
       if (err) {
@@ -258,7 +286,6 @@ exports.getHistory = (req, res) => {
     });
   };
   
-  // Événements terminés pour un utilisateur
   exports.getUserHistory = (req, res) => {
     const userId = req.params.userId;
     Event.getUserFinishedEvents(userId, (err, events) => {

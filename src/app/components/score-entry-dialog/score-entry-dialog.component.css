@@ -1,3 +1,8 @@
+.score-dialog {
+  border: none;
+  background-color: #7a80245b;
+}
+
 .full-width {
     width: 100%;
     margin-bottom: 15px;
@@ -6,6 +11,73 @@
   .dialog-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 5px;
   }
   
+  h2 {
+    color: white;
+    padding: 10px;
+  }
+
+  ::ng-deep .mat-dialog-container {
+  border-radius: 0 !important;/
+  padding: 0;
+}
+
+.score-dialog {
+  background-color: #3f4216;
+  padding: 1.5rem;
+  color: white;
+  width: 100%;
+  max-width: 500px;
+}
+
+.score-dialog h1,
+.score-dialog h2,
+.score-dialog h3 {
+  margin-top: 0;
+  margin-bottom: 1.2rem;
+  font-size: 1.5rem;
+}
+
+.score-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.score-dialog .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.esportify-button {
+  background-color: #7A8024;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.esportify-button:hover {
+  background-color: #5e661e;
+}
+
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid #7A8024;
+  color: #7A8024;
+  padding: 0.6rem 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.cancel-button:hover {
+  background-color: #7A8024;
+  color: white;
+}

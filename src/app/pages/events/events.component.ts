@@ -15,6 +15,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-events',
@@ -31,7 +33,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
     MatFormFieldModule,
     MatSelectModule,
     MatOptionModule,
-    RouterModule
+    RouterModule,
   ],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
@@ -134,57 +136,62 @@ export class EventsComponent implements OnInit {
 
   loadEvents() {
     const now = new Date();
-
+  
     this.eventService.getEvents('validated').subscribe((events: Event[]) => {
-      console.log("✅ Tous les événements validés récupérés :", events);
-      const allEvents = events.map(e => ({
-        ...e,
-        participants: e.participants || []
-      }));
+      const banChecks = events.map(e =>
+        this.eventService.isUserBanned(e.id, this.userId!).pipe(
+          catchError(() => of({ banned: false })),
+          map(res => ({
+            ...e,
+            participants: e.participants || [],
+            isBanned: (typeof res === 'object' && 'banned' in res) ? res.banned : false
 
-      const nonTermines = allEvents.filter(event => {
-        const start = new Date(event.date_time);
-        const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
-        return end > now;
+          }))
+        )
+      );
+      
+  
+      forkJoin(banChecks).subscribe(allEvents => {
+        const nonTermines = allEvents.filter(event => {
+          const start = new Date(event.date_time);
+          const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
+          return end > now;
+        });
+  
+        this.upcomingEvents = nonTermines.filter(e => new Date(e.date_time) > now);
+        this.ongoingEvents = nonTermines.filter(e => {
+          const start = new Date(e.date_time);
+          const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
+          const inProgress = e.started && start <= now && end > now;
+  
+          return inProgress;
+        });
+  
+        this.eventsToStart = nonTermines.filter(e => {
+          const eventTime = new Date(e.date_time);
+          const diffInMs = eventTime.getTime() - now.getTime();
+          return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
+        });
+  
+        if (this.selectedGames.length && !this.selectedGames.includes('ALL')) {
+          this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGames.includes(e.title));
+          this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGames.includes(e.title));
+        }
+  
+        if (this.selectedGenres.length && !this.selectedGenres.includes('ALL')) {
+          this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
+          this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
+        }
       });
-
-      this.upcomingEvents = nonTermines.filter(e => new Date(e.date_time) > now);
-      this.ongoingEvents = nonTermines.filter(e => {
-        const start = new Date(e.date_time);
-        const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
-        const inProgress = e.started && start <= now && end > now;
-      
-        console.log(`🕒 EVENT "${e.title}" - Start: ${start.toISOString()} | End: ${end.toISOString()} | Now: ${now.toISOString()} | Started: ${e.started} => ${inProgress ? '✅ EN COURS' : '❌ PAS EN COURS'}`);
-      
-        return inProgress;
-      });
-      
-      
-      
-
-      this.eventsToStart = nonTermines.filter(e => {
-        const eventTime = new Date(e.date_time);
-        const diffInMs = eventTime.getTime() - now.getTime();
-        return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
-      });
-
-      if (this.selectedGames && this.selectedGames.length > 0 && !this.selectedGames.includes('ALL')) {
-        this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGames.includes(e.title));
-        this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGames.includes(e.title));
-      }
-
-      if (this.selectedGenres && this.selectedGenres.length > 0 && !this.selectedGenres.includes('ALL')) {
-        this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
-        this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
-      }
     });
-
+  
     if (this.isAdmin) {
       this.eventService.getEvents('pending').subscribe((events: Event[]) => {
         this.pendingEvents = events;
       });
     }
   }
+  
 
   showStartButton(dateTime: string): boolean {
     const now = new Date();
@@ -263,12 +270,17 @@ export class EventsComponent implements OnInit {
         this.loadEvents();
       },
       error: (err) => {
-        if (err.status === 409) {
+        if (err.message === 'Vous êtes banni de cet événement.') {
+          this.snackBar.open('⛔ Vous avez été banni de cet événement.', 'Fermer', { duration: 4000 });
+        } else if (err.status === 409) {
           this.snackBar.open('Déjà inscrit à cet événement.', 'Fermer', { duration: 3000 });
+        } else {
+          this.snackBar.open('Erreur lors de l’inscription.', 'Fermer', { duration: 3000 });
         }
       }
     });
   }
+  
 
   leaveEvent(eventId: number) {
     this.eventService.leaveEvent(eventId).subscribe(() => {
@@ -295,4 +307,5 @@ export class EventsComponent implements OnInit {
   get canAddEvent(): boolean {
     return this.authService.hasRole('admin') || this.authService.hasRole('organizer');
   }
+  
 }

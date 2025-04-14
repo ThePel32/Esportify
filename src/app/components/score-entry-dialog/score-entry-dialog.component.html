@@ -1,7 +1,7 @@
-<h2>Entrer un score</h2>
+<div class="score-dialog">
+  <h2>Entrer un score</h2>
 
 <form [formGroup]="scoreForm" (ngSubmit)="onSubmit()">
-  <!-- Sélecteur de participant -->
   <mat-form-field appearance="fill" class="full-width">
     <mat-label>Participant</mat-label>
     <mat-select formControlName="user_id">
@@ -11,7 +11,6 @@
     </mat-select>
   </mat-form-field>
 
-  <!-- FIFA / Rocket League -->
   <div *ngIf="['fifa', 'rocketleague'].includes(data.gameType)">
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Score (toi)</mat-label>
@@ -23,7 +22,6 @@
     </mat-form-field>
   </div>
 
-  <!-- CS2 / Valorant -->
   <div *ngIf="['cs2', 'valorant'].includes(data.gameType)">
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Kills</mat-label>
@@ -39,7 +37,6 @@
     </mat-form-field>
   </div>
 
-  <!-- Super Meat Boy -->
   <div *ngIf="data.gameType === 'supermeatboy'">
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Temps (mm:ss)</mat-label>
@@ -47,7 +44,6 @@
     </mat-form-field>
   </div>
 
-  <!-- PUBG -->
   <div *ngIf="data.gameType === 'pubg'">
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Kills</mat-label>
@@ -59,7 +55,6 @@
     </mat-form-field>
   </div>
 
-  <!-- LoL -->
   <div *ngIf="data.gameType === 'lol'">
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Kills</mat-label>
@@ -75,7 +70,6 @@
     </mat-form-field>
   </div>
 
-  <!-- Balatro -->
   <div *ngIf="data.gameType === 'balatro'">
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>Score</mat-label>
@@ -83,19 +77,20 @@
     </mat-form-field>
   </div>
 
-  <!-- Starcraft2 -->
   <div *ngIf="data.gameType === 'starcraft2'">
     <p>Résultat :</p>
   </div>
 
-  <!-- Résultat (pour tous) -->
   <mat-radio-group formControlName="result" class="full-width">
     <mat-radio-button value="win">Gagné</mat-radio-button>
     <mat-radio-button value="lose">Perdu</mat-radio-button>
   </mat-radio-group>
 
-  <div class="dialog-actions">
-    <button mat-raised-button color="primary" type="submit">Valider</button>
-    <button mat-button (click)="onCancel()">Annuler</button>
+  <div class="form-actions">
+    <button class="esportify-button" type="submit">Valider</button>
+    <button class="cancel-button" type="button" (click)="onCancel()">Annuler</button>
   </div>
+  
 </form>
+
+</div>
