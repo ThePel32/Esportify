@@ -69,10 +69,9 @@
 .score-section {
   margin-top: 2rem;
   padding: 1rem;
-  background-color: #1a1f2b;
 }
 
-.esportify-button {
+button {
   background-color: #7A8024;
   color: white;
   border: none;
@@ -83,7 +82,7 @@
   display: block;
 }
 
-.esportify-button:hover {
+button:hover {
   background-color: #5e661e;
 }
 

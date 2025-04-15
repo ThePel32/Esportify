@@ -12,6 +12,7 @@ export interface Event {
     max_players: number;
     organizer_id: number;
     organizer_name: string;
+    isFavorite?: boolean
     state: string;
     images: string;
     duration: number;

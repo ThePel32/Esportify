@@ -1,48 +1,124 @@
 :host {
-    display: flex;
-    flex-direction: column;
-    color: #fff;
-    height: calc(100vh - 70px);
-    overflow: hidden;
-    width: 100%;
-  }
-  
-  .historic-wrapper {
-    display: flex;
-    gap: 0.5rem;
-    height: 100%;
-    width: 100%;
-  }
-  
-  .historic-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background-color: #242A36;
-    padding: 0.5rem;
-    overflow: hidden;
-  }
-  
-  
-  .scrollable-list {
-    overflow-y: auto;
-    flex-grow: 1;
-    margin-top: 1rem;
-  }
-  
-  .historic-card {
-    margin-bottom: 1rem;
-    background-color: #101625;
-    border-radius: 0;
-    color: white;
-    padding: 0.5rem;
-  }
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  height: calc(100vh - 70px);
+  overflow: hidden;
+  width: 100%;
+  gap: 0.5rem;
+}
 
-  .historic-card img {
-    width: 200px;
-    height: 100%;
-    max-height: 150px;
-    object-fit: cover;
-  }
-  
-  
+mat-card-actions button {
+  background-color: #7A8024;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 4px 16px;
+}
+
+mat-card-actions button:hover {
+  background-color: #4d5021;
+}
+
+/* mat-form-field {
+  border-radius: 0;
+  margin-right: 1rem;
+  color: white;
+} */
+
+mat-form-field {
+  color: white;
+  border-radius: 0px;
+  margin-right: 1rem;
+  min-width: 160px;
+}
+
+.mat-mdc-select {
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: bold;
+}
+
+.mat-mdc-select-arrow {
+  color: white;
+}
+
+.mat-mdc-form-field-infix {
+  padding: 0.5rem 0.75rem;
+}
+
+.mat-mdc-select-panel {
+  color: white;
+}
+
+mat-form-field.mat-form-field {
+  color: white !important;
+}
+
+mat-select {
+  color: white;
+}
+
+
+mat-option {
+  background-color: #242A36 !important;
+  color: white;
+}
+
+mat-option:hover {
+  background-color: #3a3f50 !important;
+}
+
+.historic-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  height: calc(100% - 100px);
+  width: 100%;
+  overflow: hidden;
+}
+
+.historic-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #242A36;
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+
+.scrollable-list {
+  overflow-y: auto;
+  flex-grow: 1;
+  margin-top: 1rem;
+}
+
+.historic-card {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 1rem;
+  background-color: #101625;
+  border-radius: 0;
+  color: white;
+  padding: 0.5rem;
+}
+
+.historic-card img {
+  width: 200px;
+  height: 100%;
+  max-height: 100px;
+  object-fit: cover;
+}
+
+.filters-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #242A36;
+  padding: 1rem;
+  height: 80px;
+}
+
+mat-checkbox {
+  color: white;
+}

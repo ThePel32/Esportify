@@ -267,36 +267,36 @@ exports.deleteAll = (req, res) => {
 exports.startEvent = (req, res) => {
     const eventId = req.params.id;
     Event.startById(eventId, (err, data) => {
-      if (err) {
-        if (err.kind === "not_found") {
-          return res.status(404).send({ message: `Événement non trouvé avec l'ID ${eventId}.` });
+        if (err) {
+            if (err.kind === "not_found") {
+            return res.status(404).send({ message: `Événement non trouvé avec l'ID ${eventId}.` });
+            }
+            return res.status(500).send({ message: "Erreur lors du démarrage de l'événement." });
         }
-        return res.status(500).send({ message: "Erreur lors du démarrage de l'événement." });
-      }
-      res.send({ message: "Événement démarré avec succès !", data });
+        res.send({ message: "Événement démarré avec succès !", data });
     });
-  };
+};
 
 exports.getHistory = (req, res) => {
     Event.getFinishedEvents((err, events) => {
-      if (err) {
-        return res.status(500).send({ message: "Erreur lors de la récupération des événements terminés." });
-      }
-      res.send(events);
+        if (err) {
+            return res.status(500).send({ message: "Erreur lors de la récupération des événements terminés." });
+        }
+        res.send(events);
     });
-  };
-  
-  exports.getUserHistory = (req, res) => {
+};
+
+exports.getUserHistory = (req, res) => {
     const userId = req.params.userId;
     Event.getUserFinishedEvents(userId, (err, events) => {
-      if (err) {
-        return res.status(500).send({ message: "Erreur lors de la récupération des événements terminés de l'utilisateur." });
-      }
-      res.send(events);
+        if (err) {
+            return res.status(500).send({ message: "Erreur lors de la récupération des événements terminés de l'utilisateur." });
+        }
+        res.send(events);
     });
-  };
+};
 
-  exports.getAllEndedEvents = (req, res) => {
+exports.getAllEndedEvents = (req, res) => {
     const now = new Date();
     const nowISO = now.toISOString();
 
@@ -317,7 +317,5 @@ exports.getHistory = (req, res) => {
         res.send(results);
     });
 };
-
-  
 
 module.exports = exports;

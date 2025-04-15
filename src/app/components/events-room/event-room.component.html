@@ -22,8 +22,8 @@
         </div>
 
         <div class="score-section" *ngIf="isOver()">
-          <button *ngIf="canEnterScore" mat-raised-button color="accent" (click)="openScoreDialog()">
-            🎯 Entrer un score
+          <button class="scoreButton" *ngIf="canEnterScore" mat-raised-button color="accent" (click)="openScoreDialog()">
+            Entrer un score
           </button>
 
           <div class="score-display">
@@ -72,7 +72,7 @@
 
   <div *ngIf="isBanned" class="banned-wrapper">
     <div class="banned-message">
-      🚫 Vous avez été banni de cet événement. Retour à la liste des événements.
+      Vous avez été banni de cet événement. Retour à la liste des événements.
     </div>
   </div>
 </div>

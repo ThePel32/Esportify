@@ -271,7 +271,7 @@ export class EventsComponent implements OnInit {
       },
       error: (err) => {
         if (err.message === 'Vous êtes banni de cet événement.') {
-          this.snackBar.open('⛔ Vous avez été banni de cet événement.', 'Fermer', { duration: 4000 });
+          this.snackBar.open('Vous avez été banni de cet événement.', 'Fermer', { duration: 4000 });
         } else if (err.status === 409) {
           this.snackBar.open('Déjà inscrit à cet événement.', 'Fermer', { duration: 3000 });
         } else {

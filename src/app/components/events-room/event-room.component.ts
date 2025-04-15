@@ -53,7 +53,7 @@ export class EventRoomComponent implements OnInit {
         next: (res) => {
           this.isBanned = res === true;
           if (this.isBanned) {
-            this.snackBar.open('🚫 Vous avez été banni de cet événement.', 'Fermer', { duration: 4000 });
+            this.snackBar.open('Vous avez été banni de cet événement.', 'Fermer', { duration: 4000 });
             this.router.navigate(['/events'], { queryParams: { tab: 'liste' } });
           } else {
             this.initRoom();

@@ -1,4 +1,3 @@
-
 <div class="overlay-wrapper">
   <div class="tab-container">
     <mat-tab-group [(selectedIndex)]="selectedTabIndex" mat-stretch-tabs="true" class="custom-tabs">
@@ -74,7 +73,7 @@
                   <mat-card *ngIf="event.isBanned" class="event-card banned">
                     <mat-card-content>
                       <p><strong>{{ event.title }}</strong></p>
-                      <p class="banned-message">🚫 Vous avez été banni de cet événement.</p>
+                      <p class="banned-message">Vous avez été banni de cet événement.</p>
                     </mat-card-content>
                   </mat-card>
 
@@ -111,7 +110,7 @@
                   <mat-card *ngIf="event.isBanned" class="event-card banned">
                     <mat-card-content>
                       <p><strong>{{ event.title }}</strong></p>
-                      <p class="banned-message">🚫 Vous avez été banni de cet événement.</p>
+                      <p class="banned-message">Vous avez été banni de cet événement.</p>
                     </mat-card-content>
                   </mat-card>
 
@@ -153,13 +152,9 @@
     </mat-tab-group>
 
     <div class="bottom-bar">
-      <div class="favoris">
-        <h3>Mes Favoris :</h3>
-        <p>Aucun favori pour l'instant</p>
         <div class="filter-container-row">
-          <label class="filter-label">Filtrer par jeu :</label>
           <mat-form-field appearance="fill">
-            <mat-label>Sélectionner</mat-label>
+            <mat-label>Filtrer par jeu</mat-label>
             <mat-select [(ngModel)]="selectedGames" (selectionChange)="applyFilter()" multiple>
               <mat-option value="ALL">Tous</mat-option>
               <mat-option *ngFor="let game of gameOptions | keyvalue" [value]="game.key">
@@ -167,9 +162,8 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <label class="filter-label">Filtrer par genre :</label>
           <mat-form-field appearance="fill">
-            <mat-label>Genre</mat-label>
+            <mat-label>Filtrer par genre</mat-label>
             <mat-select [(ngModel)]="selectedGenres" (selectionChange)="applyFilter()" multiple>
               <mat-option value="ALL">Tous</mat-option>
               <mat-option *ngFor="let genre of genreOptions" [value]="genre">
@@ -178,7 +172,6 @@
             </mat-select>
           </mat-form-field>
         </div>
-      </div>
     </div>
   </div>
 </div>
