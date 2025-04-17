@@ -17,6 +17,9 @@ import { MatOptionModule } from '@angular/material/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { FavoritesService } from '../../service/favorites.service';
+import { MatIconModule } from '@angular/material/icon';
+import { GameService } from '../../service/game.service';
 
 @Component({
   selector: 'app-events',
@@ -34,66 +37,27 @@ import { map, catchError } from 'rxjs/operators';
     MatSelectModule,
     MatOptionModule,
     RouterModule,
+    MatIconModule,
   ],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
 })
 export class EventsComponent implements OnInit {
+  favorites: string[] = [];
   upcomingEvents: Event[] = [];
   ongoingEvents: Event[] = [];
   pendingEvents: Event[] = [];
   validatedEvents: Event[] = [];
+  eventsToStart: Event[] = [];
   userId: number | null = null;
   isAdmin: boolean = false;
   isOrganizer: boolean = false;
   hasJoined: boolean = false;
+
   selectedGames: string[] = [];
   selectedGenres: string[] = [];
-  eventsToStart: Event[] = [];
-  genreOptions: string[] = [
-    'FPS/TPS',
-    'Sport',
-    'MOBA',
-    'RTS',
-    'Cartes',
-    'Plateforme'
-  ];
-
-  gameOptions: { [key: string]: string } = {
-    balatro: 'img/Balatro.jpg',
-    Cs2: 'img/CS2.png',
-    fifa: 'img/fifa.png',
-    lol: 'img/LoL.png',
-    rocketleague: 'img/rocketLeague.png',
-    starcraft2: 'img/starcraft2.png',
-    supermeatboy: 'img/supermeatboy.jpg',
-    valorant: 'img/valorant.png',
-    pubg: 'img/pubg.jpg'
-  };
-
-  gameNames: { [key: string]: string } = {
-    balatro: "Balatro",
-    Cs2: "Counter Strike 2",
-    fifa: "Fifa 24",
-    lol: "League of Legends",
-    rocketleague: "Rocket League",
-    starcraft2: "Starcraft 2",
-    supermeatboy: "Super Meat Boy",
-    valorant: "Valorant",
-    pubg: "PUBG"
-  };
-
-  GameGenres: { [key: string]: string } = {
-    cs2: 'FPS/TPS',
-    valorant: 'FPS/TPS',
-    pubg: 'FPS/TPS',
-    fifa: 'Sport',
-    rocketleague: 'Sport',
-    lol: 'MOBA',
-    starcraft2: 'RTS',
-    balatro: 'Cartes',
-    supermeatboy: 'Plateforme'
-  };
+  genreOptions: string[] = [];
+  gamesList: { key: string, name: string }[] = [];
 
   selectedTabIndex: number = 0;
 
@@ -102,10 +66,21 @@ export class EventsComponent implements OnInit {
     private authService: AuthService,
     private eventBus: EventBusService,
     private snackBar: MatSnackBar,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private favoritesService: FavoritesService,
+    private gameService: GameService,
   ) {}
 
   ngOnInit() {
+    const allGames = this.gameService.getAllGames();
+
+    this.gamesList = Object.entries(allGames).map(([key, data]) => ({
+      key,
+      name: data.name
+    }));
+
+    this.genreOptions = [...new Set(Object.values(allGames).map(g => g.genre))];
+
     this.route.queryParams.subscribe(params => {
       const tabParam = params['tab'];
       if (tabParam === 'liste') {
@@ -115,15 +90,17 @@ export class EventsComponent implements OnInit {
 
     this.authService.userProfile.subscribe(profile => {
       this.userId = profile?.id || null;
+      if (this.userId) {
+        this.loadFavorites();
+      }
       this.isAdmin = this.authService.hasRole('admin');
       this.isOrganizer = this.authService.hasRole('organizer');
       this.loadEvents();
     });
-    
+
     this.eventBus.refreshEvents$.subscribe(() => {
       this.loadEvents();
     });
-    
   }
 
   get isConnected(): boolean {
@@ -136,7 +113,7 @@ export class EventsComponent implements OnInit {
 
   loadEvents() {
     const now = new Date();
-  
+
     this.eventService.getEvents('validated').subscribe((events: Event[]) => {
       const banChecks = events.map(e =>
         this.eventService.isUserBanned(e.id, this.userId!).pipe(
@@ -144,54 +121,55 @@ export class EventsComponent implements OnInit {
           map(res => ({
             ...e,
             participants: e.participants || [],
-            isBanned: (typeof res === 'object' && 'banned' in res) ? res.banned : false
-
+            isBanned: typeof res === 'object' && 'banned' in res ? res.banned : false,
+            images: this.gameService.getGame(e.title.toLowerCase())?.image
           }))
         )
       );
-      
-  
+
       forkJoin(banChecks).subscribe(allEvents => {
         const nonTermines = allEvents.filter(event => {
           const start = new Date(event.date_time);
           const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
           return end > now;
         });
-  
+
         this.upcomingEvents = nonTermines.filter(e => new Date(e.date_time) > now);
         this.ongoingEvents = nonTermines.filter(e => {
           const start = new Date(e.date_time);
           const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
-          const inProgress = e.started && start <= now && end > now;
-  
-          return inProgress;
+          return e.started && start <= now && end > now;
         });
-  
+
         this.eventsToStart = nonTermines.filter(e => {
           const eventTime = new Date(e.date_time);
           const diffInMs = eventTime.getTime() - now.getTime();
           return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
         });
-  
+
+        // Filtres
         if (this.selectedGames.length && !this.selectedGames.includes('ALL')) {
           this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGames.includes(e.title));
           this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGames.includes(e.title));
         }
-  
+
         if (this.selectedGenres.length && !this.selectedGenres.includes('ALL')) {
-          this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
-          this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
+          this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.gameService.getGenre(e.title.toLowerCase())));
+          this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGenres.includes(this.gameService.getGenre(e.title.toLowerCase())));
         }
       });
     });
-  
+
     if (this.isAdmin) {
       this.eventService.getEvents('pending').subscribe((events: Event[]) => {
-        this.pendingEvents = events;
+        this.pendingEvents = events.map(e => ({
+          ...e,
+          images: this.gameService.getGame(e.title.toLowerCase())?.image
+
+        }));
       });
     }
   }
-  
 
   showStartButton(dateTime: string): boolean {
     const now = new Date();
@@ -211,6 +189,42 @@ export class EventsComponent implements OnInit {
       }
     });
   }
+
+  loadFavorites(): void {
+    this.favoritesService.getFavoritesByUser().subscribe({
+      next: (res) => (this.favorites = res.map(game => game.toLowerCase())),
+      error: () => (this.favorites = [])
+    });
+  }
+  
+  
+
+  toggleFavorite(event: Event): void {
+    const gameKey = event.title.toLowerCase();
+    const isFav = this.favorites.includes(gameKey);
+  
+    const obs = isFav
+      ? this.favoritesService.removeFavorite(gameKey)
+      : this.favoritesService.addFavorite(event.id); // on a encore besoin de l'eventId ici pour récupérer le title côté backend
+  
+    obs.subscribe({
+      next: () => {
+        if (isFav) {
+          this.favorites = this.favorites.filter(key => key !== gameKey);
+        } else {
+          this.favorites.push(gameKey);
+        }
+      }
+    });
+  }
+  
+  
+
+  isFavorite(gameKey: string): boolean {
+    return this.favorites.includes(gameKey.toLowerCase());
+  }
+  
+  
 
   applyFilter() {
     this.loadEvents();
@@ -280,7 +294,6 @@ export class EventsComponent implements OnInit {
       }
     });
   }
-  
 
   leaveEvent(eventId: number) {
     this.eventService.leaveEvent(eventId).subscribe(() => {
@@ -307,5 +320,4 @@ export class EventsComponent implements OnInit {
   get canAddEvent(): boolean {
     return this.authService.hasRole('admin') || this.authService.hasRole('organizer');
   }
-  
 }

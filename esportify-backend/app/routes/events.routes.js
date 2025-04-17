@@ -3,6 +3,8 @@ const router = express.Router();
 const events = require("../controllers/events.controller.js");
 const verifyToken = require("../middleware/auth.js");
 const authorize = require("../middleware/authorize.js");
+const eventController = require('../controllers/events.controller');
+
 
 router.post("/", authorize(["admin", "organizer"]), events.create);
 
@@ -28,6 +30,9 @@ router.delete("/:id/kick/:userId", authorize(["admin", "organizer"]), events.kic
 
 
 router.patch("/:id/start", authorize(["organizer", "admin"]), events.startEvent);
+
+router.patch('/auto-start', eventController.autoStartEvents);
+
 
 router.get("/history", events.getHistory);
 router.get("/history/user/:userId", events.getUserHistory);

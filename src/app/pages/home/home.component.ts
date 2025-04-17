@@ -19,15 +19,15 @@ export class HomeComponent implements OnInit {
   upcomingEvents: Event[] = [];
   ongoingEvents: Event[] = [];
 slideImages: string[] = [
-  'img/Balatro.jpg',
-  'img/CS2.png',
-  'img/fifa.png',
-  'img/LoL.png',
-  'img/rocketLeague.png',
-  'img/starcraft2.png',
-  'img/valorant.png',
-  'img/pubg.jpg',
-  'img/supermeatboy.jpg'
+  'assets/img/Balatro.jpg',
+  'assets/img/CS2.png',
+  'assets/img/fifa.png',
+  'assets/img/LoL.png',
+  'assets/img/rocketLeague.png',
+  'assets/img/starcraft2.png',
+  'assets/img/valorant.png',
+  'assets/img/pubg.jpg',
+  'assets/img/supermeatboy.jpg'
 ];
 clonedSlideImages: string[] = [];
 currentSlideIndex = 0;

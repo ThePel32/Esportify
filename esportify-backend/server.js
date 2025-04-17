@@ -12,7 +12,7 @@ const saleRouter = require("./app/routes/sale.routes");
 const eventsRouter = require("./app/routes/events.routes");
 const contactRouter = require("./app/routes/contact.routes.js");
 const scoreRouter = require("./app/routes/scores.routes.js")
-const favoritesRoutes = require('./routes/favorites.routes');
+const favoritesRoutes = require('./app/routes/favorites.routes.js');
 
 const app = express();
 
@@ -52,7 +52,7 @@ app.use('/api/events', verifyToken, (req, res, next) => {
 
 app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
 
-app.use('/api/favorites', favoritesRoutes);
+app.use('/api/favorites', verifyToken, favoritesRoutes);
 
 app.get('/api/events/pending', (req, res) => {
   Event.getByState('pending', (err, events) => {

@@ -1,78 +1,99 @@
-<div *ngIf="!isLoading">
-  <div *ngIf="!isBanned">
-    <div class="event-room" *ngIf="eventData">
-      <div class="event-info">
-        <div class="header">
+<div class="event-room-wrapper" *ngIf="!isLoading">
+  <div class="event-room" *ngIf="!isBanned && eventData">
+    <div class="event-info">
+      <div class="header">
+        <div class="image-wrapper">
+          <button class="back-button" (click)="router.navigate(['/events'], { queryParams: { tab: 'liste' } })">
+            <mat-icon class="back-icon">arrow_back</mat-icon>
+          </button>          
+          
+          <button class="favorite-btn" (click)="toggleFavorite()" [ngClass]="{ active: isFavorite }" aria-label="Favori">
+            <mat-icon>{{ isFavorite ? 'favorite' : 'favorite_border' }}</mat-icon>
+          </button>
           <img *ngIf="eventData.images" [src]="eventData.images" alt="image du jeu" />
-          <div class="details">
-            <p><strong>Date :</strong> {{ eventData.date_time | date:'dd/MM/yyyy à HH:mm' }}</p>
-            <p><strong>Organisateur :</strong> {{ eventData.organizer_name || 'Inconnu' }}</p>
-            <p><strong>Durée :</strong> {{ eventData.duration }} heure(s)</p>
-            <p><strong>Description :</strong> {{ eventData.description }}</p>
-
-            <div class="participants">
-              <p><strong>Participants :</strong></p>
-              <ul>
-                <li *ngFor="let p of eventData.participants" (click)="openParticipantMenu(p)" class="clickable-participant">
-                  {{ p.username }} <span *ngIf="p.has_joined"></span>
-                </li>
-              </ul>
-            </div>
-          </div>
         </div>
 
-        <div class="score-section" *ngIf="isOver()">
-          <button class="scoreButton" *ngIf="canEnterScore" mat-raised-button color="accent" (click)="openScoreDialog()">
-            Entrer un score
-          </button>
-
-          <div class="score-display">
-            <div class="score-left">
-              <h3>Ton score</h3>
-              <ng-container *ngIf="userScore; else noScore">
-                <p *ngIf="userScore.metadata?.kills"><strong>Kills :</strong> {{ userScore.metadata.kills }}</p>
-                <p *ngIf="userScore.metadata?.score"><strong>Score :</strong> {{ userScore.metadata.score }} - {{ userScore.metadata.score_opponent }}</p>
-                <p>
-                  <strong>Résultat :</strong>
-                  <span [ngClass]="{
-                    'result-win': userScore.result === 'win',
-                    'result-lose': userScore.result === 'lose'
-                  }">
-                    {{ userScore.result === 'win' ? 'Gagné' : 'Perdu' }}
-                  </span>
-                </p>
-              </ng-container>
-              <ng-template #noScore><p>Aucun score enregistré.</p></ng-template>
-            </div>
-
-            <div class="score-right">
-              <h3>Top 10</h3>
+        <div class="details-grid">
+          <div class="detail-row">
+            <span class="label">Date :</span>
+            <span class="value">{{ eventData.date_time | date:'dd/MM/yyyy à HH:mm' }}</span>
+          </div>
+        
+          <div class="detail-row">
+            <span class="label">Organisateur :</span>
+            <span class="value">{{ eventData.organizer_name || 'Inconnu' }}</span>
+          </div>
+        
+          <div class="detail-row">
+            <span class="label">Durée :</span>
+            <span class="value">{{ eventData.duration }} heure(s)</span>
+          </div>
+        
+          <div class="detail-row">
+            <span class="label">Description :</span>
+            <span class="value">{{ eventData.description }}</span>
+          </div>
+        
+          <div class="detail-row">
+            <span class="label">Participants :</span>
+            <span class="value">
               <ul>
-                <li *ngFor="let s of topScores">
-                  {{ s.username }} :
-                  <span *ngIf="s.metadata?.score">{{ s.metadata.score }} - {{ s.metadata.score_opponent }}</span>
-                  <span *ngIf="!s.metadata?.score">{{ s.score }}</span>
+                <li *ngFor="let p of eventData.participants" (click)="openParticipantMenu(p)" class="clickable-participant">
+                  {{ p.username }}
                 </li>
               </ul>
-            </div>
+            </span>
+          </div>
+        </div>
+        
+      </div>
+
+      <div class="score-section" *ngIf="isOver()">
+        <button class="scoreButton" *ngIf="canEnterScore" (click)="openScoreDialog()">Entrer un score</button>
+
+        <div class="score-display">
+          <div class="score-left">
+            <h3>Ton score</h3>
+            <ng-container *ngIf="userScore; else noScore">
+              <p *ngIf="userScore.metadata?.kills"><strong>Kills :</strong> {{ userScore.metadata.kills }}</p>
+              <p *ngIf="userScore.metadata?.score">
+                <strong>Score :</strong> {{ userScore.metadata.score }} - {{ userScore.metadata.score_opponent }}
+              </p>
+              <p>
+                <strong>Résultat :</strong>
+                <span [ngClass]="{ 'result-win': userScore.result === 'win', 'result-lose': userScore.result === 'lose' }">
+                  {{ userScore.result === 'win' ? 'Gagné' : 'Perdu' }}
+                </span>
+              </p>
+            </ng-container>
+            <ng-template #noScore><p>Aucun score enregistré.</p></ng-template>
+          </div>
+
+          <div class="score-right">
+            <h3>Top 10</h3>
+            <ul>
+              <li *ngFor="let s of topScores">
+                {{ s.username }} :
+                <span *ngIf="s.metadata?.score">{{ s.metadata.score }} - {{ s.metadata.score_opponent }}</span>
+                <span *ngIf="!s.metadata?.score">{{ s.score }}</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="chat-section">
-        <h3>Chat</h3>
-        <div class="chat-messages"><p>(À intégrer avec socket.io)</p></div>
-        <div class="chat-input">
-          <input type="text" placeholder="Écris ton message..." />
-          <button>Envoyer</button>
-        </div>
+    <div class="chat-section">
+      <h3>Chat</h3>
+      <div class="chat-messages"><p>(À intégrer avec socket.io)</p></div>
+      <div class="chat-input">
+        <input type="text" placeholder="Écris ton message..." />
+        <button>Envoyer</button>
       </div>
     </div>
   </div>
 
   <div *ngIf="isBanned" class="banned-wrapper">
-    <div class="banned-message">
-      Vous avez été banni de cet événement. Retour à la liste des événements.
-    </div>
+    <div class="banned-message">Vous avez été banni de cet événement.</div>
   </div>
 </div>

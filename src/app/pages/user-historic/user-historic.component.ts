@@ -36,17 +36,16 @@ export class UserHistoricComponent implements OnInit {
   onlyFavorites: boolean = false;
   originalUserEvents: Event[] = [];
   originalAllEndedEvents: Event[] = [];
-
   gameOptions: { [key: string]: string } = {
-    balatro: 'img/Balatro.jpg',
-    cs2: 'img/CS2.png',
-    fifa: 'img/Fifa.png',
-    lol: 'img/LoL.png',
-    rocketLeague: 'img/rocketLeague.png',
-    starcraft2: 'img/starcraft2.png',
-    supermeatboy: 'img/supermeatboy.jpg',
-    valorant: 'img/valorant.png',
-    pubg: 'img/pubg.jpg',
+    balatro: 'assets/img/Balatro.jpg',
+    cs2: 'assets/img/CS2.png',
+    fifa: 'assets/img/Fifa.png',
+    lol: 'assets/img/LoL.png',
+    rocketLeague: 'assets/img/rocketLeague.png',
+    starcraft2: 'assets/img/starcraft2.png',
+    supermeatboy: 'assets/img/supermeatboy.jpg',
+    valorant: 'assets/img/valorant.png',
+    pubg: 'assets/img/pubg.jpg',
   };
 
   gameNames: { [key: string]: string } = {

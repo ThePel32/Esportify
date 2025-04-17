@@ -11,13 +11,23 @@ import { ScoreService } from '../../service/score.service';
 import { ScoreEntryDialogComponent } from '../score-entry-dialog/score-entry-dialog.component';
 import { ParticipantActionDialogComponent } from '../participant-action-dialog/participant-action-dialog.component';
 import { Score } from '../../models/score.model';
+import { GameService } from '../../service/game.service';
+import { FavoritesService } from '../../service/favorites.service';
+import { MatIconModule } from '@angular/material/icon';
+
 
 @Component({
   selector: 'app-event-room',
   standalone: true,
   templateUrl: './event-room.component.html',
   styleUrls: ['./event-room.component.css'],
-  imports: [CommonModule, FormsModule, NgIf, NgFor]
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    NgIf, 
+    NgFor,
+    MatIconModule,
+  ]
 })
 export class EventRoomComponent implements OnInit {
   eventId!: number;
@@ -33,6 +43,9 @@ export class EventRoomComponent implements OnInit {
   userScore: Score | null = null;
   topScores: Score[] = [];
   eventScores: any[] = [];
+  isFavorite: boolean = false;
+  gameKey: string = '';
+
 
   constructor(
     private route: ActivatedRoute,
@@ -40,13 +53,16 @@ export class EventRoomComponent implements OnInit {
     private authService: AuthService,
     private dialog: MatDialog,
     private scoreService: ScoreService,
-    private router: Router,
-    private snackBar: MatSnackBar
+    public router: Router,
+    private snackBar: MatSnackBar,
+    private gameService: GameService,
+    private favoritesService: FavoritesService,
   ) {}
 
   ngOnInit(): void {
     this.eventId = Number(this.route.snapshot.paramMap.get('id'));
     this.userId = this.authService.userProfile.value?.id || null;
+    
 
     if (this.userId) {
       this.eventService.isUserBanned(this.eventId, this.userId).subscribe({
@@ -76,6 +92,38 @@ export class EventRoomComponent implements OnInit {
     this.loadTopScores();
   }
 
+  loadFavoriteStatus(): void {
+    this.favoritesService.getFavoritesByUser().subscribe({
+      next: (favorites) => {
+        this.isFavorite = favorites.includes(this.gameKey);
+      },
+      error: () => {
+        this.isFavorite = false;
+      }
+    });
+  }
+  
+  toggleFavorite(): void {
+    const obs = this.isFavorite
+      ? this.favoritesService.removeFavorite(this.gameKey)
+      : this.favoritesService.addFavorite(this.eventId);
+  
+    obs.subscribe({
+      next: () => {
+        this.isFavorite = !this.isFavorite;
+        this.snackBar.open(
+          this.isFavorite ? 'Ajouté aux favoris !' : 'Retiré des favoris.',
+          'Fermer',
+          { duration: 3000 }
+        );
+      },
+      error: () => {
+        this.snackBar.open("Erreur lors de la mise à jour des favoris", 'Fermer', { duration: 3000 });
+      }
+    });
+  }
+  
+
   loadEvent(): void {
     this.eventService.getEventById(this.eventId).subscribe({
       next: (event) => {
@@ -85,11 +133,11 @@ export class EventRoomComponent implements OnInit {
           organizer_name: event.organizer_name || 'Inconnu'
         };
         this.gameType = event.title.toLowerCase();
+        this.gameKey = this.gameType;
+        this.eventData.images = this.gameService.getGameImage(this.gameType);
+        this.loadFavoriteStatus();
         this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement de l’événement :', err);
-        this.isLoading = false;
+        
       }
     });
   }

@@ -78,7 +78,17 @@
                   </mat-card>
 
                   <mat-card *ngIf="!event.isBanned" class="event-card">
-                    <img *ngIf="event.images" [src]="event.images" class="event-image">
+                    <div class="event-media-column">
+                      <img *ngIf="event.images" [src]="event.images" class="event-image" />
+                      <div class="favorite-container" *ngIf="isConnected">
+                        <button mat-icon-button (click)="toggleFavorite(event)">
+                          <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
+                        </button>                        
+                      </div>
+                    </div>
+                    
+                    
+                    
                     <div class="event-content-wrapper">
                       <mat-card-content>
                         <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
@@ -115,13 +125,23 @@
                   </mat-card>
 
                   <mat-card *ngIf="!event.isBanned" class="event-card">
-                    <img *ngIf="event.images" [src]="event.images" class="event-image">
+                    <div class="event-media-column">
+                      <img *ngIf="event.images" [src]="event.images" class="event-image" />
+                      <div class="favorite-container" *ngIf="isConnected">
+                        <button mat-icon-button (click)="toggleFavorite(event)">
+                          <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    
                     <div class="event-content-wrapper">
                       <mat-card-content>
                         <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
                         <p><strong>Participants :</strong> {{ getParticipantsCount(event) }}</p>
                       </mat-card-content>
                     </div>
+                    
                     <div class="event-content-right">
                       <mat-card-actions>
                         <ng-container *ngIf="isConnected">
@@ -141,6 +161,7 @@
                         </ng-container>
                         <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Accéder</button>
                       </mat-card-actions>
+                      
                     </div>
                   </mat-card>
                 </ng-container>
@@ -152,26 +173,27 @@
     </mat-tab-group>
 
     <div class="bottom-bar">
-        <div class="filter-container-row">
-          <mat-form-field appearance="fill">
-            <mat-label>Filtrer par jeu</mat-label>
-            <mat-select [(ngModel)]="selectedGames" (selectionChange)="applyFilter()" multiple>
-              <mat-option value="ALL">Tous</mat-option>
-              <mat-option *ngFor="let game of gameOptions | keyvalue" [value]="game.key">
-                {{ gameNames[game.key] | titlecase }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="fill">
-            <mat-label>Filtrer par genre</mat-label>
-            <mat-select [(ngModel)]="selectedGenres" (selectionChange)="applyFilter()" multiple>
-              <mat-option value="ALL">Tous</mat-option>
-              <mat-option *ngFor="let genre of genreOptions" [value]="genre">
-                {{ genre }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-    </div>
+      <div class="filter-container-row">
+        <mat-form-field appearance="fill">
+          <mat-label>Filtrer par jeu</mat-label>
+          <mat-select [(ngModel)]="selectedGames" (selectionChange)="applyFilter()" multiple>
+            <mat-option value="ALL">Tous</mat-option>
+            <mat-option *ngFor="let game of gamesList" [value]="game.key">
+              {{ game.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+    
+        <mat-form-field appearance="fill">
+          <mat-label>Filtrer par genre</mat-label>
+          <mat-select [(ngModel)]="selectedGenres" (selectionChange)="applyFilter()" multiple>
+            <mat-option value="ALL">Tous</mat-option>
+            <mat-option *ngFor="let genre of genreOptions" [value]="genre">
+              {{ genre }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>    
   </div>
 </div>

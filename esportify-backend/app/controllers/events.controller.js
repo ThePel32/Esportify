@@ -32,17 +32,42 @@ exports.create = (req, res) => {
         });
 
         Event.create(event, (err, data) => {
-            if (err) {
-                return res.status(500).send({ message: err.message || "Erreur lors de la création de l'événement." });
-            }
-            res.send(data);
+    if (err) {
+        console.error("Erreur SQL dans create event:", err); // 🔍 Ajouté ici
+        return res.status(500).send({ 
+            message: err.sqlMessage || err.message || "Erreur lors de la création de l'événement." 
         });
+    }
+    res.send(data);
+});
+
     });
 };
 
-exports.findAll = (req, res) => {
+exports.findAll = async (req, res) => {
     const title = req.query.title || "";
     const state = req.query.state || "";
+  
+    try {
+      const [rows] = await sql.query(
+        `SELECT * FROM events
+         WHERE state = 'validated'
+           AND started = 0
+           AND DATE_ADD(date_time, INTERVAL 15 MINUTE) <= NOW()`
+      );
+
+        const updatePromises = rows.map(event => {
+            return sql.query(`
+                UPDATE events
+                SET started = 1
+                WHERE id = ?
+            `, [event.id]);
+        });
+
+        await Promise.all(updatePromises);
+    } catch (error) {
+        console.error("Erreur auto-start dans findAll:", error);
+    }
 
 
     Event.getAll(title, state, (err, events) => {
@@ -276,6 +301,34 @@ exports.startEvent = (req, res) => {
         res.send({ message: "Événement démarré avec succès !", data });
     });
 };
+
+exports.autoStartEvents = async (req, res) => {
+    const now = new Date();
+
+    try {
+        const [rows] = await db.query(`
+            SELECT * FROM events
+            WHERE validated = 1
+            AND started = 0
+            AND DATE_ADD(date_time, INTERVAL 15 MINUTE) <= ?
+        `, [now]);
+
+        const updatePromises = rows.map(event => {
+            return db.query(`
+                UPDATE events
+                SET started = 1, start_time_effective = ?
+                WHERE id = ?
+            `, [event.date_time, event.id]);
+        });
+
+        await Promise.all(updatePromises);
+        res.status(200).json({ message: 'Événements auto-démarrés.' });
+    } catch (err) {
+        console.error('Erreur auto-démarrage', err);
+        res.status(500).json({ error: 'Erreur lors du démarrage automatique.' });
+    }
+};
+
 
 exports.getHistory = (req, res) => {
     Event.getFinishedEvents((err, events) => {
