@@ -1,7 +1,48 @@
 const jwt = require('jsonwebtoken');
 const Event = require('../models/events.model.js');
 const sql = require('../config/db.js');
-const EventBan = require('../models/eventBan.model.js')
+const EventBan = require('../models/eventBan.model.js');
+
+// 🔁 Auto-start logic déplacée ici
+const autoStartEventsIfNeeded = () => {
+  const now = new Date();
+
+  sql.query(`
+    SELECT * FROM events
+    WHERE state = 'validated'
+      AND started = 0
+      AND DATE_ADD(date_time, INTERVAL 15 MINUTE) <= ?
+  `, [now], (err, rows) => {
+    if (err) {
+      console.error("Erreur auto-start dans findAll:", err);
+      return;
+    }
+
+    if (!Array.isArray(rows)) {
+      console.error("⚠ rows n'est pas un tableau :", rows);
+      return;
+    }
+
+    console.log(`⏰ Auto-start : ${rows.length} événement(s) à démarrer`);
+
+    const updatePromises = rows.map(event => {
+      return new Promise((resolve, reject) => {
+        sql.query(`
+          UPDATE events
+          SET started = 1, start_time_effective = ?
+          WHERE id = ?
+        `, [event.date_time, event.id], (err2) => {
+          if (err2) reject(err2);
+          else resolve();
+        });
+      });
+    });
+
+    Promise.all(updatePromises).catch(updateErr => {
+      console.error("Erreur lors des mises à jour auto-start :", updateErr);
+    });
+  });
+};
 
 exports.create = (req, res) => {
     if (!req.body) {
@@ -44,41 +85,20 @@ exports.create = (req, res) => {
     });
 };
 
-exports.findAll = async (req, res) => {
+exports.findAll = (req, res) => {
     const title = req.query.title || "";
     const state = req.query.state || "";
   
-    try {
-      const [rows] = await sql.query(
-        `SELECT * FROM events
-         WHERE state = 'validated'
-           AND started = 0
-           AND DATE_ADD(date_time, INTERVAL 15 MINUTE) <= NOW()`
-      );
-
-        const updatePromises = rows.map(event => {
-            return sql.query(`
-                UPDATE events
-                SET started = 1
-                WHERE id = ?
-            `, [event.id]);
-        });
-
-        await Promise.all(updatePromises);
-    } catch (error) {
-        console.error("Erreur auto-start dans findAll:", error);
-    }
-
-
+    autoStartEventsIfNeeded();
+  
     Event.getAll(title, state, (err, events) => {
-        if (err) {
-            return res.status(500).send({ message: err.message || "Erreur lors de la récupération des événements." });
-        }
-
-        res.send(events);
-
+      if (err) {
+        return res.status(500).send({ message: err.message || "Erreur lors de la récupération des événements." });
+      }
+      res.send(events);
     });
-};
+  };
+  
 
 
 exports.findOne = (req, res) => {
@@ -133,67 +153,78 @@ exports.validate = (req, res) => {
     );
 };
 
-exports.joinEvent = (req, res) => {
+exports.joinEvent = async (req, res) => {
     const userId = req.user.id;
     const eventId = req.params.id;
 
-    Event.findById(eventId, async (err, event) => {
-        if (err || !event) {
-            return res.status(404).send({ message: "Événement introuvable." });
+    try {
+        const event = await new Promise((resolve, reject) => {
+            Event.findById(eventId, (err, evt) => {
+                if (err || !evt) return reject("Événement introuvable.");
+                resolve(evt);
+            });
+        });
+
+        const isBanned = await EventBan.isUserBanned(eventId, userId);
+        if (isBanned) {
+            return res.status(403).send({ message: "Vous êtes banni de cet événement." });
         }
 
-        try {
-            const isBanned = await EventBan.isUserBanned(eventId, userId);
-            if (isBanned) {
-                return res.status(403).send({ message: "Vous êtes banni de cet événement." });
-            }
-        } catch (error) {
-            console.error("Erreur lors de la vérification du bannissement :", error);
-            return res.status(500).send({ message: "Erreur serveur lors de la vérification du bannissement." });
+        const isGameBanned = await EventBan.isUserBannedFromGame(event.title, userId);
+        if (isGameBanned) {
+            return res.status(403).send({ message: `Vous êtes banni des événements du jeu ${event.title}.` });
         }
 
-        sql.query(
-            "SELECT * FROM event_participants WHERE event_id = ? AND user_id = ?",
-            [eventId, userId],
-            (err, result) => {
-                if (err) {
-                    return res.status(500).send({ message: "Erreur interne." });
+        const alreadyJoined = await new Promise((resolve, reject) => {
+            sql.query(
+                "SELECT * FROM event_participants WHERE event_id = ? AND user_id = ?",
+                [eventId, userId],
+                (err, result) => {
+                    if (err) return reject("Erreur interne.");
+                    resolve(result.length > 0);
                 }
+            );
+        });
 
-                if (result.length > 0) {
-                    return res.status(409).send({ message: "Déjà inscrit à l'événement." });
+        if (alreadyJoined) {
+            return res.status(409).send({ message: "Déjà inscrit à l'événement." });
+        }
+
+        const participantCount = await new Promise((resolve, reject) => {
+            sql.query(
+                "SELECT COUNT(*) AS nb_participants FROM event_participants WHERE event_id = ?",
+                [eventId],
+                (err, result) => {
+                    if (err) return reject("Erreur lors du comptage des participants.");
+                    resolve(result[0].nb_participants);
                 }
+            );
+        });
 
-                sql.query(
-                    "SELECT COUNT(*) AS nb_participants FROM event_participants WHERE event_id = ?",
-                    [eventId],
-                    (err, countRes) => {
-                        if (err) {
-                            return res.status(500).send({ message: "Erreur lors du comptage des participants." });
-                        }
+        if (participantCount >= event.max_players) {
+            return res.status(400).send({ message: "L'événement est complet." });
+        }
 
-                        const nbParticipants = countRes[0].nb_participants;
+        await new Promise((resolve, reject) => {
+            sql.query(
+                "INSERT INTO event_participants (event_id, user_id, registered_at) VALUES (?, ?, NOW())",
+                [eventId, userId],
+                (err) => {
+                    if (err) return reject("Erreur lors de l'inscription.");
+                    resolve();
+                }
+            );
+        });
 
-                        if (nbParticipants >= event.max_players) {
-                            return res.status(400).send({ message: "L'événement est complet." });
-                        }
+        return res.send({ message: "Inscription réussie !" });
 
-                        sql.query(
-                            "INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)",
-                            [eventId, userId],
-                            (err) => {
-                                if (err) {
-                                    return res.status(500).send({ message: "Erreur lors de l'inscription à l'événement." });
-                                }
-                                res.send({ message: "Inscription réussie !" });
-                            }
-                        );
-                    }
-                );
-            }
-        );
-    });
+    } catch (err) {
+        console.error("❌ Erreur joinEvent:", err);
+        return res.status(500).send({ message: err.toString() });
+    }
 };
+
+
 
 
 exports.update = (req, res) => {

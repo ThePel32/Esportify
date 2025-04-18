@@ -21,6 +21,12 @@ import { FavoritesService } from '../../service/favorites.service';
 import { MatIconModule } from '@angular/material/icon';
 import { GameService } from '../../service/game.service';
 
+type ExtendedEvent = Event & {
+  isBanned?: boolean;
+  isGameBanned?: boolean;
+  images?: string;
+};
+
 @Component({
   selector: 'app-events',
   standalone: true,
@@ -42,13 +48,14 @@ import { GameService } from '../../service/game.service';
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
 })
+
 export class EventsComponent implements OnInit {
   favorites: string[] = [];
-  upcomingEvents: Event[] = [];
-  ongoingEvents: Event[] = [];
-  pendingEvents: Event[] = [];
-  validatedEvents: Event[] = [];
-  eventsToStart: Event[] = [];
+  upcomingEvents: ExtendedEvent[] = [];
+  ongoingEvents: ExtendedEvent[] = [];
+  pendingEvents: ExtendedEvent[] = [];
+  validatedEvents: ExtendedEvent[] = [];
+  eventsToStart: ExtendedEvent[] = [];
   userId: number | null = null;
   isAdmin: boolean = false;
   isOrganizer: boolean = false;
@@ -115,19 +122,33 @@ export class EventsComponent implements OnInit {
     const now = new Date();
 
     this.eventService.getEvents('validated').subscribe((events: Event[]) => {
-      const banChecks = events.map(e =>
-        this.eventService.isUserBanned(e.id, this.userId!).pipe(
-          catchError(() => of({ banned: false })),
-          map(res => ({
-            ...e,
-            participants: e.participants || [],
-            isBanned: typeof res === 'object' && 'banned' in res ? res.banned : false,
-            images: this.gameService.getGame(e.title.toLowerCase())?.image
-          }))
-        )
-      );
+      const banChecks = events.map(e => {
+        const gameKey = e.title.toLowerCase();
 
-      forkJoin(banChecks).subscribe(allEvents => {
+        return forkJoin({
+          eventBan: this.eventService.isUserBanned(e.id, this.userId!).pipe(
+            catchError(() => of(false))
+          ),
+          gameBan: this.eventService.isUserBannedFromGame(gameKey, this.userId!).pipe(
+            catchError(() => of(false))
+          )
+        }).pipe(
+          map(({ eventBan, gameBan }) => {
+            const isBanned = typeof eventBan === 'object' ? eventBan.banned : eventBan;
+            const isGameBanned = typeof gameBan === 'object' ? gameBan.banned : gameBan;
+
+            return {
+              ...e,
+              participants: e.participants || [],
+              isBanned,
+              isGameBanned,
+              images: this.gameService.getGame(gameKey)?.image
+            } as ExtendedEvent;
+          })
+        );
+      });
+
+      forkJoin(banChecks).subscribe((allEvents: ExtendedEvent[]) => {
         const nonTermines = allEvents.filter(event => {
           const start = new Date(event.date_time);
           const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
@@ -140,7 +161,6 @@ export class EventsComponent implements OnInit {
           const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
           return e.started && start <= now && end > now;
         });
-
         this.eventsToStart = nonTermines.filter(e => {
           const eventTime = new Date(e.date_time);
           const diffInMs = eventTime.getTime() - now.getTime();
@@ -149,9 +169,16 @@ export class EventsComponent implements OnInit {
 
         // Filtres
         if (this.selectedGames.length && !this.selectedGames.includes('ALL')) {
-          this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGames.includes(e.title));
-          this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGames.includes(e.title));
+          this.upcomingEvents = this.upcomingEvents.filter(e => {
+            const gameKey = this.gameService.getGameKeyFromTitle(e.title);
+            return this.selectedGames.includes(gameKey);
+          });
+          this.ongoingEvents = this.ongoingEvents.filter(e => {
+            const gameKey = this.gameService.getGameKeyFromTitle(e.title);
+            return this.selectedGames.includes(gameKey);
+          });
         }
+        
 
         if (this.selectedGenres.length && !this.selectedGenres.includes('ALL')) {
           this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.gameService.getGenre(e.title.toLowerCase())));
@@ -165,8 +192,7 @@ export class EventsComponent implements OnInit {
         this.pendingEvents = events.map(e => ({
           ...e,
           images: this.gameService.getGame(e.title.toLowerCase())?.image
-
-        }));
+        })) as ExtendedEvent[];
       });
     }
   }
@@ -196,17 +222,15 @@ export class EventsComponent implements OnInit {
       error: () => (this.favorites = [])
     });
   }
-  
-  
 
   toggleFavorite(event: Event): void {
     const gameKey = event.title.toLowerCase();
     const isFav = this.favorites.includes(gameKey);
-  
+
     const obs = isFav
       ? this.favoritesService.removeFavorite(gameKey)
-      : this.favoritesService.addFavorite(event.id); // on a encore besoin de l'eventId ici pour récupérer le title côté backend
-  
+      : this.favoritesService.addFavorite(event.id);
+
     obs.subscribe({
       next: () => {
         if (isFav) {
@@ -217,14 +241,10 @@ export class EventsComponent implements OnInit {
       }
     });
   }
-  
-  
 
   isFavorite(gameKey: string): boolean {
     return this.favorites.includes(gameKey.toLowerCase());
   }
-  
-  
 
   applyFilter() {
     this.loadEvents();
@@ -277,15 +297,30 @@ export class EventsComponent implements OnInit {
     return new Date(dateTime) <= new Date();
   }
 
-  joinEvent(eventId: number) {
-    this.eventService.joinEvent(eventId).subscribe({
+  isUserBanned(event: ExtendedEvent): boolean {
+    return event.isBanned === true || event.isGameBanned === true;
+  }
+
+  joinEvent(event: ExtendedEvent) {
+    if (this.isUserBanned(event)) {
+      this.snackBar.open('Vous êtes banni de cet événement ou de ce jeu.', 'Fermer', { duration: 4000 });
+      return;
+    }
+
+    if (!this.userId) return;
+
+    const gameKey = event.title.toLowerCase();
+
+    this.eventService.joinEvent(event.id, gameKey, this.userId).subscribe({
       next: () => {
         this.snackBar.open('Inscription réussie !', 'Fermer', { duration: 3000 });
         this.loadEvents();
       },
       error: (err) => {
-        if (err.message === 'Vous êtes banni de cet événement.') {
-          this.snackBar.open('Vous avez été banni de cet événement.', 'Fermer', { duration: 4000 });
+        if (err.message === 'Vous êtes banni de ce jeu. Impossible de rejoindre l\'événement.') {
+          this.snackBar.open(err.message, 'Fermer', { duration: 4000 });
+        } else if (err.message === 'Vous êtes banni de cet événement.') {
+          this.snackBar.open(err.message, 'Fermer', { duration: 4000 });
         } else if (err.status === 409) {
           this.snackBar.open('Déjà inscrit à cet événement.', 'Fermer', { duration: 3000 });
         } else {

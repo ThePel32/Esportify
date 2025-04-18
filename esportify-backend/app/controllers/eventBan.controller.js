@@ -4,13 +4,23 @@ const db = require('../config/db');
 exports.banUserFromEvent = async (req, res) => {
   const { eventId, userId } = req.params;
   try {
+    await new Promise((resolve, reject) => {
+      db.query(
+        "DELETE FROM event_participants WHERE event_id = ? AND user_id = ?",
+        [eventId, userId],
+        (err) => (err ? reject(err) : resolve())
+      );
+    });
+
     await EventBan.banUser(eventId, userId);
-    res.status(200).json({ message: "Utilisateur banni de l'événement." });
+
+    res.status(200).json({ message: "Utilisateur banni et retiré de l'événement." });
   } catch (err) {
     console.error("Erreur lors du bannissement :", err);
     res.status(500).json({ error: "Erreur serveur lors du bannissement." });
   }
 };
+
 
 exports.unbanUser = async (req, res) => {
   const { eventId, userId } = req.params;
@@ -63,3 +73,15 @@ exports.getAllBans = (req, res) => {
     res.status(200).json(results);
   });
 };
+
+exports.checkIfUserBannedFromGame = async (req, res) => {
+    const { gameKey, userId } = req.params;
+    try {
+        const banned = await EventBan.isUserBannedFromGame(gameKey, userId);
+        res.status(200).json({ banned });
+    } catch (err) {
+        console.error("Erreur check ban par jeu :", err);
+        res.status(500).json({ error: "Erreur serveur." });
+    }
+};
+

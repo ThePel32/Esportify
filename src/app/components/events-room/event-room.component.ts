@@ -67,7 +67,7 @@ export class EventRoomComponent implements OnInit {
     if (this.userId) {
       this.eventService.isUserBanned(this.eventId, this.userId).subscribe({
         next: (res) => {
-          this.isBanned = res === true;
+          this.isBanned = typeof res === 'object' && 'banned' in res ? res.banned : !!res;
           if (this.isBanned) {
             this.snackBar.open('Vous avez été banni de cet événement.', 'Fermer', { duration: 4000 });
             this.router.navigate(['/events'], { queryParams: { tab: 'liste' } });

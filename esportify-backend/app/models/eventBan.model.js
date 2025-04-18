@@ -29,17 +29,18 @@ exports.isUserBanned = (eventId, userId) => {
 
 exports.getBannedUsers = (eventId) => {
     return new Promise((resolve, reject) => {
-        const query = `
+      const query = `
         SELECT users.id, users.username FROM event_bans
-        JOIN users ON event_bans.users_id
+        JOIN users ON event_bans.user_id = users.id
         WHERE event_bans.event_id = ?
-        `;
-        db.query(query, [eventId], (err, results) => {
-            if (err) return reject(err);
-            resolve(results);
-        });
+      `;
+      db.query(query, [eventId], (err, results) => {
+        if (err) return reject(err);
+        resolve(results);
+      });
     });
-};
+  };
+  
 
 exports.unbanUser = (eventId, userId) => {
     return new Promise((resolve, reject) => {
@@ -52,3 +53,22 @@ exports.unbanUser = (eventId, userId) => {
         });
     });
 };
+
+exports.isUserBannedFromGame = (gameKey, userId) => {
+    return new Promise((resolve, reject) => {
+      const query = `
+        SELECT eb.*
+        FROM event_bans eb
+        JOIN events e ON eb.event_id = e.id
+        WHERE LOWER(e.title) = LOWER(?)
+        AND eb.user_id = ?
+      `;
+  
+      db.query(query, [gameKey, userId], (err, results) => {
+        if (err) return reject(err);
+        resolve(results.length > 0);
+      });
+    });
+  };
+  
+  

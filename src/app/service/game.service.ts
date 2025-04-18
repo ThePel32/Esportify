@@ -32,4 +32,10 @@ export class GameService {
     getGenre(key: string): string {
         return this.gameMap[key.toLowerCase()]?.genre || '';
     }
+
+    getGameKeyFromTitle(title: string): string {
+        const allGames = this.getAllGames();
+        const match = Object.entries(allGames).find(([key, data]) => data.name.toLowerCase() === title.toLowerCase());
+        return match?.[0] || title.toLowerCase();
+    }
 }

@@ -37,20 +37,20 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(eventBanRoutes);
-
 app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/shop', shopRouter);
 app.use('/api/sale', saleRouter);
 app.use('/api/scores', scoreRouter)
 
+app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
+
 app.use('/api/events', verifyToken, (req, res, next) => {
   console.log(`[${req.method}] ${req.url} - Token validé :`, req.headers.authorization || "No Token");
   next();
 }, eventsRouter);
 
-app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
+
 
 app.use('/api/favorites', verifyToken, favoritesRoutes);
 
