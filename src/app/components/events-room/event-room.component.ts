@@ -15,7 +15,6 @@ import { GameService } from '../../service/game.service';
 import { FavoritesService } from '../../service/favorites.service';
 import { MatIconModule } from '@angular/material/icon';
 
-
 @Component({
   selector: 'app-event-room',
   standalone: true,
@@ -45,7 +44,6 @@ export class EventRoomComponent implements OnInit {
   eventScores: any[] = [];
   isFavorite: boolean = false;
   gameKey: string = '';
-
 
   constructor(
     private route: ActivatedRoute,
@@ -127,11 +125,13 @@ export class EventRoomComponent implements OnInit {
   loadEvent(): void {
     this.eventService.getEventById(this.eventId).subscribe({
       next: (event) => {
+
         this.eventData = {
           ...event,
           participants: event.participants || [],
           organizer_name: event.organizer_name || 'Inconnu'
         };
+
         this.gameType = event.title.toLowerCase();
         this.gameKey = this.gameType;
         this.eventData.images = this.gameService.getGameImage(this.gameType);
