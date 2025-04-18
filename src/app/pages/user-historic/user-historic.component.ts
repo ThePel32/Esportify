@@ -1,5 +1,7 @@
+import { FavoritesService } from './../../service/favorites.service';
 import { Component, OnInit } from '@angular/core';
 import { EventService } from '../../service/event.service';
+import { GameService } from '../../service/game.service';
 import { AuthService } from '../../service/auth.service';
 import { Event } from '../../models/event.model';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
@@ -8,7 +10,7 @@ import { RouterModule } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-user-historic',
@@ -22,7 +24,7 @@ import { MatIconModule } from '@angular/material/icon';
     MatFormFieldModule,
     MatSelectModule,
     FormsModule,
-    MatIconModule
+    MatCheckboxModule,
   ],
   templateUrl: './user-historic.component.html',
   styleUrls: ['./user-historic.component.css']
@@ -36,69 +38,37 @@ export class UserHistoricComponent implements OnInit {
   onlyFavorites: boolean = false;
   originalUserEvents: Event[] = [];
   originalAllEndedEvents: Event[] = [];
-  gameOptions: { [key: string]: string } = {
-    balatro: 'assets/img/Balatro.jpg',
-    cs2: 'assets/img/CS2.png',
-    fifa: 'assets/img/Fifa.png',
-    lol: 'assets/img/LoL.png',
-    rocketLeague: 'assets/img/rocketLeague.png',
-    starcraft2: 'assets/img/starcraft2.png',
-    supermeatboy: 'assets/img/supermeatboy.jpg',
-    valorant: 'assets/img/valorant.png',
-    pubg: 'assets/img/pubg.jpg',
-  };
 
-  gameNames: { [key: string]: string } = {
-    balatro: 'Balatro',
-    cs2: 'Counter Strike 2',
-    fifa: 'Fifa 24',
-    lol: 'League of Legends',
-    rocketLeague: 'Rocket League',
-    starcraft2: 'Starcraft 2',
-    supermeatboy: 'Super meat boy',
-    valorant: 'Valorant',
-    pubg: 'PUBG'
-  };
-
-  gameGenres: { [key: string]: string } = {
-    cs2: 'FPS/TPS',
-    valorant: 'FPS/TPS',
-    pubg: 'FPS/TPS',
-    fifa: 'Sport',
-    rocketLeague: 'Sport',
-    lol: 'MOBA',
-    starcraft2: 'RTS',
-    balatro: 'Cartes',
-    supermeatboy: 'Plateforme'
-  }
+  gamesList: [string, { name: string; image: string; genre: string }][] = [];
 
   constructor(
     private eventService: EventService,
     private authService: AuthService,
+    public gameService: GameService,
+    private favoritesService: FavoritesService,
+    
   ) {}
 
   ngOnInit(): void {
+    this.gamesList = Object.entries(this.gameService.getAllGames());
     this.userId = this.authService.userProfile.value?.id || null;
-
+  
     if (this.userId) {
-      this.eventService.getHistoricForUser(this.userId).subscribe({
-        next: (events) => {
-          this.originalUserEvents = events;
-          this.userEvents = events;
-        },
-        error: () => {
-          console.error("Erreur lors du chargement de l'historique d'événements.");
-        }
-      });
-
-      this.eventService.getAllEndedEvents().subscribe({
-        next: (events) => {
-          this.originalAllEndedEvents = events;
-          this.allEndedEvents = events;
-        },
-        error: () => {
-          console.error("Erreur lors du chargement de tous les événements terminés.");
-        }
+      Promise.all([
+        this.eventService.getHistoricForUser(this.userId).toPromise(),
+        this.eventService.getAllEndedEvents().toPromise(),
+        this.favoritesService.getFavoritesByUser().toPromise()
+      ]).then(([userEvents, allEvents, favorites]) => {
+  
+        this.originalUserEvents = this.markFavorites(userEvents || [], favorites || []);
+        this.originalAllEndedEvents = this.markFavorites(allEvents || [], favorites || []);
+  
+        this.userEvents = [...this.originalUserEvents];
+        this.allEndedEvents = [...this.originalAllEndedEvents];
+  
+        this.applyFilter();
+      }).catch(() => {
+        console.error("Erreur lors du chargement de l'historique ou des favoris.");
       });
     }
   }
@@ -110,7 +80,8 @@ export class UserHistoricComponent implements OnInit {
   }
 
   uniqueGenres(): string[] {
-    return Array.from(new Set(Object.values(this.gameGenres)));
+    const all = Object.values(this.gameService.getAllGames()).map(g => g.genre);
+    return Array.from(new Set(all));
   }
 
   applyFilter(): void {
@@ -118,8 +89,8 @@ export class UserHistoricComponent implements OnInit {
     const selectedGenresSet = new Set(this.selectedGenres);
 
     const filterFn = (event: Event) => {
-      const gameKey = this.getGameKeyFromTitle(event.title.toLowerCase());
-      const genre = this.gameGenres[gameKey];
+      const gameKey = this.gameService.getGameKeyFromTitle(event.title.toLowerCase());
+      const genre = this.gameService.getGenre(gameKey);
       const isGameMatch = selectedGamesSet.size === 0 || selectedGamesSet.has(gameKey);
       const isGenreMatch = selectedGenresSet.size === 0 || selectedGenresSet.has(genre);
       const isFavoriteMatch = !this.onlyFavorites || event.isFavorite;
@@ -132,8 +103,12 @@ export class UserHistoricComponent implements OnInit {
   }
 
   getGameKeyFromTitle(title: string): string {
-    return Object.keys(this.gameNames).find(key =>
-      this.gameNames[key].toLowerCase() === title.toLowerCase()
-    ) || title;
+    return this.gameService.getGameKeyFromTitle(title);
+  }
+  private markFavorites(events: Event[], favorites: string[]): Event[] {
+    return events.map(event => {
+      const gameKey = this.gameService.getGameKeyFromTitle(event.title.toLowerCase());
+      return { ...event, isFavorite: favorites.includes(gameKey) };
+    });
   }
 }

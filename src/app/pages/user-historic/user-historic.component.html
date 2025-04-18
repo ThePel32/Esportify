@@ -3,7 +3,10 @@
     <h2>Mes événements</h2>
     <div class="scrollable-list">
       <mat-card *ngFor="let event of userEvents" class="historic-card">
-        <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}">
+        <img 
+          *ngIf="gameService.getGameImage(gameService.getGameKeyFromTitle(event.title))"
+          [src]="gameService.getGameImage(gameService.getGameKeyFromTitle(event.title))"
+          alt="{{ event.title }}">
         <mat-card-content>
           <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
           <p><strong>Durée :</strong> {{ event.duration }}h</p>
@@ -19,7 +22,10 @@
     <h2>Tous les événements</h2>
     <div class="scrollable-list">
       <mat-card *ngFor="let event of allEndedEvents" class="historic-card">
-        <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}">
+        <img 
+          *ngIf="gameService.getGameImage(gameService.getGameKeyFromTitle(event.title))"
+          [src]="gameService.getGameImage(gameService.getGameKeyFromTitle(event.title))"
+          alt="{{ event.title }}">
         <mat-card-content>
           <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
           <p><strong>Durée :</strong> {{ event.duration }}h</p>
@@ -36,8 +42,8 @@
   <mat-form-field appearance="fill">
     <mat-label>Filtrer par jeu</mat-label>
     <mat-select [(ngModel)]="selectedGames" (selectionChange)="applyFilter()" multiple>
-      <mat-option *ngFor="let game of gameOptions | keyvalue" [value]="game.key">
-        {{ gameNames[game.key] | titlecase }}
+      <mat-option *ngFor="let game of gamesList" [value]="game[0]">
+        {{ game[1].name }}
       </mat-option>
     </mat-select>
   </mat-form-field>
