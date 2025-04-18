@@ -44,17 +44,16 @@ export class AddEventComponent {
   hourOptions: string[] = [];
   durationOptions: number[] = [];
 
-
   gameOptions: { [key: string]: string } = {
-    balatro: 'img/Balatro.jpg',
-    Cs2: 'img/CS2.png',
-    fifa: 'img/fifa.png',
-    lol: 'img/LoL.png',
-    rocketleague: 'img/rocketLeague.png',
-    starcraft2: 'img/starcraft2.png',
-    supermeatboy: 'img/supermeatboy.jpg',
-    valorant: 'img/valorant.png',
-    pubg: 'img/pubg.jpg',
+    balatro: 'assets/img/Balatro.jpg',
+    Cs2: 'assets/img/CS2.png',
+    fifa: 'assets/img/fifa.png',
+    lol: 'assets/img/LoL.png',
+    rocketleague: 'assets/img/rocketLeague.png',
+    starcraft2: 'assets/img/starcraft2.png',
+    supermeatboy: 'assets/img/supermeatboy.jpg',
+    valorant: 'assets/img/valorant.png',
+    pubg: 'assets/img/pubg.jpg',
   };
 
   gameNames: { [key: string]: string } = {

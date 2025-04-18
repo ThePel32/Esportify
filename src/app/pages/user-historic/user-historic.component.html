@@ -1,36 +1,57 @@
 <div class="historic-wrapper">
-    <div class="historic-section">
-      <h2>Mes événements</h2>
-      <div class="scrollable-list">
-        <mat-card *ngFor="let event of userEvents" class="historic-card">
-          <h3>{{ event.title }}</h3>
-          <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}">
-          <mat-card-content>
-            <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
-            <p><strong>Durée :</strong> {{ event.duration }}h</p>
-          </mat-card-content>
-          <mat-card-actions>
-            <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">📄 Détails</button>
-          </mat-card-actions>
-        </mat-card>
-      </div>
-    </div>
-  
-    <div class="historic-section">
-      <h2>Tous les événements</h2>
-      <div class="scrollable-list">
-        <mat-card *ngFor="let event of allEndedEvents" class="historic-card">
-          <h3>{{ event.title }}</h3>
-          <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}">
-          <mat-card-content>
-            <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
-            <p><strong>Durée :</strong> {{ event.duration }}h</p>
-          </mat-card-content>
-          <mat-card-actions>
-            <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">📄 Détails</button>
-          </mat-card-actions>
-        </mat-card>
-      </div>
+  <div class="historic-section">
+    <h2>Mes événements</h2>
+    <div class="scrollable-list">
+      <mat-card *ngFor="let event of userEvents" class="historic-card">
+        <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}">
+        <mat-card-content>
+          <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+          <p><strong>Durée :</strong> {{ event.duration }}h</p>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Détails</button>
+        </mat-card-actions>
+      </mat-card>
     </div>
   </div>
-  
+
+  <div class="historic-section">
+    <h2>Tous les événements</h2>
+    <div class="scrollable-list">
+      <mat-card *ngFor="let event of allEndedEvents" class="historic-card">
+        <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}">
+        <mat-card-content>
+          <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+          <p><strong>Durée :</strong> {{ event.duration }}h</p>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Détails</button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+</div>
+
+<div class="filters-container">
+  <mat-form-field appearance="fill">
+    <mat-label>Filtrer par jeu</mat-label>
+    <mat-select [(ngModel)]="selectedGames" (selectionChange)="applyFilter()" multiple>
+      <mat-option *ngFor="let game of gameOptions | keyvalue" [value]="game.key">
+        {{ gameNames[game.key] | titlecase }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Filtrer par genre</mat-label>
+    <mat-select [(ngModel)]="selectedGenres" (selectionChange)="applyFilter()" multiple>
+      <mat-option *ngFor="let genre of uniqueGenres()" [value]="genre">
+        {{ genre }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-checkbox [(ngModel)]="onlyFavorites" (change)="applyFilter()">
+    ❤️ Favoris uniquement
+  </mat-checkbox>
+</div>

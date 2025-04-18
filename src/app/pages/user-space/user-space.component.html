@@ -1,34 +1,108 @@
-    <div *ngIf="isAdmin">
-        <h3>Liste des utilisateurs</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Pseudo</th>
-                    <th>Email</th>
-                    <th>Rôle</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let user of users">
-                    <td>{{ user.id }}</td>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.role }}</td>
-                    <td>
-                        <select (change)="changeRole(user, $event)">
-                            <option value="user" [selected]="user.role === 'user'">Utilisateur</option>
-                            <option value="organizer" [selected]="user.role === 'organizer'">Organisateur</option>
-                            <option value="admin" [selected]="user.role === 'admin'">Administrateur</option>
-                        </select>
-                                                    
-                        <button (click)="deleteUser(user.id)">
-                            Supprimer
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <p>user-space works !</p>
+<div class="overlay-wrapper">
+
+    <mat-tab-group class="full-width-tabs">
+        <!-- Onglet 1 - Mes Favoris -->
+        <mat-tab label="Mes Favoris">
+            <div class="favorites-section">
+              <h3>Mes jeux favoris</h3>
+              <div class="favorites-grid">
+                <div *ngIf="favoriteGames.length === 0">Aucun favori pour le moment.</div>
+          
+                <ng-container *ngFor="let game of favoriteGames">
+                  <mat-card class="favorite-card">
+                    <img [src]="game.image" class="favorite-image" />
+                    <mat-card-content>
+                      <p><strong>{{ game.name }}</strong></p>
+                    </mat-card-content>
+                    <mat-card-actions>
+                      <button mat-raised-button color="warn" (click)="removeFromFavorites(game.key)">
+                        Retirer
+                      </button>
+                    </mat-card-actions>
+                  </mat-card>
+                </ng-container>
+              </div>
+            </div>
+          </mat-tab>
+          
+    
+        <!-- Onglet 2 - Liste des utilisateurs (admin uniquement) -->
+        <mat-tab label="Liste des utilisateurs" *ngIf="isAdmin">
+            <h3>Liste des utilisateurs</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Pseudo</th>
+                        <th>Email</th>
+                        <th>Rôle</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let user of users">
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>
+                            <select (change)="changeRole(user, $event)">
+                                <option value="user" [selected]="user.role === 'user'">Utilisateur</option>
+                                <option value="organizer" [selected]="user.role === 'organizer'">Organisateur</option>
+                                <option value="admin" [selected]="user.role === 'admin'">Administrateur</option>
+                            </select>
+                            <button (click)="deleteUser(user.id)">Supprimer</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </mat-tab>
+    
+        <!-- Onglet 3 - Liste des bannis (admin + orga) -->
+        <mat-tab label="Liste des bannis" *ngIf="isAdmin || isOrganizer">
+            <h3>Utilisateurs bannis</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pseudo</th>
+                        <th>Événement</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let ban of bannedUsers">
+                        <td>{{ ban.username }}</td>
+                        <td>{{ ban.event_title }}</td>
+                        <td>
+                            <button mat-raised-button color="warn" (click)="unbanUser(ban.user_id, ban.event_id)">
+                                Débannir
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </mat-tab>
+    
+        <!-- Onglet 4 - Mes infos -->
+        <mat-tab label="Mes infos">
+            <div class="profile-section">
+                <h3>Mes informations</h3>
+                <p><strong>Pseudo :</strong> {{ userProfile?.username }}</p>
+                <p><strong>Email :</strong> {{ userProfile?.email }}</p>
+                <p><strong>Inscrit depuis :</strong> {{ userProfile?.created_at | date:'longDate' }}</p>
+    
+                <h4>Changer mon mot de passe</h4>
+                <form (ngSubmit)="changePassword()" #passwordForm="ngForm">
+                    <mat-form-field appearance="fill">
+                        <mat-label>Nouveau MdP</mat-label>
+                        <input matInput type="password" name="newPassword" [(ngModel)]="newPassword" required>
+                    </mat-form-field>
+                    <button mat-raised-button color="primary" type="submit" [disabled]="!passwordForm.form.valid">
+                        Mettre à jour
+                    </button>
+                </form>
+            </div>
+        </mat-tab>
+    
+    </mat-tab-group>
+</div>

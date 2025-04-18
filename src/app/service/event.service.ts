@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpRequest } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { Observable, of, throwError, forkJoin } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { Event } from '../models/event.model';
 
 
@@ -87,16 +87,52 @@ export class EventService {
         return this.http.patch(`${this.apiUrl}/${eventId}/start`, {});
     }
 
-    joinEvent(eventId: number): Observable<any> {
-        return this.http.post<any>(`${this.apiUrl}/${eventId}/join`, {}, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
-    }
+    joinEvent(eventId: number, gameKey: string, userId: number): Observable<any> {
+        const bannedGameUrl = `http://localhost:3000/api/event-bans/is-banned-game/${gameKey}/${userId}`;
+        const bannedEventUrl = `http://localhost:3000/api/event-bans/${eventId}/is-banned/${userId}`;
+      
+        return forkJoin([
+          this.http.get<{ banned: boolean }>(bannedGameUrl, { headers: this.getAuthHeaders() }).pipe(
+            catchError(() => of({ banned: false }))
+          ),
+          this.http.get<{ banned: boolean }>(bannedEventUrl, { headers: this.getAuthHeaders() }).pipe(
+            catchError(() => of({ banned: false }))
+          )
+        ]).pipe(
+          switchMap(([gameBan, eventBan]) => {
+            if (gameBan.banned) {
+              return throwError(() => new Error("Vous êtes banni de ce jeu. Impossible de rejoindre l'événement."));
+            }
+            if (eventBan.banned) {
+              return throwError(() => new Error("Vous êtes banni de cet événement."));
+            }
+      
+            return this.http.post<any>(
+              `${this.apiUrl}/${eventId}/join`,
+              {},
+              { headers: this.getAuthHeaders() }
+            );
+          }),
+          catchError((error: HttpErrorResponse) => this.handleError(error))
+        );
+      }
+      
+
+      isUserBanned(eventId: number, userId: number) {
+        return this.http.get<{ banned: boolean }>(`http://localhost:3000/api/event-bans/${eventId}/is-banned/${userId}`);
+      }
+      
+      isUserBannedFromGame(gameKey: string, userId: number) {
+        return this.http.get<{ banned: boolean }>(`http://localhost:3000/api/event-bans/is-banned-game/${gameKey}/${userId}`);
+      }
+      
 
     leaveEvent(eventId: number): Observable<any> {
         return this.http.post<any>(`${this.apiUrl}/${eventId}/leave`, {}, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
 
-    removeParticipant(eventId: number, userId: number): Observable<any> {
-        return this.http.delete<any>(`${this.apiUrl}/${eventId}/remove/${userId}`, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
+    kickParticipant(eventId: number, userId: number): Observable<any> {
+        return this.http.delete<any>(`${this.apiUrl}/${eventId}/kick/${userId}`, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
 
     deleteEvent(eventId: number): Observable<any> {
@@ -130,6 +166,12 @@ export class EventService {
     getAllEndedEvents(): Observable<Event[]> {
         return this.http.get<Event[]>(`${this.apiUrl}/history/all`, { headers: this.getAuthHeaders() });
     }
+
+    banUser(eventId: number, userId: number): Observable<any> {
+        return this.http.post(`${this.apiUrl.replace('/events', '')}/event-bans/${eventId}/ban/${userId}`, {}, { headers: this.getAuthHeaders() });
+    }
+    
+    
 
     private getAuthHeaders(): HttpHeaders {
         const token = localStorage.getItem('token');

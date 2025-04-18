@@ -160,7 +160,6 @@ Event.startById = (id, result) => {
         [new Date(), id],
         (err, res) => {
             if (err) {
-                console.error("Erreur SQL dans startById :", err); // <--- Ajout temporaire
                 result(err, null);
                 return;
             }
@@ -173,7 +172,6 @@ Event.startById = (id, result) => {
     );
 };
 
-// Tous les événements terminés
 Event.getFinishedEvents = (result) => {
     const now = new Date();
     sql.query(

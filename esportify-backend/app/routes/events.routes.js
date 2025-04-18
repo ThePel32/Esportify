@@ -3,6 +3,7 @@ const router = express.Router();
 const events = require("../controllers/events.controller.js");
 const verifyToken = require("../middleware/auth.js");
 const authorize = require("../middleware/authorize.js");
+const eventController = require('../controllers/events.controller');
 
 
 router.post("/", authorize(["admin", "organizer"]), events.create);
@@ -20,14 +21,14 @@ router.delete("/", authorize(["admin"]), events.deleteAll);
 
 router.put("/:id/validate", authorize(["admin"]), events.validate);
 
-router.post("/:id/join", authorize(["user", "organizer", "admin"]), events.joinEvent);
-router.post("/:id/confirm-join", authorize(["user", "organizer", "admin"]), events.confirmJoin);
+router.post("/:id/join", verifyToken, authorize(["user", "organizer", "admin"]), events.joinEvent);
+router.post("/:id/confirm-join", verifyToken, authorize(["user", "organizer", "admin"]), events.confirmJoin);
+router.post("/:id/leave", verifyToken, authorize(["user", "organizer", "admin"]), events.leaveEvent);
+router.delete("/:id/kick/:userId", verifyToken, authorize(["admin", "organizer"]), events.kickParticipant);
+router.patch("/:id/start", verifyToken, authorize(["organizer", "admin"]), events.startEvent);
 
-router.post("/:id/leave", authorize(["user", "organizer", "admin"]), events.leaveEvent);
+router.patch('/auto-start', eventController.autoStartEvents);
 
-router.delete("/:id/remove/:userId", authorize(["admin"]), events.removeParticipant);
-
-router.patch("/:id/start", authorize(["organizer", "admin"]), events.startEvent);
 
 router.get("/history", events.getHistory);
 router.get("/history/user/:userId", events.getUserHistory);

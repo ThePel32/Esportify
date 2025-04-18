@@ -15,6 +15,17 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { FavoritesService } from '../../service/favorites.service';
+import { MatIconModule } from '@angular/material/icon';
+import { GameService } from '../../service/game.service';
+
+type ExtendedEvent = Event & {
+  isBanned?: boolean;
+  isGameBanned?: boolean;
+  images?: string;
+};
 
 @Component({
   selector: 'app-events',
@@ -31,67 +42,29 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
     MatFormFieldModule,
     MatSelectModule,
     MatOptionModule,
-    RouterModule
+    RouterModule,
+    MatIconModule,
   ],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
 })
+
 export class EventsComponent implements OnInit {
-  upcomingEvents: Event[] = [];
-  ongoingEvents: Event[] = [];
-  pendingEvents: Event[] = [];
-  validatedEvents: Event[] = [];
+  favorites: string[] = [];
+  upcomingEvents: ExtendedEvent[] = [];
+  ongoingEvents: ExtendedEvent[] = [];
+  pendingEvents: ExtendedEvent[] = [];
+  validatedEvents: ExtendedEvent[] = [];
+  eventsToStart: ExtendedEvent[] = [];
   userId: number | null = null;
   isAdmin: boolean = false;
   isOrganizer: boolean = false;
   hasJoined: boolean = false;
+
   selectedGames: string[] = [];
   selectedGenres: string[] = [];
-  eventsToStart: Event[] = [];
-  genreOptions: string[] = [
-    'FPS/TPS',
-    'Sport',
-    'MOBA',
-    'RTS',
-    'Cartes',
-    'Plateforme'
-  ];
-
-  gameOptions: { [key: string]: string } = {
-    balatro: 'img/Balatro.jpg',
-    Cs2: 'img/CS2.png',
-    fifa: 'img/fifa.png',
-    lol: 'img/LoL.png',
-    rocketleague: 'img/rocketLeague.png',
-    starcraft2: 'img/starcraft2.png',
-    supermeatboy: 'img/supermeatboy.jpg',
-    valorant: 'img/valorant.png',
-    pubg: 'img/pubg.jpg'
-  };
-
-  gameNames: { [key: string]: string } = {
-    balatro: "Balatro",
-    Cs2: "Counter Strike 2",
-    fifa: "Fifa 24",
-    lol: "League of Legends",
-    rocketleague: "Rocket League",
-    starcraft2: "Starcraft 2",
-    supermeatboy: "Super Meat Boy",
-    valorant: "Valorant",
-    pubg: "PUBG"
-  };
-
-  GameGenres: { [key: string]: string } = {
-    cs2: 'FPS/TPS',
-    valorant: 'FPS/TPS',
-    pubg: 'FPS/TPS',
-    fifa: 'Sport',
-    rocketleague: 'Sport',
-    lol: 'MOBA',
-    starcraft2: 'RTS',
-    balatro: 'Cartes',
-    supermeatboy: 'Plateforme'
-  };
+  genreOptions: string[] = [];
+  gamesList: { key: string, name: string }[] = [];
 
   selectedTabIndex: number = 0;
 
@@ -100,10 +73,21 @@ export class EventsComponent implements OnInit {
     private authService: AuthService,
     private eventBus: EventBusService,
     private snackBar: MatSnackBar,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private favoritesService: FavoritesService,
+    private gameService: GameService,
   ) {}
 
   ngOnInit() {
+    const allGames = this.gameService.getAllGames();
+
+    this.gamesList = Object.entries(allGames).map(([key, data]) => ({
+      key,
+      name: data.name
+    }));
+
+    this.genreOptions = [...new Set(Object.values(allGames).map(g => g.genre))];
+
     this.route.queryParams.subscribe(params => {
       const tabParam = params['tab'];
       if (tabParam === 'liste') {
@@ -113,15 +97,17 @@ export class EventsComponent implements OnInit {
 
     this.authService.userProfile.subscribe(profile => {
       this.userId = profile?.id || null;
+      if (this.userId) {
+        this.loadFavorites();
+      }
       this.isAdmin = this.authService.hasRole('admin');
       this.isOrganizer = this.authService.hasRole('organizer');
       this.loadEvents();
     });
-    
+
     this.eventBus.refreshEvents$.subscribe(() => {
       this.loadEvents();
     });
-    
   }
 
   get isConnected(): boolean {
@@ -136,52 +122,77 @@ export class EventsComponent implements OnInit {
     const now = new Date();
 
     this.eventService.getEvents('validated').subscribe((events: Event[]) => {
-      console.log("✅ Tous les événements validés récupérés :", events);
-      const allEvents = events.map(e => ({
-        ...e,
-        participants: e.participants || []
-      }));
+      const banChecks = events.map(e => {
+        const gameKey = e.title.toLowerCase();
 
-      const nonTermines = allEvents.filter(event => {
-        const start = new Date(event.date_time);
-        const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
-        return end > now;
+        return forkJoin({
+          eventBan: this.eventService.isUserBanned(e.id, this.userId!).pipe(
+            catchError(() => of(false))
+          ),
+          gameBan: this.eventService.isUserBannedFromGame(gameKey, this.userId!).pipe(
+            catchError(() => of(false))
+          )
+        }).pipe(
+          map(({ eventBan, gameBan }) => {
+            const isBanned = typeof eventBan === 'object' ? eventBan.banned : eventBan;
+            const isGameBanned = typeof gameBan === 'object' ? gameBan.banned : gameBan;
+
+            return {
+              ...e,
+              participants: e.participants || [],
+              isBanned,
+              isGameBanned,
+              images: this.gameService.getGame(gameKey)?.image
+            } as ExtendedEvent;
+          })
+        );
       });
 
-      this.upcomingEvents = nonTermines.filter(e => new Date(e.date_time) > now);
-      this.ongoingEvents = nonTermines.filter(e => {
-        const start = new Date(e.date_time);
-        const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
-        const inProgress = e.started && start <= now && end > now;
-      
-        console.log(`🕒 EVENT "${e.title}" - Start: ${start.toISOString()} | End: ${end.toISOString()} | Now: ${now.toISOString()} | Started: ${e.started} => ${inProgress ? '✅ EN COURS' : '❌ PAS EN COURS'}`);
-      
-        return inProgress;
+      forkJoin(banChecks).subscribe((allEvents: ExtendedEvent[]) => {
+        const nonTermines = allEvents.filter(event => {
+          const start = new Date(event.date_time);
+          const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
+          return end > now;
+        });
+
+        this.upcomingEvents = nonTermines.filter(e => new Date(e.date_time) > now);
+        this.ongoingEvents = nonTermines.filter(e => {
+          const start = new Date(e.date_time);
+          const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
+          return e.started && start <= now && end > now;
+        });
+        this.eventsToStart = nonTermines.filter(e => {
+          const eventTime = new Date(e.date_time);
+          const diffInMs = eventTime.getTime() - now.getTime();
+          return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
+        });
+
+        // Filtres
+        if (this.selectedGames.length && !this.selectedGames.includes('ALL')) {
+          this.upcomingEvents = this.upcomingEvents.filter(e => {
+            const gameKey = this.gameService.getGameKeyFromTitle(e.title);
+            return this.selectedGames.includes(gameKey);
+          });
+          this.ongoingEvents = this.ongoingEvents.filter(e => {
+            const gameKey = this.gameService.getGameKeyFromTitle(e.title);
+            return this.selectedGames.includes(gameKey);
+          });
+        }
+        
+
+        if (this.selectedGenres.length && !this.selectedGenres.includes('ALL')) {
+          this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.gameService.getGenre(e.title.toLowerCase())));
+          this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGenres.includes(this.gameService.getGenre(e.title.toLowerCase())));
+        }
       });
-      
-      
-      
-
-      this.eventsToStart = nonTermines.filter(e => {
-        const eventTime = new Date(e.date_time);
-        const diffInMs = eventTime.getTime() - now.getTime();
-        return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
-      });
-
-      if (this.selectedGames && this.selectedGames.length > 0 && !this.selectedGames.includes('ALL')) {
-        this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGames.includes(e.title));
-        this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGames.includes(e.title));
-      }
-
-      if (this.selectedGenres && this.selectedGenres.length > 0 && !this.selectedGenres.includes('ALL')) {
-        this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
-        this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGenres.includes(this.GameGenres[e.title.toLowerCase()]));
-      }
     });
 
     if (this.isAdmin) {
       this.eventService.getEvents('pending').subscribe((events: Event[]) => {
-        this.pendingEvents = events;
+        this.pendingEvents = events.map(e => ({
+          ...e,
+          images: this.gameService.getGame(e.title.toLowerCase())?.image
+        })) as ExtendedEvent[];
       });
     }
   }
@@ -203,6 +214,36 @@ export class EventsComponent implements OnInit {
         this.snackBar.open("Erreur lors du démarrage de l'événement.", "Fermer", { duration: 3000 });
       }
     });
+  }
+
+  loadFavorites(): void {
+    this.favoritesService.getFavoritesByUser().subscribe({
+      next: (res) => (this.favorites = res.map(game => game.toLowerCase())),
+      error: () => (this.favorites = [])
+    });
+  }
+
+  toggleFavorite(event: Event): void {
+    const gameKey = event.title.toLowerCase();
+    const isFav = this.favorites.includes(gameKey);
+
+    const obs = isFav
+      ? this.favoritesService.removeFavorite(gameKey)
+      : this.favoritesService.addFavorite(event.id);
+
+    obs.subscribe({
+      next: () => {
+        if (isFav) {
+          this.favorites = this.favorites.filter(key => key !== gameKey);
+        } else {
+          this.favorites.push(gameKey);
+        }
+      }
+    });
+  }
+
+  isFavorite(gameKey: string): boolean {
+    return this.favorites.includes(gameKey.toLowerCase());
   }
 
   applyFilter() {
@@ -256,15 +297,34 @@ export class EventsComponent implements OnInit {
     return new Date(dateTime) <= new Date();
   }
 
-  joinEvent(eventId: number) {
-    this.eventService.joinEvent(eventId).subscribe({
+  isUserBanned(event: ExtendedEvent): boolean {
+    return event.isBanned === true || event.isGameBanned === true;
+  }
+
+  joinEvent(event: ExtendedEvent) {
+    if (this.isUserBanned(event)) {
+      this.snackBar.open('Vous êtes banni de cet événement ou de ce jeu.', 'Fermer', { duration: 4000 });
+      return;
+    }
+
+    if (!this.userId) return;
+
+    const gameKey = event.title.toLowerCase();
+
+    this.eventService.joinEvent(event.id, gameKey, this.userId).subscribe({
       next: () => {
         this.snackBar.open('Inscription réussie !', 'Fermer', { duration: 3000 });
         this.loadEvents();
       },
       error: (err) => {
-        if (err.status === 409) {
+        if (err.message === 'Vous êtes banni de ce jeu. Impossible de rejoindre l\'événement.') {
+          this.snackBar.open(err.message, 'Fermer', { duration: 4000 });
+        } else if (err.message === 'Vous êtes banni de cet événement.') {
+          this.snackBar.open(err.message, 'Fermer', { duration: 4000 });
+        } else if (err.status === 409) {
           this.snackBar.open('Déjà inscrit à cet événement.', 'Fermer', { duration: 3000 });
+        } else {
+          this.snackBar.open('Erreur lors de l’inscription.', 'Fermer', { duration: 3000 });
         }
       }
     });
