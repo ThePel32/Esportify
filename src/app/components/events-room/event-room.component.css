@@ -133,6 +133,21 @@ html, body {
   color: #f2d974;
 }
 
+.join-action-button {
+  background-color: #7A8024;
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.join-action-button:hover {
+  background-color: #5e661e;
+}
+
+
 /* Score Section */
 .score-section {
   margin-top: 2rem;

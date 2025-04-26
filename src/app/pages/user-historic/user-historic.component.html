@@ -7,13 +7,26 @@
           *ngIf="gameService.getGameImage(gameService.getGameKeyFromTitle(event.title))"
           [src]="gameService.getGameImage(gameService.getGameKeyFromTitle(event.title))"
           alt="{{ event.title }}">
-        <mat-card-content>
-          <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
-          <p><strong>Durée :</strong> {{ event.duration }}h</p>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Détails</button>
-        </mat-card-actions>
+          <mat-card-content>
+            <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+            <p><strong>Durée :</strong> {{ event.duration }}h</p>
+          
+            
+          </mat-card-content>
+          
+          <div *ngIf="event.userScore?.result">
+            <span 
+              [ngClass]="{
+                'result-win': event.userScore.result === 'win',
+                'result-lose': event.userScore.result === 'lose'
+              }"
+            >
+              {{ event.userScore.result === 'win' ? '🏆 Gagné' : '💀 Perdu' }}
+            </span>
+          </div>
+          <mat-card-actions>
+            <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Détails</button>
+          </mat-card-actions>
       </mat-card>
     </div>
   </div>
@@ -40,7 +53,7 @@
 
 <div class="filters-container">
   <mat-form-field appearance="fill">
-    <mat-label>Filtrer par jeu</mat-label>
+    <mat-label>jeu</mat-label>
     <mat-select [(ngModel)]="selectedGames" (selectionChange)="applyFilter()" multiple>
       <mat-option *ngFor="let game of gamesList" [value]="game[0]">
         {{ game[1].name }}
@@ -49,13 +62,23 @@
   </mat-form-field>
 
   <mat-form-field appearance="fill">
-    <mat-label>Filtrer par genre</mat-label>
+    <mat-label>genre</mat-label>
     <mat-select [(ngModel)]="selectedGenres" (selectionChange)="applyFilter()" multiple>
       <mat-option *ngFor="let genre of uniqueGenres()" [value]="genre">
         {{ genre }}
       </mat-option>
     </mat-select>
   </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Filtrer par résultat</mat-label>
+    <mat-select [(ngModel)]="selectedResult" (selectionChange)="applyFilter()">
+      <mat-option value="all">Tous</mat-option>
+      <mat-option value="win">🏆 Gagné</mat-option>
+      <mat-option value="lose">💀 Perdu</mat-option>
+    </mat-select>
+  </mat-form-field>
+  
 
   <mat-checkbox [(ngModel)]="onlyFavorites" (change)="applyFilter()">
     ❤️ Favoris uniquement

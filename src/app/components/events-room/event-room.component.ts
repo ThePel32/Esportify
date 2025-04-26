@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../service/event.service';
 import { AuthService } from '../../service/auth.service';
@@ -15,15 +15,20 @@ import { GameService } from '../../service/game.service';
 import { FavoritesService } from '../../service/favorites.service';
 import { MatIconModule } from '@angular/material/icon';
 
+type ExtendedScore = Score & {
+  displayScore?: string;
+};
+
+
 @Component({
   selector: 'app-event-room',
   standalone: true,
   templateUrl: './event-room.component.html',
   styleUrls: ['./event-room.component.css'],
   imports: [
-    CommonModule, 
-    FormsModule, 
-    NgIf, 
+    CommonModule,
+    FormsModule,
+    NgIf,
     NgFor,
     MatIconModule,
   ]
@@ -38,9 +43,9 @@ export class EventRoomComponent implements OnInit {
   isOrganizer = false;
   gameType = '';
   score: any = {};
-  showScoreOverlay = false;
+  // showScoreOverlay = false;
   userScore: Score | null = null;
-  topScores: Score[] = [];
+  topScores: ExtendedScore[] = [];
   eventScores: any[] = [];
   isFavorite: boolean = false;
   gameKey: string = '';
@@ -55,12 +60,12 @@ export class EventRoomComponent implements OnInit {
     private snackBar: MatSnackBar,
     private gameService: GameService,
     private favoritesService: FavoritesService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.eventId = Number(this.route.snapshot.paramMap.get('id'));
     this.userId = this.authService.userProfile.value?.id || null;
-    
 
     if (this.userId) {
       this.eventService.isUserBanned(this.eventId, this.userId).subscribe({
@@ -86,8 +91,10 @@ export class EventRoomComponent implements OnInit {
     this.isOrganizer = this.authService.hasRole('organizer');
     this.loadEvent();
     this.loadScores();
+    this.loadTopScores(() => {
     this.loadUserScore();
-    this.loadTopScores();
+    });
+
   }
 
   loadFavoriteStatus(): void {
@@ -100,12 +107,12 @@ export class EventRoomComponent implements OnInit {
       }
     });
   }
-  
+
   toggleFavorite(): void {
     const obs = this.isFavorite
       ? this.favoritesService.removeFavorite(this.gameKey)
       : this.favoritesService.addFavorite(this.eventId);
-  
+
     obs.subscribe({
       next: () => {
         this.isFavorite = !this.isFavorite;
@@ -120,26 +127,103 @@ export class EventRoomComponent implements OnInit {
       }
     });
   }
-  
 
   loadEvent(): void {
     this.eventService.getEventById(this.eventId).subscribe({
       next: (event) => {
-
         this.eventData = {
           ...event,
           participants: event.participants || [],
           organizer_name: event.organizer_name || 'Inconnu'
         };
+        this.cdr.detectChanges();
 
         this.gameType = event.title.toLowerCase();
         this.gameKey = this.gameType;
         this.eventData.images = this.gameService.getGameImage(this.gameType);
         this.loadFavoriteStatus();
         this.isLoading = false;
-        
+  
+        console.log('🚀 Participants:', this.eventData.participants);
+        console.log('🧪 Utilisateur connecté :', this.userId);
+        console.log('🧪 A-t-il rejoint ? =>', this.hasUserJoined());
+        console.log('🧪 Événement démarré ? =>', this.isEventStarted());
       }
     });
+    this.loadTopScores();
+  }
+  
+
+  isStarted(): boolean {
+    return !!this.eventData?.started;
+  }
+
+  isUserRegistered(): boolean {
+    return this.eventData?.participants?.some(p => p.id === this.userId) || false;
+  }
+
+  hasUserJoined(): boolean {
+    return this.eventData?.participants?.some(p => p.id === this.userId && !!p.has_joined) || false;
+  }
+
+  isEventStarted(): boolean {
+    const now = new Date();
+    const start = new Date(this.eventData?.date_time);
+    return now >= start && (this.eventData.started ?? false);
+  }
+
+  joinEvent(): void {
+    if (!this.userId || !this.eventData) return;
+
+    this.eventService.joinEvent(this.eventId, this.gameKey, this.userId).subscribe(() => {
+      this.snackBar.open('Inscription réussie !', 'Fermer', { duration: 3000 });
+      this.loadEvent();
+    });
+  }
+
+  leaveEvent(): void {
+    this.eventService.leaveEvent(this.eventId).subscribe(() => {
+      this.snackBar.open('Désinscription réussie !', 'Fermer', { duration: 3000 });
+      this.loadEvent();
+    });
+  }
+
+  confirmPresence(): void {
+    if (!this.eventId || !this.userId) return;
+
+    this.eventService.confirmJoin(this.eventId).subscribe(() => {
+      this.snackBar.open('Présence confirmée !', 'Fermer', { duration: 3000 });
+
+      this.eventService.getEventById(this.eventId).subscribe((updatedEvent) => {
+        this.eventData = {
+          ...updatedEvent,
+          participants: updatedEvent.participants || [],
+          organizer_name: updatedEvent.organizer_name || 'Inconnu',
+          images: this.gameService.getGameImage(updatedEvent.title.toLowerCase())
+        };
+        this.cdr.detectChanges();
+      });
+    });
+  }
+
+  getActionLabel(): string {
+    if (!this.eventData || !this.userId) return '';
+
+    if (!this.isEventStarted()) {
+      return this.isUserRegistered() ? 'Se désinscrire' : "S'inscrire";
+    } else {
+      return this.hasUserJoined() ? 'Rejoint !' : 'Rejoindre';
+    }
+  }
+
+  handleActionClick(): void {
+    if (!this.eventData || !this.userId) return;
+
+    if (!this.isEventStarted()) {
+      this.isUserRegistered() ? this.leaveEvent() : this.joinEvent();
+    } else {
+      if (!this.hasUserJoined()) this.confirmPresence();
+    }
   }
 
   loadScores(): void {
@@ -151,71 +235,153 @@ export class EventRoomComponent implements OnInit {
         console.error('Erreur lors du chargement des scores :', err);
       }
     });
+    this.loadEvent();
   }
 
   loadUserScore(): void {
     if (!this.userId) return;
+  
     this.scoreService.getScoreForUser(this.eventId, this.userId).subscribe({
       next: (score) => {
         if (!score) {
           this.userScore = null;
           return;
         }
-
+  
         const metadata = typeof score.metadata === 'string' ? JSON.parse(score.metadata) : score.metadata;
-        this.userScore = {
+        const rawScore = this.getMainScoreFromMetadata(metadata);
+        const gameKey = this.gameType;
+  
+        const userScore: Score = {
           ...score,
           metadata,
-          score: this.getMainScoreFromMetadata(metadata)
-        } as Score;
+          score: rawScore
+        };
+  
+        let result: 'win' | 'lose' = 'lose';
+  
+        if (['fifa', 'rocketleague', 'cs2', 'valorant'].includes(gameKey)) {
+          const playerScore = parseInt(metadata.score, 10) || 0;
+          const opponentScore = parseInt(metadata.score_opponent, 10) || 0;
+          result = playerScore > opponentScore ? 'win' : 'lose';
+  
+        } else if (gameKey === 'pubg') {
+          result = metadata.place === 1 ? 'win' : 'lose';
+  
+        } else if (gameKey === 'supermeatboy') {
+          const myTime = parseInt(userScore.score as any, 10);
+          const best = Math.min(...this.topScores.map(s => parseInt(s.score as any, 10)));
+          result = myTime <= best ? 'win' : 'lose';
+  
+        } else if (gameKey === 'lol') {
+          const myScore = (metadata.kills || 0) + (metadata.assists || 0) - (metadata.deaths || 0);
+          const best = Math.max(...this.topScores.map(s => {
+            const m = s.metadata;
+            return (m.kills || 0) + (m.assists || 0) - (m.deaths || 0);
+          }));
+          result = myScore >= best ? 'win' : 'lose';
+  
+        } else if (gameKey === 'balatro') {
+          const best = Math.max(...this.topScores.map(s => s.score || 0));
+          result = userScore.score >= best ? 'win' : 'lose';
+          
+        } else if (gameKey === 'starcraft2') {
+          result = metadata.win ? 'win' : 'lose';
+        }
+        
+  
+        this.userScore = { ...userScore, result };
       },
       error: (err) => {
         console.error('Erreur récupération score utilisateur', err);
       }
     });
+    this.loadEvent();
   }
+  
 
-  loadTopScores(): void {
+
+  loadTopScores(callback?: () => void): void {
     this.scoreService.getTopScoresForEvent(this.eventId).subscribe({
       next: (scores) => {
-        this.topScores = scores
-          .map((s: any) => {
-            const metadata = typeof s.metadata === 'string' ? JSON.parse(s.metadata) : s.metadata;
-            return {
-              ...s,
-              metadata,
-              score: this.getMainScoreFromMetadata(metadata)
-            } as Score;
-          })
-          .sort((a, b) => {
-            if (['cs2', 'valorant'].includes(this.gameType)) {
-              return (b.metadata.roundsWon || 0) - (a.metadata.roundsWon || 0);
-            }
-            return (b.score || 0) - (a.score || 0);
-          });
+        const type = this.gameType;
+        const parsed: ExtendedScore[] = scores.map((s: any) => {
+          const metadata = typeof s.metadata === 'string' ? JSON.parse(s.metadata) : s.metadata;
+          const scoreValue = this.getMainScoreFromMetadata(metadata);
+          let displayScore = '';
+  
+          if (type === 'supermeatboy') displayScore = this.formatSecondsToTime(scoreValue);
+          else if (type === 'lol') displayScore = `${metadata.kills || 0}/${metadata.assists || 0}/${metadata.deaths || 0}`;
+          else if (['fifa', 'rocketleague', 'cs2', 'valorant'].includes(type)) displayScore = `${metadata.score || 0} - ${metadata.score_opponent || 0}`;
+          else if (type === 'pubg') displayScore = `Place : ${metadata.place || '?'}`;
+          else if (type === 'balatro') displayScore = `${metadata.points || 0} pts`;
+          else displayScore = scoreValue.toString();
+  
+          return { ...s, metadata, score: scoreValue, displayScore };
+        });
+  
+        this.topScores = parsed.sort((a, b) => {
+          if (['cs2', 'valorant'].includes(type)) return (b.metadata.roundsWon || 0) - (a.metadata.roundsWon || 0);
+          if (type === 'starcraft2') return (b.metadata.win ? 1 : 0) - (a.metadata.win ? 1 : 0);
+          if (type === 'pubg') return (a.metadata.place || 100) - (b.metadata.place || 100);
+          if (type === 'supermeatboy') return a.score - b.score;
+          if (type === 'lol') {
+            const scoreA = (a.metadata.kills || 0) + (a.metadata.assists || 0) - (a.metadata.deaths || 0);
+            const scoreB = (b.metadata.kills || 0) + (b.metadata.assists || 0) - (b.metadata.deaths || 0);
+            return scoreB - scoreA;
+          }
+          return (b.score || 0) - (a.score || 0);
+        });
+  
+        if (callback) callback();
       },
       error: (err) => {
         console.error('Erreur récupération top scores', err);
+        if (callback) callback(); // même si erreur, tente quand même
       }
     });
   }
+  
+
+
 
   getMainScoreFromMetadata(metadata: any): number {
     const type = this.gameType;
+  
     if (['cs2', 'valorant'].includes(type)) return metadata.roundsWon || 0;
+  
     if (type === 'pubg') return metadata.place || 100;
+  
     if (['fifa', 'rocketleague'].includes(type)) {
-      const parts = (metadata.score || '').split('-');
-      return parseInt(parts[0], 10) || 0;
+      return parseInt(metadata.score, 10) || 0;
     }
+  
     if (type === 'supermeatboy') {
       const [min, sec] = (metadata.time || '0:0').split(':').map(Number);
       return (min || 0) * 60 + (sec || 0);
     }
-    if (type === 'lol') return metadata.kills || 0;
+  
+    if (type === 'lol') {
+      const kills = metadata.kills || 0;
+      const assists = metadata.assists || 0;
+      const deaths = metadata.deaths || 0;
+      return kills + assists - deaths;
+    }
+  
     if (type === 'balatro') return metadata.points || 0;
+    if (type === 'starcraft2') return metadata.win ? 1 : 0;
+
+  
     return 0;
   }
+  
+  formatSecondsToTime(seconds: number): string {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  }
+  
+  
 
   getGameType(): string {
     return this.gameType;
@@ -246,6 +412,13 @@ export class EventRoomComponent implements OnInit {
     });
   }
 
+  allScoresEntered(): boolean {
+    if (!this.eventData || !this.eventData.participants) return false;
+    const participantIds = this.eventData.participants.map(p => p.id);
+    const scoredUserIds = this.eventScores.map(s => s.user_id);
+    return participantIds.every(id => scoredUserIds.includes(id));
+  }
+
   openParticipantMenu(participant: any): void {
     const dialogRef = this.dialog.open(ParticipantActionDialogComponent, {
       width: '300px',
@@ -269,15 +442,37 @@ export class EventRoomComponent implements OnInit {
     });
   }
 
-  openScoreOverlay(): void {
-    this.showScoreOverlay = true;
-  }
+  // openScoreOverlay(): void {
+  //   this.showScoreOverlay = true;
+  // }
 
-  closeScoreOverlay(): void {
-    this.showScoreOverlay = false;
-  }
+  // closeScoreOverlay(): void {
+  //   this.showScoreOverlay = false;
+  // }
 
-  submitScore(): void {
-    this.closeScoreOverlay();
+  // submitScore(): void {
+  //   this.closeScoreOverlay();
+  // }
+
+  getOpponentReferenceScore(): number {
+    return 0;
+  }
+  
+  isBestTime(myTime: number): boolean {
+    if (!this.allScoresEntered()) return false;
+    return this.topScores.length > 0 && this.topScores[0].user_id === this.userId;
+  }
+  
+  isHighestScore(myScore: number): boolean {
+    if (!this.allScoresEntered()) return false;
+    return this.topScores.length > 0 && this.topScores[0].user_id === this.userId;
+  }
+  
+  isBestLoLScore(metadata: any): boolean {
+    if (!this.allScoresEntered()) return false;
+    const myScore = (metadata.kills || 0) + (metadata.assists || 0) - (metadata.deaths || 0);
+    const topScore = this.topScores[0];
+    const top = (topScore?.metadata?.kills || 0) + (topScore?.metadata?.assists || 0) - (topScore?.metadata?.deaths || 0);
+    return topScore?.user_id === this.userId && myScore >= top;
   }
 }

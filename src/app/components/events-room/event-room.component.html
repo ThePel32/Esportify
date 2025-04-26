@@ -3,10 +3,15 @@
     <div class="event-info">
       <div class="header">
         <div class="image-wrapper">
-          <button class="back-button" (click)="router.navigate(['/events'], { queryParams: { tab: 'liste' } })">
+          <button *ngIf="isOver(); else ongoingEvent" class="back-button" (click)="router.navigate(['/historic'], { queryParams: { tab: 'mes' } })">
             <mat-icon class="back-icon">arrow_back</mat-icon>
-          </button>          
-          
+          </button>
+
+          <ng-template #ongoingEvent>
+            <button class="back-button" (click)="router.navigate(['/events'], { queryParams: { tab: 'liste' } })">
+              <mat-icon class="back-icon">arrow_back</mat-icon>
+            </button>
+          </ng-template>
           <button class="favorite-btn" (click)="toggleFavorite()" [ngClass]="{ active: isFavorite }" aria-label="Favori">
             <mat-icon>{{ isFavorite ? 'favorite' : 'favorite_border' }}</mat-icon>
           </button>
@@ -40,6 +45,7 @@
               <ul>
                 <li *ngFor="let p of eventData.participants" (click)="openParticipantMenu(p)" class="clickable-participant">
                   {{ p.username }}
+                  <mat-icon *ngIf="p.has_joined" class="presence-icon" style="color: green">check-circle</mat-icon>
                 </li>
               </ul>
             </span>
@@ -47,25 +53,71 @@
         </div>
         
       </div>
+      <div class="action-buttons" *ngIf="!isOver() && !isBanned">
+        <ng-container *ngIf="!isEventStarted(); else startedBlock">
+          <button
+            *ngIf="!isUserRegistered()"
+            class="join-action-button"
+            (click)="joinEvent()"
+          >
+            S'inscrire
+          </button>
+      
+          <button
+            *ngIf="isUserRegistered()"
+            class="join-action-button"
+            (click)="leaveEvent()"
+          >
+            Se désinscrire
+          </button>
+        </ng-container>
+        <ng-template #startedBlock>
+          <ng-container *ngIf="isUserRegistered() && !hasUserJoined() && isEventStarted()">
+            <button class="join-action-button" (click)="confirmPresence()">Rejoindre</button>
+          </ng-container>
+          <ng-container *ngIf="isUserRegistered() && hasUserJoined()">
+            <span class="already-joined">Rejoint !</span>
+          </ng-container>
+        </ng-template>
+        
+      </div>
 
       <div class="score-section" *ngIf="isOver()">
-        <button class="scoreButton" *ngIf="canEnterScore" (click)="openScoreDialog()">Entrer un score</button>
-
+        <button class="scoreButton" *ngIf="canEnterScore && !allScoresEntered()" (click)="openScoreDialog()">
+          Entrer un score
+        </button>  
         <div class="score-display">
           <div class="score-left">
             <h3>Ton score</h3>
             <ng-container *ngIf="userScore; else noScore">
               <p *ngIf="userScore.metadata?.kills"><strong>Kills :</strong> {{ userScore.metadata.kills }}</p>
-              <p *ngIf="userScore.metadata?.score">
+            
+              <p *ngIf="getGameType() === 'starcraft2'">
+                <span 
+                  [ngClass]="{ 'result-win': userScore.result === 'win', 'result-lose': userScore.result === 'lose' }">
+                </span>
+              </p>
+              
+
+              <p *ngIf="getGameType() === 'balatro' && userScore.score">
+                <strong>Points :</strong> {{ userScore.score }} pts
+              </p>
+              
+              <p *ngIf="getGameType() === 'supermeatboy' && userScore.score">
+                <strong>Temps :</strong> {{ formatSecondsToTime(userScore.score) }}
+              </p>
+            
+              <p *ngIf="getGameType() !== 'supermeatboy' && userScore.metadata?.score">
                 <strong>Score :</strong> {{ userScore.metadata.score }} - {{ userScore.metadata.score_opponent }}
               </p>
+            
               <p>
-                <strong>Résultat :</strong>
                 <span [ngClass]="{ 'result-win': userScore.result === 'win', 'result-lose': userScore.result === 'lose' }">
                   {{ userScore.result === 'win' ? 'Gagné' : 'Perdu' }}
                 </span>
               </p>
             </ng-container>
+            
             <ng-template #noScore><p>Aucun score enregistré.</p></ng-template>
           </div>
 
@@ -74,8 +126,15 @@
             <ul>
               <li *ngFor="let s of topScores">
                 {{ s.username }} :
-                <span *ngIf="s.metadata?.score">{{ s.metadata.score }} - {{ s.metadata.score_opponent }}</span>
-                <span *ngIf="!s.metadata?.score">{{ s.score }}</span>
+                <span *ngIf="gameType === 'starcraft2'">
+                  {{ s.metadata?.win ? 'Victoire' : 'Défaite' }}
+                </span>
+                <span *ngIf="gameType === 'supermeatboy'">
+                  {{ formatSecondsToTime(s.score) }}
+                </span>
+                <span *ngIf="gameType !== 'starcraft2' && gameType !== 'supermeatboy'">
+                  {{ s.displayScore || s.score }}
+                </span>
               </li>
             </ul>
           </div>
