@@ -17,6 +17,7 @@ html, body {
   background-color: #0f1121;
   display: flex;
   overflow: hidden;
+  height: calc(100vh - 64px - 40px);
 }
 
 .event-room {
@@ -82,7 +83,6 @@ html, body {
   color: rgb(245, 15, 134);
 }
 
-/* Details */
 .details-grid {
   display: flex;
   flex-direction: column;
@@ -148,7 +148,6 @@ html, body {
 }
 
 
-/* Score Section */
 .score-section {
   margin-top: 2rem;
   padding: 1rem;
@@ -212,7 +211,6 @@ html, body {
   font-weight: bold;
 }
 
-/* Chat */
 .chat-section {
   flex: 1;
   background-color: #242A36;
@@ -262,7 +260,6 @@ html, body {
   background-color: #5e661e;
 }
 
-/* Bannissement */
 .banned-wrapper {
   display: flex;
   justify-content: center;

@@ -20,6 +20,7 @@ import { map, catchError } from 'rxjs/operators';
 import { FavoritesService } from '../../service/favorites.service';
 import { MatIconModule } from '@angular/material/icon';
 import { GameService } from '../../service/game.service';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 type ExtendedEvent = Event & {
   isBanned?: boolean;
@@ -44,6 +45,7 @@ type ExtendedEvent = Event & {
     MatOptionModule,
     RouterModule,
     MatIconModule,
+    MatCheckboxModule
   ],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
@@ -60,6 +62,7 @@ export class EventsComponent implements OnInit {
   isAdmin: boolean = false;
   isOrganizer: boolean = false;
   hasJoined: boolean = false;
+  allEvents: ExtendedEvent[] = [];
 
   selectedGames: string[] = [];
   selectedGenres: string[] = [];
@@ -67,6 +70,7 @@ export class EventsComponent implements OnInit {
   gamesList: { key: string, name: string }[] = [];
 
   selectedTabIndex: number = 0;
+  selectedFavorites: boolean = false;
 
   constructor(
     private eventService: EventService,
@@ -120,23 +124,19 @@ export class EventsComponent implements OnInit {
 
   loadEvents() {
     const now = new Date();
-
+  
     this.eventService.getEvents('validated').subscribe((events: Event[]) => {
       const banChecks = events.map(e => {
         const gameKey = e.title.toLowerCase();
-
+  
         return forkJoin({
-          eventBan: this.eventService.isUserBanned(e.id, this.userId!).pipe(
-            catchError(() => of(false))
-          ),
-          gameBan: this.eventService.isUserBannedFromGame(gameKey, this.userId!).pipe(
-            catchError(() => of(false))
-          )
+          eventBan: this.eventService.isUserBanned(e.id, this.userId!).pipe(catchError(() => of(false))),
+          gameBan: this.eventService.isUserBannedFromGame(gameKey, this.userId!).pipe(catchError(() => of(false)))
         }).pipe(
           map(({ eventBan, gameBan }) => {
             const isBanned = typeof eventBan === 'object' ? eventBan.banned : eventBan;
             const isGameBanned = typeof gameBan === 'object' ? gameBan.banned : gameBan;
-
+  
             return {
               ...e,
               participants: e.participants || [],
@@ -147,46 +147,13 @@ export class EventsComponent implements OnInit {
           })
         );
       });
-
+  
       forkJoin(banChecks).subscribe((allEvents: ExtendedEvent[]) => {
-        const nonTermines = allEvents.filter(event => {
-          const start = new Date(event.date_time);
-          const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
-          return end > now;
-        });
-
-        this.upcomingEvents = nonTermines.filter(e => new Date(e.date_time) > now);
-        this.ongoingEvents = nonTermines.filter(e => {
-          const start = new Date(e.date_time);
-          const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
-          return e.started && start <= now && end > now;
-        });
-        this.eventsToStart = nonTermines.filter(e => {
-          const eventTime = new Date(e.date_time);
-          const diffInMs = eventTime.getTime() - now.getTime();
-          return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
-        });
-
-        // Filtres
-        if (this.selectedGames.length && !this.selectedGames.includes('ALL')) {
-          this.upcomingEvents = this.upcomingEvents.filter(e => {
-            const gameKey = this.gameService.getGameKeyFromTitle(e.title);
-            return this.selectedGames.includes(gameKey);
-          });
-          this.ongoingEvents = this.ongoingEvents.filter(e => {
-            const gameKey = this.gameService.getGameKeyFromTitle(e.title);
-            return this.selectedGames.includes(gameKey);
-          });
-        }
-        
-
-        if (this.selectedGenres.length && !this.selectedGenres.includes('ALL')) {
-          this.upcomingEvents = this.upcomingEvents.filter(e => this.selectedGenres.includes(this.gameService.getGenre(e.title.toLowerCase())));
-          this.ongoingEvents = this.ongoingEvents.filter(e => this.selectedGenres.includes(this.gameService.getGenre(e.title.toLowerCase())));
-        }
+        this.allEvents = allEvents;
+        this.filterEvents();
       });
     });
-
+  
     if (this.isAdmin) {
       this.eventService.getEvents('pending').subscribe((events: Event[]) => {
         this.pendingEvents = events.map(e => ({
@@ -197,6 +164,47 @@ export class EventsComponent implements OnInit {
     }
   }
 
+  filterEvents() {
+    const now = new Date();
+  
+    let filtered = this.allEvents.filter(event => {
+      const start = new Date(event.date_time);
+      const end = new Date(start.getTime() + event.duration * 60 * 60 * 1000);
+      return end > now;
+    });
+  
+    if (this.selectedGames.length && !this.selectedGames.includes('ALL')) {
+      filtered = filtered.filter(e => {
+        const gameKey = this.gameService.getGameKeyFromTitle(e.title);
+        return this.selectedGames.includes(gameKey);
+      });
+    }
+  
+    if (this.selectedGenres.length && !this.selectedGenres.includes('ALL')) {
+      filtered = filtered.filter(e => {
+        const genre = this.gameService.getGenre(e.title.toLowerCase());
+        return this.selectedGenres.includes(genre);
+      });
+    }
+  
+    if (this.selectedFavorites) {
+      filtered = filtered.filter(e => this.isFavorite(this.gameService.getGameKeyFromTitle(e.title)));
+    }
+  
+    this.upcomingEvents = filtered.filter(e => new Date(e.date_time) > now);
+    this.ongoingEvents = filtered.filter(e => {
+      const start = new Date(e.date_time);
+      const end = new Date(start.getTime() + e.duration * 60 * 60 * 1000);
+      return e.started && start <= now && end > now;
+    });
+  
+    this.eventsToStart = filtered.filter(e => {
+      const eventTime = new Date(e.date_time);
+      const diffInMs = eventTime.getTime() - now.getTime();
+      return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
+    });
+  }
+ 
   showStartButton(dateTime: string): boolean {
     const now = new Date();
     const start = new Date(dateTime);
@@ -247,7 +255,7 @@ export class EventsComponent implements OnInit {
   }
 
   applyFilter() {
-    this.loadEvents();
+    this.filterEvents();
   }
 
   getActionButtonType(event: Event): 'register' | 'join' | null {

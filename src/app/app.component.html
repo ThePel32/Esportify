@@ -1,28 +1,36 @@
 <mat-toolbar>
     <a href="/home" class="homeBtnNav">Esportify</a>
     <span *ngIf="isLoggedIn">Bonjour {{ pseudo }} !</span>
-    <a *ngIf="isLoggedIn" (click)="logout()" href="/home" class="btnNav">Deconnexion</a>
+    <a *ngIf="isLoggedIn" (click)="logout()" href="/home" class="btnNav">Déconnexion</a>
     <a *ngIf="!isLoggedIn" href="/connexion" class="btnNav">Connexion</a>
-</mat-toolbar>
-
-<mat-drawer-container>
-    <mat-drawer mode="side" opened>
+  </mat-toolbar>
+  
+  <div class="app-container">
+    <mat-drawer-container>
+      <mat-drawer mode="side" opened>
         <div class="sideNav">
-            <div class="menuNav">
-                <a href="/events" class="btnNav">Événements</a>
-                @if(isLoggedIn){
-                    <a href="/space" class="btnNav">Mon espace</a>
-                    <a href="/historic" class="btnNav">Historique</a>
-                }
-            </div>
-            <div class="contactBtn">
-                <a href="/contact" class="btnNav">Contact</a>
-            </div>
-        </div>        
-    </mat-drawer>
-    <mat-drawer-content>
-        <div class="main">
-            <router-outlet></router-outlet>
+          <div class="menuNav">
+            <a href="/events" class="btnNav">Événements</a>
+            @if(isLoggedIn){
+              <a href="/space" class="btnNav">Mon espace</a>
+              <a href="/historic" class="btnNav">Historique</a>
+            }
+          </div>
+          <div class="contactBtn">
+            <a href="/contact" class="btnNav">Contact</a>
+          </div>
         </div>
-    </mat-drawer-content>
-</mat-drawer-container>
+      </mat-drawer>
+      <mat-drawer-content>
+        <div class="main">
+          <router-outlet></router-outlet>
+        </div>
+      </mat-drawer-content>
+    </mat-drawer-container>
+  </div>
+  
+  <footer class="footer">
+    © Esportify - 2025. Tous droits réservés
+  </footer>
+  
+  
