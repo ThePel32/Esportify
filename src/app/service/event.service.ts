@@ -172,7 +172,16 @@ export class EventService {
         return this.http.post(`${this.apiUrl.replace('/events', '')}/event-bans/${eventId}/ban/${userId}`, {}, { headers: this.getAuthHeaders() });
     }
     
+    getMessages(eventId: number) {
+        return this.http.get<any[]>(`http://localhost:3000/api/chat/messages/${eventId}`, {
+            headers: this.getAuthHeaders()
+        });
+    }
     
+
+    saveMessage(messageData: any) {
+        return this.http.post('/api/chat/send-message', messageData, { headers: this.getAuthHeaders() });
+    }
 
     private getAuthHeaders(): HttpHeaders {
         const token = localStorage.getItem('token');

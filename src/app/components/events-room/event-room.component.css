@@ -87,9 +87,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  background-color: #1b1f2e;
+  background-color: #0f1121;
   padding: 1rem;
-  border-radius: 8px;
   font-size: 1rem;
   line-height: 1.5;
   flex: 1;
@@ -100,14 +99,13 @@ html, body {
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 0.5rem;
-  border-bottom: 1px solid #2c3144;
   padding-bottom: 0.5rem;
 }
 
 .label {
   min-width: 120px;
   font-weight: bold;
-  color: #f2d974;
+  color: #7A8024;
   flex-shrink: 0;
 }
 
@@ -212,53 +210,59 @@ html, body {
 }
 
 .chat-section {
-  flex: 1;
-  background-color: #242A36;
-  padding: 1rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  max-height: 100%;
+  background-color: #242A36;
+  padding: 10px;
+  height: 100%;
+  width: 60vh;
+  box-sizing: border-box;
 }
 
-.chat-section h3 {
-  font-size: 1.4rem;
-  margin-bottom: 1rem;
+.username{
+  color:#7A8024;
 }
 
 .chat-messages {
-  flex-grow: 1;
+  flex: 1;
   overflow-y: auto;
-  margin-bottom: 1rem;
-  padding-right: 0.5rem;
+  background-color: #0f1121;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chat-message {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: white;
 }
 
 .chat-input {
   display: flex;
-  gap: 0.5rem;
-  align-items: center;
+  gap: 10px;
 }
 
-.chat-input input[type="text"] {
-  flex-grow: 1;
-  padding: 0.4rem 0.6rem;
-  border: none;
-  background-color: #1f2230;
+.chat-input input {
+  flex: 1;
+  padding: 8px;
+  background-color: #1e1e2f;
   color: white;
 }
 
 .chat-input button {
+  padding: 8px 16px;
   background-color: #7A8024;
   color: white;
-  font-weight: bold;
   border: none;
-  padding: 0.5rem 1rem;
   cursor: pointer;
 }
 
 .chat-input button:hover {
-  background-color: #5e661e;
+  background-color: #4d5021;
 }
+
 
 .banned-wrapper {
   display: flex;

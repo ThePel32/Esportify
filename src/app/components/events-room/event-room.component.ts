@@ -1,3 +1,4 @@
+import { SocketService } from './../../service/socket.service';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EventService } from '../../service/event.service';
@@ -14,6 +15,8 @@ import { Score } from '../../models/score.model';
 import { GameService } from '../../service/game.service';
 import { FavoritesService } from '../../service/favorites.service';
 import { MatIconModule } from '@angular/material/icon';
+import { ViewChild, ElementRef } from '@angular/core';
+
 
 type ExtendedScore = Score & {
   displayScore?: string;
@@ -43,12 +46,16 @@ export class EventRoomComponent implements OnInit {
   isOrganizer = false;
   gameType = '';
   score: any = {};
-  // showScoreOverlay = false;
   userScore: Score | null = null;
   topScores: ExtendedScore[] = [];
   eventScores: any[] = [];
   isFavorite: boolean = false;
   gameKey: string = '';
+  messages: { user: string; content: string }[] = [];
+  newMessage: string = '';
+
+  @ViewChild('chatMessagesContainer') chatMessagesContainer!: ElementRef;
+
 
   constructor(
     private route: ActivatedRoute,
@@ -60,13 +67,27 @@ export class EventRoomComponent implements OnInit {
     private snackBar: MatSnackBar,
     private gameService: GameService,
     private favoritesService: FavoritesService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private SocketService: SocketService
   ) {}
 
   ngOnInit(): void {
     this.eventId = Number(this.route.snapshot.paramMap.get('id'));
     this.userId = this.authService.userProfile.value?.id || null;
+  
+    this.SocketService.connect();
+    this.loadMessages();
 
+    this.SocketService.onReceiveMessage((message: any) => {
+      this.messages.push(message);
+      this.scrollToBottom();
+    });
+    
+  
+    window.addEventListener('beforeunload', () => {
+      this.SocketService.disconnect();
+    });
+  
     if (this.userId) {
       this.eventService.isUserBanned(this.eventId, this.userId).subscribe({
         next: (res) => {
@@ -84,6 +105,10 @@ export class EventRoomComponent implements OnInit {
         }
       });
     }
+  }
+
+  ngOnDestroy(): void {
+    this.SocketService.disconnect();
   }
 
   initRoom(): void {
@@ -298,8 +323,6 @@ export class EventRoomComponent implements OnInit {
     });
     this.loadEvent();
   }
-  
-
 
   loadTopScores(callback?: () => void): void {
     this.scoreService.getTopScoresForEvent(this.eventId).subscribe({
@@ -337,13 +360,10 @@ export class EventRoomComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erreur récupération top scores', err);
-        if (callback) callback(); // même si erreur, tente quand même
+        if (callback) callback();
       }
     });
   }
-  
-
-
 
   getMainScoreFromMetadata(metadata: any): number {
     const type = this.gameType;
@@ -442,18 +462,6 @@ export class EventRoomComponent implements OnInit {
     });
   }
 
-  // openScoreOverlay(): void {
-  //   this.showScoreOverlay = true;
-  // }
-
-  // closeScoreOverlay(): void {
-  //   this.showScoreOverlay = false;
-  // }
-
-  // submitScore(): void {
-  //   this.closeScoreOverlay();
-  // }
-
   getOpponentReferenceScore(): number {
     return 0;
   }
@@ -475,4 +483,48 @@ export class EventRoomComponent implements OnInit {
     const top = (topScore?.metadata?.kills || 0) + (topScore?.metadata?.assists || 0) - (topScore?.metadata?.deaths || 0);
     return topScore?.user_id === this.userId && myScore >= top;
   }
+
+  loadMessages(): void {
+    this.messages = [];
+  
+    this.eventService.getMessages(this.eventId).subscribe({
+      next: (messages: any[]) => {
+        this.messages = messages.map(m => ({
+          user: m.username,
+          content: m.content,
+          send_at: m.send_at
+        }));
+        this.scrollToBottom();
+      },
+      error: (err) => {
+        console.error('Erreur chargement messages', err);
+      }
+    });
+  }
+  
+
+  sendMessage(): void {
+    if (this.newMessage.trim()) {
+      const messageData = {
+        event_id: this.eventId,
+        user_id: this.userId,
+        user: this.authService.userProfile.value?.username,
+        content: this.newMessage.trim()
+      };
+      this.SocketService.sendMessage(messageData);
+      this.newMessage = '';
+      this.scrollToBottom();
+    }
+  }
+  
+  scrollToBottom(): void {
+    setTimeout(() => {
+      if (this.chatMessagesContainer) {
+        this.chatMessagesContainer.nativeElement.scrollTop = this.chatMessagesContainer.nativeElement.scrollHeight;
+      }
+    }, 0);
+  }
+  
+  
+  
 }

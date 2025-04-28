@@ -51,7 +51,6 @@
             </span>
           </div>
         </div>
-        
       </div>
       <div class="action-buttons" *ngIf="!isOver() && !isBanned">
         <ng-container *ngIf="!isEventStarted(); else startedBlock">
@@ -79,7 +78,6 @@
             <span class="already-joined">Rejoint !</span>
           </ng-container>
         </ng-template>
-        
       </div>
 
       <div class="score-section" *ngIf="isOver()">
@@ -144,13 +142,24 @@
 
     <div class="chat-section">
       <h3>Chat</h3>
-      <div class="chat-messages"><p>(À intégrer avec socket.io)</p></div>
-      <div class="chat-input">
-        <input type="text" placeholder="Écris ton message..." />
-        <button>Envoyer</button>
+    
+      <div class="chat-messages" #chatMessagesContainer>
+        <div *ngFor="let msg of messages" class="chat-message">
+          <strong class="username">{{ msg.user }} : </strong> <span class="message-text">{{ msg.content }}</span>
+        </div>
+      </div>
+    
+      <div class="chat-input" *ngIf="!isOver() && !isBanned">
+        <input 
+          type="text" 
+          [(ngModel)]="newMessage"
+          (keydown.enter)="sendMessage()"
+          placeholder="Écris ton message..."
+        />
+        <button (click)="sendMessage()">Envoyer</button>
       </div>
     </div>
-  </div>
+    
 
   <div *ngIf="isBanned" class="banned-wrapper">
     <div class="banned-message">Vous avez été banni de cet événement.</div>
