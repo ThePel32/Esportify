@@ -25,8 +25,14 @@ Event.create = (newEvent, result) => {
 };
 
 Event.findById = (id, result) => {
-    sql.query("SELECT * FROM events WHERE id = ?", [id], (err, res) => {
+    sql.query(`
+        SELECT e.*, u.username AS organizer_name
+        FROM events e
+        LEFT JOIN users u ON e.organizer_id = u.id
+        WHERE e.id = ?
+    `, [id], (err, res) => {
         if (err) {
+            console.error("❌ Erreur SQL dans findById :", err);
             result(err, null);
             return;
         }

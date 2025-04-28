@@ -86,46 +86,47 @@ export class EventService {
     startEvent(eventId: number) {
         return this.http.patch(`${this.apiUrl}/${eventId}/start`, {});
     }
-
+    stopEvent(eventId: number): Observable<any> {
+        return this.http.patch(`${this.apiUrl}/${eventId}/stop`, {}, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
+    }
     joinEvent(eventId: number, gameKey: string, userId: number): Observable<any> {
         const bannedGameUrl = `http://localhost:3000/api/event-bans/is-banned-game/${gameKey}/${userId}`;
         const bannedEventUrl = `http://localhost:3000/api/event-bans/${eventId}/is-banned/${userId}`;
-      
-        return forkJoin([
-          this.http.get<{ banned: boolean }>(bannedGameUrl, { headers: this.getAuthHeaders() }).pipe(
-            catchError(() => of({ banned: false }))
-          ),
-          this.http.get<{ banned: boolean }>(bannedEventUrl, { headers: this.getAuthHeaders() }).pipe(
-            catchError(() => of({ banned: false }))
-          )
-        ]).pipe(
-          switchMap(([gameBan, eventBan]) => {
-            if (gameBan.banned) {
-              return throwError(() => new Error("Vous êtes banni de ce jeu. Impossible de rejoindre l'événement."));
-            }
-            if (eventBan.banned) {
-              return throwError(() => new Error("Vous êtes banni de cet événement."));
-            }
-      
-            return this.http.post<any>(
-              `${this.apiUrl}/${eventId}/join`,
-              {},
-              { headers: this.getAuthHeaders() }
-            );
-          }),
-          catchError((error: HttpErrorResponse) => this.handleError(error))
-        );
-      }
-      
 
-      isUserBanned(eventId: number, userId: number) {
+        return forkJoin([
+            this.http.get<{ banned: boolean }>(bannedGameUrl, { headers: this.getAuthHeaders() }).pipe(
+                catchError(() => of({ banned: false }))
+            ),
+            this.http.get<{ banned: boolean }>(bannedEventUrl, { headers: this.getAuthHeaders() }).pipe(
+                catchError(() => of({ banned: false }))
+            )
+        ]).pipe(
+            switchMap(([gameBan, eventBan]) => {
+                if (gameBan.banned) {
+                    return throwError(() => new Error("Vous êtes banni de ce jeu. Impossible de rejoindre l'événement."));
+                }
+                if (eventBan.banned) {
+                    return throwError(() => new Error("Vous êtes banni de cet événement."));
+                }
+
+                return this.http.post<any>(
+                    `${this.apiUrl}/${eventId}/join`,
+                    {},
+                    { headers: this.getAuthHeaders() }
+                );
+            }),
+            catchError((error: HttpErrorResponse) => this.handleError(error))
+        );
+    }
+
+    isUserBanned(eventId: number, userId: number) {
         return this.http.get<{ banned: boolean }>(`http://localhost:3000/api/event-bans/${eventId}/is-banned/${userId}`);
-      }
-      
-      isUserBannedFromGame(gameKey: string, userId: number) {
+    }
+
+    isUserBannedFromGame(gameKey: string, userId: number) {
         return this.http.get<{ banned: boolean }>(`http://localhost:3000/api/event-bans/is-banned-game/${gameKey}/${userId}`);
-      }
-      
+    }
+
 
     leaveEvent(eventId: number): Observable<any> {
         return this.http.post<any>(`${this.apiUrl}/${eventId}/leave`, {}, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
@@ -171,7 +172,16 @@ export class EventService {
         return this.http.post(`${this.apiUrl.replace('/events', '')}/event-bans/${eventId}/ban/${userId}`, {}, { headers: this.getAuthHeaders() });
     }
     
+    getMessages(eventId: number) {
+        return this.http.get<any[]>(`http://localhost:3000/api/chat/messages/${eventId}`, {
+            headers: this.getAuthHeaders()
+        });
+    }
     
+
+    saveMessage(messageData: any) {
+        return this.http.post('/api/chat/send-message', messageData, { headers: this.getAuthHeaders() });
+    }
 
     private getAuthHeaders(): HttpHeaders {
         const token = localStorage.getItem('token');

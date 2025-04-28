@@ -78,13 +78,12 @@
   </div>
 
   <div *ngIf="data.gameType === 'starcraft2'">
-    <p>Résultat :</p>
+    <mat-radio-group formControlName="win">
+      <mat-radio-button [value]="true">Victoire</mat-radio-button>
+      <mat-radio-button [value]="false">Défaite</mat-radio-button>
+    </mat-radio-group>
   </div>
-
-  <mat-radio-group formControlName="result" class="full-width">
-    <mat-radio-button value="win">Gagné</mat-radio-button>
-    <mat-radio-button value="lose">Perdu</mat-radio-button>
-  </mat-radio-group>
+  
 
   <div class="form-actions">
     <button class="esportify-button" type="submit">Valider</button>

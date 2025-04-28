@@ -3,45 +3,42 @@ const Event = require('../models/events.model.js');
 const sql = require('../config/db.js');
 const EventBan = require('../models/eventBan.model.js');
 
-// 🔁 Auto-start logic déplacée ici
 const autoStartEventsIfNeeded = () => {
-  const now = new Date();
+    const now = new Date();
 
-  sql.query(`
-    SELECT * FROM events
-    WHERE state = 'validated'
-      AND started = 0
-      AND DATE_ADD(date_time, INTERVAL 15 MINUTE) <= ?
-  `, [now], (err, rows) => {
-    if (err) {
-      console.error("Erreur auto-start dans findAll:", err);
-      return;
-    }
+    sql.query(`
+        SELECT * FROM events
+        WHERE state = 'validated'
+        AND started = 0
+        AND DATE_ADD(date_time, INTERVAL 15 MINUTE) <= ?
+    `, [now], (err, rows) => {
+        if (err) {
+            console.error("Erreur auto-start dans findAll:", err);
+            return;
+        }
 
-    if (!Array.isArray(rows)) {
-      console.error("⚠ rows n'est pas un tableau :", rows);
-      return;
-    }
+        if (!Array.isArray(rows)) {
+            console.error("⚠ rows n'est pas un tableau :", rows);
+            return;
+        }
 
-    console.log(`⏰ Auto-start : ${rows.length} événement(s) à démarrer`);
-
-    const updatePromises = rows.map(event => {
-      return new Promise((resolve, reject) => {
-        sql.query(`
-          UPDATE events
-          SET started = 1, start_time_effective = ?
-          WHERE id = ?
-        `, [event.date_time, event.id], (err2) => {
-          if (err2) reject(err2);
-          else resolve();
+        const updatePromises = rows.map(event => {
+            return new Promise((resolve, reject) => {
+                sql.query(`
+                    UPDATE events
+                    SET started = 1, start_time_effective = ?
+                    WHERE id = ?
+                `, [event.date_time, event.id], (err2) => {
+                    if (err2) reject(err2);
+                    else resolve();
+                });
+            });
         });
-      });
-    });
 
-    Promise.all(updatePromises).catch(updateErr => {
-      console.error("Erreur lors des mises à jour auto-start :", updateErr);
+        Promise.all(updatePromises).catch(updateErr => {
+            console.error("Erreur lors des mises à jour auto-start :", updateErr);
+        });
     });
-  });
 };
 
 exports.create = (req, res) => {
@@ -73,33 +70,30 @@ exports.create = (req, res) => {
         });
 
         Event.create(event, (err, data) => {
-    if (err) {
-        console.error("Erreur SQL dans create event:", err); // 🔍 Ajouté ici
-        return res.status(500).send({ 
-            message: err.sqlMessage || err.message || "Erreur lors de la création de l'événement." 
+            if (err) {
+                console.error("Erreur SQL dans create event:", err);
+                return res.status(500).send({
+                    message: err.sqlMessage || err.message || "Erreur lors de la création de l'événement."
+                });
+            }
+            res.send(data);
         });
-    }
-    res.send(data);
-});
-
     });
 };
 
 exports.findAll = (req, res) => {
     const title = req.query.title || "";
     const state = req.query.state || "";
-  
-    autoStartEventsIfNeeded();
-  
-    Event.getAll(title, state, (err, events) => {
-      if (err) {
-        return res.status(500).send({ message: err.message || "Erreur lors de la récupération des événements." });
-      }
-      res.send(events);
-    });
-  };
-  
 
+    autoStartEventsIfNeeded();
+
+    Event.getAll(title, state, (err, events) => {
+        if (err) {
+            return res.status(500).send({ message: err.message || "Erreur lors de la récupération des événements." });
+        }
+        res.send(events);
+    });
+};
 
 exports.findOne = (req, res) => {
     const eventId = req.params.id;
@@ -112,45 +106,39 @@ exports.findOne = (req, res) => {
             return res.status(500).send({ message: `Erreur lors de la récupération de l'événement avec l'ID ${eventId}.` });
         }
 
-        sql.query(
-            `SELECT users.id, users.username, ep.has_joined
+        sql.query(`
+            SELECT users.id, users.username, ep.has_joined
             FROM event_participants ep
             JOIN users ON ep.user_id = users.id
-            WHERE ep.event_id = ?`,
-            [eventId],
-            (err2, participants) => {
-                if (err2) {
-                    console.error("Erreur lors du fetch des participants :", err2);
-                    return res.status(500).send({ message: "Erreur lors de la récupération des participants." });
-                }
-
-                event.participants = participants;
-                res.send(event);
+            WHERE ep.event_id = ?
+        `, [eventId], (err2, participants) => {
+            if (err2) {
+                console.error("Erreur lors du fetch des participants :", err2);
+                return res.status(500).send({ message: "Erreur lors de la récupération des participants." });
             }
-        );
+
+            event.participants = participants;
+            res.send(event);
+        });
     });
 };
-
 
 exports.validate = (req, res) => {
     const eventId = req.params.id;
 
-
-    sql.query(
-        "UPDATE events SET state = ?, updated_at = ? WHERE id = ?",
-        ["validated", new Date(), eventId],
-        (err, result) => {
-            if (err) {
-                return res.status(500).send({ message: "Erreur lors de la validation." });
-            }
-
-            if (result.affectedRows === 0) {
-                return res.status(404).send({ message: "Événement non trouvé." });
-            }
-
-            res.send({ message: "Événement validé avec succès." });
+    sql.query(`
+        UPDATE events SET state = ?, updated_at = ? WHERE id = ?
+    `, ["validated", new Date(), eventId], (err, result) => {
+        if (err) {
+            return res.status(500).send({ message: "Erreur lors de la validation." });
         }
-    );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).send({ message: "Événement non trouvé." });
+        }
+
+        res.send({ message: "Événement validé avec succès." });
+    });
 };
 
 exports.joinEvent = async (req, res) => {
@@ -176,14 +164,12 @@ exports.joinEvent = async (req, res) => {
         }
 
         const alreadyJoined = await new Promise((resolve, reject) => {
-            sql.query(
-                "SELECT * FROM event_participants WHERE event_id = ? AND user_id = ?",
-                [eventId, userId],
-                (err, result) => {
-                    if (err) return reject("Erreur interne.");
-                    resolve(result.length > 0);
-                }
-            );
+            sql.query(`
+                SELECT * FROM event_participants WHERE event_id = ? AND user_id = ?
+            `, [eventId, userId], (err, result) => {
+                if (err) return reject("Erreur interne.");
+                resolve(result.length > 0);
+            });
         });
 
         if (alreadyJoined) {
@@ -191,14 +177,12 @@ exports.joinEvent = async (req, res) => {
         }
 
         const participantCount = await new Promise((resolve, reject) => {
-            sql.query(
-                "SELECT COUNT(*) AS nb_participants FROM event_participants WHERE event_id = ?",
-                [eventId],
-                (err, result) => {
-                    if (err) return reject("Erreur lors du comptage des participants.");
-                    resolve(result[0].nb_participants);
-                }
-            );
+            sql.query(`
+                SELECT COUNT(*) AS nb_participants FROM event_participants WHERE event_id = ?
+            `, [eventId], (err, result) => {
+                if (err) return reject("Erreur lors du comptage des participants.");
+                resolve(result[0].nb_participants);
+            });
         });
 
         if (participantCount >= event.max_players) {
@@ -206,14 +190,12 @@ exports.joinEvent = async (req, res) => {
         }
 
         await new Promise((resolve, reject) => {
-            sql.query(
-                "INSERT INTO event_participants (event_id, user_id, registered_at) VALUES (?, ?, NOW())",
-                [eventId, userId],
-                (err) => {
-                    if (err) return reject("Erreur lors de l'inscription.");
-                    resolve();
-                }
-            );
+            sql.query(`
+                INSERT INTO event_participants (event_id, user_id, registered_at) VALUES (?, ?, NOW())
+            `, [eventId, userId], (err) => {
+                if (err) return reject("Erreur lors de l'inscription.");
+                resolve();
+            });
         });
 
         return res.send({ message: "Inscription réussie !" });
@@ -223,9 +205,6 @@ exports.joinEvent = async (req, res) => {
         return res.status(500).send({ message: err.toString() });
     }
 };
-
-
-
 
 exports.update = (req, res) => {
     if (!req.body) {
@@ -243,7 +222,6 @@ exports.update = (req, res) => {
     });
 };
 
-
 exports.leaveEvent = (req, res) => {
     const userId = req.user.id;
     sql.query("DELETE FROM event_participants WHERE event_id = ? AND user_id = ?", [req.params.id, userId], (err) => {
@@ -255,56 +233,50 @@ exports.leaveEvent = (req, res) => {
 exports.confirmJoin = (req, res) => {
     const userId = req.user.id;
     const eventId = req.params.id;
+    console.log(`✅ Confirmation présence - event: ${eventId} | user: ${userId}`);
 
-    sql.query(
-        "SELECT * FROM event_bans WHERE event_id = ? AND user_id = ?",
-        [eventId, userId],
-        (err, banResults) => {
+
+    sql.query(`
+        SELECT * FROM event_bans WHERE event_id = ? AND user_id = ?
+    `, [eventId, userId], (err, banResults) => {
+        if (err) {
+            console.error("Erreur lors de la vérification du bannissement :", err);
+            return res.status(500).send({ message: "Erreur serveur" });
+        }
+
+        if (banResults.length > 0) {
+            return res.status(403).send({ message: "Vous êtes banni de cet événement." });
+        }
+
+        sql.query(`
+            UPDATE event_participants SET has_joined = true WHERE event_id = ? AND user_id = ?
+        `, [eventId, userId], (err, result) => {
             if (err) {
-                console.error("Erreur lors de la vérification du bannissement :", err);
+                console.error("Erreur DB :", err);
                 return res.status(500).send({ message: "Erreur serveur" });
             }
-
-            if (banResults.length > 0) {
-                return res.status(403).send({ message: "Vous êtes banni de cet événement." });
+            if (result.affectedRows === 0) {
+                return res.status(404).send({ message: "Aucune participation trouvée pour mise à jour." });
             }
-
-            sql.query(
-                'UPDATE event_participants SET has_joined = true WHERE event_id = ? AND user_id = ?',
-                [eventId, userId],
-                (err, result) => {
-                    if (err) {
-                        console.error("Erreur DB :", err);
-                        return res.status(500).send({ message: "Erreur serveur" });
-                    }
-                    if (result.affectedRows === 0) {
-                        return res.status(404).send({ message: "Aucune participation trouvée pour mise à jour." });
-                    }
-                    res.send({ message: "Présence confirmée !" });
-                }
-            );
-        }
-    );
+            res.send({ message: "Présence confirmée !" });
+        });
+    });
 };
-
 
 exports.kickParticipant = (req, res) => {
     const { id, userId } = req.params;
-    sql.query(
-        "DELETE FROM event_participants WHERE event_id = ? AND user_id = ?",
-        [id, userId],
-        (err, result) => {
-            if (err) return res.status(500).send({ message: "Erreur lors du kick du participant." });
+    sql.query(`
+        DELETE FROM event_participants WHERE event_id = ? AND user_id = ?
+    `, [id, userId], (err, result) => {
+        if (err) return res.status(500).send({ message: "Erreur lors du kick du participant." });
 
-            if (result.affectedRows === 0) {
+        if (result.affectedRows === 0) {
             return res.status(404).send({ message: "Le participant n'existe pas ou n'est pas inscrit à cet événement." });
-            }
-
-            res.send({ message: "Participant kické avec succès !" });
         }
-    );
-};
 
+        res.send({ message: "Participant kické avec succès !" });
+    });
+};
 
 exports.delete = (req, res) => {
     Event.remove(req.params.id, (err) => {
@@ -325,7 +297,7 @@ exports.startEvent = (req, res) => {
     Event.startById(eventId, (err, data) => {
         if (err) {
             if (err.kind === "not_found") {
-            return res.status(404).send({ message: `Événement non trouvé avec l'ID ${eventId}.` });
+                return res.status(404).send({ message: `Événement non trouvé avec l'ID ${eventId}.` });
             }
             return res.status(500).send({ message: "Erreur lors du démarrage de l'événement." });
         }
@@ -359,7 +331,6 @@ exports.autoStartEvents = async (req, res) => {
         res.status(500).json({ error: 'Erreur lors du démarrage automatique.' });
     }
 };
-
 
 exports.getHistory = (req, res) => {
     Event.getFinishedEvents((err, events) => {

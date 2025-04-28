@@ -46,7 +46,6 @@ export class ScoreEntryDialogComponent {
   initForm() {
     const baseControls = {
       user_id: [null, Validators.required],
-      result: ['win', Validators.required],
     };
 
     const gameControls: { [key: string]: any } = {
@@ -80,7 +79,10 @@ export class ScoreEntryDialogComponent {
         assists: [0, Validators.required],
         deaths: [0, Validators.required],
       },
-      'starcraft2': {}, // seulement result
+      'starcraft2': {
+        win: [null, Validators.required],
+      },
+
       'balatro': {
         points: [0, Validators.required],
       },
@@ -143,13 +145,39 @@ export class ScoreEntryDialogComponent {
     const formValues = this.scoreForm.value;
     const metadata = { ...formValues };
     delete metadata.user_id;
-    delete metadata.result;
+
+    const score = this.getScoreFromForm();
+    let scoreOpponent = 0;
+
+    if (formValues.score_opponent) {
+      scoreOpponent = parseInt(formValues.score_opponent, 10) || 0;
+    }
+
+    if (this.data.gameType === 'starcraft2') {
+      const win = this.scoreForm.value.win;
+      const payload = {
+        user_id: formValues.user_id,
+        event_id: this.data.eventId,
+        score: 0,
+        result: win ? 'win' : 'lose',
+        metadata: { win },
+      };
+    
+      this.scoreService.addScore(payload).subscribe({
+        next: () => this.dialogRef.close('success'),
+        error: () => alert('Erreur lors de l’enregistrement du score.')
+      });
+      return;
+    }
+    
+
+    const result = score > scoreOpponent ? 'win' : (score < scoreOpponent ? 'lose' : 'draw');
 
     const payload = {
       user_id: formValues.user_id,
       event_id: this.data.eventId,
-      score: this.getScoreFromForm(),
-      result: formValues.result,
+      score,
+      result,
       metadata,
     };
 

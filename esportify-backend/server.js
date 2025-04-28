@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
+const http = require('http');
+const { Server } = require('socket.io');
 const verifyToken = require("./app/middleware/auth.js");
-const eventsController = require('./app/controllers/events.controller.js');
-const eventBanRoutes = require('./app/routes/eventBan.routes');
 
 const usersRouter = require("./app/routes/users.routes");
 const gameRouter = require("./app/routes/game.routes");
@@ -11,24 +11,26 @@ const shopRouter = require("./app/routes/shop.routes");
 const saleRouter = require("./app/routes/sale.routes");
 const eventsRouter = require("./app/routes/events.routes");
 const contactRouter = require("./app/routes/contact.routes.js");
-const scoreRouter = require("./app/routes/scores.routes.js")
+const scoreRouter = require("./app/routes/scores.routes.js");
 const favoritesRoutes = require('./app/routes/favorites.routes.js');
+const chatRoutes = require('./app/routes/chat.routes.js');
+const Chat = require('./app/service/chat.service');
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:4200",
+    methods: ["GET", "POST"]
+  }
+});
 
-const corsOptions = {
+app.use(cors({
   origin: "http://localhost:4200",
   methods: ['POST', 'PUT', 'DELETE', 'GET', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'],
   credentials: true,
-};
-
-app.use(cors(corsOptions));
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
-
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -41,29 +43,17 @@ app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/shop', shopRouter);
 app.use('/api/sale', saleRouter);
-app.use('/api/scores', scoreRouter)
-
+app.use('/api/scores', scoreRouter);
+app.use('/api/favorites', verifyToken, favoritesRoutes);
 app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
+app.use('/api/message', contactRouter);
 
 app.use('/api/events', verifyToken, (req, res, next) => {
-  console.log(`[${req.method}] ${req.url} - Token validé :`, req.headers.authorization || "No Token");
+  console.log(`[${req.method}] ${req.url} - Token validé`);
   next();
 }, eventsRouter);
 
-
-
-app.use('/api/favorites', verifyToken, favoritesRoutes);
-
-app.get('/api/events/pending', (req, res) => {
-  Event.getByState('pending', (err, events) => {
-      if (err) {
-          return res.status(500).send({ message: err.message || "Erreur lors de la récupération des événements en attente de validation." });
-      }
-      res.send(events);
-  });
-});
-
-app.use('/api/message', contactRouter);
+app.use('/api/chat', verifyToken, chatRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Bienvenue sur Esportify." });
@@ -73,19 +63,45 @@ app.use((req, res) => {
   res.status(404).json({ message: "Route not found." });
 });
 
-const PORT = process.env.PORT || 3000;
+io.on('connection', (socket) => {
+  console.log('✅ Un utilisateur est connecté au chat');
 
-const sql = require("./app/config/db.js");
+  socket.on('chatMessage', (data) => {
+    console.log('✉️ Nouveau message reçu:', data);
 
-sql.query("SELECT * FROM events WHERE state = ?", ["pending"], (err, res) => {
-    if (err) {
-        console.error("❌ Erreur SQL directe dans Node.js :", err);
+    const messageData = {
+      event_id: data.event_id,
+      user_id: data.user_id,
+      username: data.user,
+      content: data.content,
+    };
+
+    Chat.createMessage(messageData, (err, messageId) => {
+      if (err) {
+        console.error('❌ Erreur lors de la sauvegarde du message:', err);
         return;
-    }
+      }
+
+      console.log('✅ Message enregistré avec ID:', messageId);
+      io.emit('receiveMessage', {
+        user: messageData.username,
+        content: messageData.content,
+        send_at: new Date()
+      });
+    });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ Un utilisateur s\'est déconnecté');
+  });
 });
 
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  console.log(`✅ Serveur Express + Socket.io lancé sur http://localhost:${PORT}`);
+});
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
-  console.log("Routes API chargées !");
+const sql = require("./app/config/db.js");
+sql.query("SELECT * FROM events WHERE state = ?", ["pending"], (err, res) => {
+  if (err) console.error("❌ Erreur SQL directe dans Node.js :", err);
 });

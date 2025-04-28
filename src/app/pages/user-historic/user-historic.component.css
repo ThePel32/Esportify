@@ -122,3 +122,13 @@ mat-option:hover {
 mat-checkbox {
   color: white;
 }
+
+.result-win {
+  color: green;
+  font-weight: bold;
+}
+
+.result-lose {
+  color: red;
+  font-weight: bold;
+}
