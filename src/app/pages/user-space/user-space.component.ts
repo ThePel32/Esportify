@@ -11,6 +11,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { FavoritesService } from '../../service/favorites.service';
+import { registerLocaleData } from '@angular/common';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import localeFr from '@angular/common/locales/fr';
+
+registerLocaleData(localeFr);
 
 @Component({
   selector: 'app-user-space',
@@ -23,6 +28,7 @@ import { FavoritesService } from '../../service/favorites.service';
     MatFormFieldModule,
     FormsModule,
     MatInputModule,
+    MatSnackBarModule
   ],
   templateUrl: './user-space.component.html',
   styleUrls: ['./user-space.component.css']
@@ -33,6 +39,7 @@ export class UserSpaceComponent implements OnInit {
   favoriteGames: any[] = [];
   userProfile: any;
   newPassword: string = '';
+  confirmPassword: string = '';
 
   isAdmin: boolean = false;
   isOrganizer: boolean = false;
@@ -43,10 +50,26 @@ export class UserSpaceComponent implements OnInit {
     private http: HttpClient,
     private gameService: GameService,
     private favoritesService: FavoritesService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
-    this.userProfile = this.authService.userProfile.value;
+    this.authService.getUserProfile().subscribe({
+      next: (user) => {
+          this.userProfile = user;
+          this.checkRoles();
+          this.loadFavorites();
+          this.loadBannedUsers();
+          if (this.isAdmin) {
+              this.loadUsers();
+          }
+      },
+      error: (err) => {
+          console.error('Erreur chargement profil:', err);
+      }
+  });
+  
+
     this.checkRoles();
 
     this.loadFavorites();
@@ -63,7 +86,6 @@ export class UserSpaceComponent implements OnInit {
     this.isOrganizer = role?.toLowerCase() === "organizer";
   }
 
-  /** --- Liste des utilisateurs (admin) --- */
   loadUsers(): void {
     this.userService.getAllUsers().subscribe({
       next: (data) => this.users = data,
@@ -86,7 +108,6 @@ export class UserSpaceComponent implements OnInit {
     });
   }
 
-  /** --- Favoris --- */
   loadFavorites(): void {
     const userId = this.userProfile?.id;
     if (!userId) return;
@@ -119,7 +140,6 @@ export class UserSpaceComponent implements OnInit {
   
 
 
-  /** --- Liste des bannis --- */
   loadBannedUsers(): void {
     this.http.get<any[]>(`http://localhost:3000/api/event-bans`).subscribe({
       next: (res) => this.bannedUsers = res,
@@ -136,14 +156,36 @@ export class UserSpaceComponent implements OnInit {
     });
   }
 
-  /** --- Changement de mot de passe --- */
   changePassword(): void {
     const userId = this.userProfile?.id;
+
+    if (this.newPassword !== this.confirmPassword) {
+        this.snackBar.open("Les mots de passe ne correspondent pas.", "Fermer", {
+            duration: 3000,
+            panelClass: ['snackbar-error']
+        });
+        return;
+    }
+
     this.http.patch(`http://localhost:3000/api/users/${userId}/password`, {
-      password: this.newPassword
+        password: this.newPassword
     }).subscribe({
-      next: () => alert("Mot de passe mis à jour !"),
-      error: (err) => console.error("Erreur MAJ mot de passe", err)
+        next: () => {
+            this.snackBar.open("Mot de passe mis à jour avec succès !", "Fermer", {
+                duration: 3000,
+                panelClass: ['snackbar-success']
+            });
+            this.newPassword = '';
+            this.confirmPassword = '';
+        },
+        error: (err) => {
+            console.error("Erreur MAJ mot de passe", err);
+            this.snackBar.open("Erreur lors de la mise à jour du mot de passe.", "Fermer", {
+                duration: 3000,
+                panelClass: ['snackbar-error']
+            });
+        }
     });
-  }
+}
+
 }

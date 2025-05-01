@@ -6,8 +6,9 @@ mat-form-field {
     flex: 1;
     display: flex;
     flex-direction: column;
-    /* gap: 20px; */
-    /* padding-right: 20px; */
+    padding-right: 10%;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn {
@@ -29,3 +30,11 @@ mat-form-field {
     background-color: #4d5021;
 }
 
+@media (max-width: 768px) {
+    .signup {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+}

@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../service/auth.service';
 import { map } from 'rxjs';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 export class SigninErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -18,10 +19,12 @@ export class SigninErrorStateMatcher implements ErrorStateMatcher {
 @Component({
   selector: 'app-signin',
   imports: [
-      FormsModule, 
-      MatFormFieldModule, 
-      MatInputModule,
-      ReactiveFormsModule,        
+    CommonModule,
+    MatFormFieldModule,
+    FormsModule, 
+    MatFormFieldModule, 
+    MatInputModule,
+    ReactiveFormsModule,        
   ],
   templateUrl: './signin.component.html',
   styleUrl: './signin.component.css'
@@ -49,9 +52,8 @@ export class SigninComponent {
         password: this.loginPasswordFormControl.getRawValue() as string
       }).pipe(
         map((response) => {
-          
-          this.auth.saveUserToLocalStorage(response);
-          this.auth.userProfile.next(response);
+          this.auth.saveUserToLocalStorage(response.user);
+          this.auth.userProfile.next(response.user);
           this.router.navigate(["home"]);
         })
       ).subscribe({
@@ -59,10 +61,14 @@ export class SigninComponent {
           console.log('Connexion réussie', response);
         },
         error: err => {
-          console.error('Erreur lors de la connexion', err)
+          console.error('Erreur lors de la connexion', err);
+    
+          if (err.status === 401) {
+            this.loginPasswordFormControl.setErrors({ invalidPassword: true });
+          }
         }
-        
       });
     }
+    
 }
 

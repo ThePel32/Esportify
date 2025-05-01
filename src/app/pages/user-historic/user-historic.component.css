@@ -8,6 +8,22 @@
   gap: 0.5rem;
 }
 
+.details_result {
+  display: flex;
+}
+
+mat-card-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+}
+
+.result {
+  display: flex;
+  flex-direction: row;
+}
+
 mat-card-actions button {
   background-color: #7A8024;
   border: none;
@@ -19,12 +35,6 @@ mat-card-actions button {
 mat-card-actions button:hover {
   background-color: #4d5021;
 }
-
-/* mat-form-field {
-  border-radius: 0;
-  margin-right: 1rem;
-  color: white;
-} */
 
 mat-form-field {
   color: white;
@@ -58,7 +68,6 @@ mat-form-field.mat-form-field {
 mat-select {
   color: white;
 }
-
 
 mat-option {
   background-color: #242A36 !important;
@@ -111,12 +120,20 @@ mat-option:hover {
 }
 
 .filters-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   background-color: #242A36;
-  padding: 1rem;
-  height: 80px;
+  padding: 1rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 10000;
+  position: relative;
+  border-bottom: 1px solid #7A8024;
+}
+
+.filters-container mat-form-field {
+  width: 100%;
+  background-color: #1a1f30;
+  border-radius: 0;
 }
 
 mat-checkbox {
@@ -132,3 +149,90 @@ mat-checkbox {
   color: red;
   font-weight: bold;
 }
+
+@media (max-width: 768px) {
+  .historic-wrapper {
+    display: none;
+  }
+
+  .mobile-filters {
+    position: sticky;
+    z-index: 10;
+    background-color: #0f1121;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    width: 100%;
+    border-bottom: 1px solid #7A8024;
+  }
+  
+  .toggle-filters-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: bold;
+    background-color: #7A8024;
+    border: none;
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 0;
+    transition: background-color 0.3s ease;
+  }
+  
+  .toggle-filters-btn:hover {
+    background-color: #5e661e;
+  }
+
+  .toggle-filters-btn span {
+    transition: transform 0.3s ease;
+  }
+
+  .toggle-filters-btn span.rotated {
+    transform: rotate(180deg);
+  }
+  
+  .filters-container {
+    background-color: #242A36;
+    padding: 1rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .filters-container mat-form-field {
+    width: 100%;
+  }
+
+  .mobile-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 250px);
+    background-color: #0f1121;
+    padding: 0.5rem;
+    overflow: hidden;
+  }
+
+  .historic-card {
+    flex-direction: column;
+    padding: 0.5rem;
+  }
+
+  .historic-card img {
+    width: 100%;
+    height: auto;
+    max-height: none;
+  }
+
+  mat-card-content, mat-card-actions {
+    padding: 0.5rem 0;
+  }
+
+  mat-card-actions {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+

@@ -132,7 +132,8 @@ exports.getUserProfile = async (req, res) => {
             id: user.id,
             username: user.username,
             email: user.email,
-            role: user.role
+            role: user.role,
+            created_at: user.created_at
         });
 
     } catch (error) {
@@ -208,6 +209,43 @@ exports.updateRole = async (req, res) => {
     }
 };
 
+exports.updatePassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { password } = req.body;
+
+        if (!password) {
+            return res.status(400).send({ message: "Le nouveau mot de passe est requis !" });
+        }
+
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        const sql = require("../config/db.js");
+        sql.query(
+            "UPDATE users SET password = ? WHERE id = ?",
+            [hashedPassword, id],
+            (err, result) => {
+                if (err) {
+                    console.error("Erreur SQL lors de la mise à jour du mot de passe :", err);
+                    return res.status(500).send({ message: "Erreur SQL" });
+                }
+
+                if (result.affectedRows === 0) {
+                    return res.status(404).send({ message: `Utilisateur non trouvé avec l'id ${id}.` });
+                }
+
+                res.status(200).send({ message: "Mot de passe mis à jour avec succès !" });
+            }
+        );
+
+    } catch (error) {
+        console.error("Erreur MAJ mot de passe :", error);
+        res.status(500).send({ message: "Erreur lors de la mise à jour du mot de passe." });
+    }
+};
+
+
+
 exports.delete = async (req, res) => {
     try {
         const { id } = req.params;
@@ -240,6 +278,7 @@ module.exports = {
     findOne: exports.findOne,
     update: exports.update,
     updateRole: exports.updateRole,
+    updatePassword: exports.updatePassword,
     create: exports.create,
     delete: exports.delete,
     deleteAll: exports.deleteAll

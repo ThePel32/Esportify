@@ -1,7 +1,7 @@
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, HostListener } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatDrawer, MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -30,12 +30,16 @@ import { ChangeDetectorRef } from '@angular/core';
 export class AppComponent implements OnInit{
   isLoggedIn: any;
   pseudo: string = '';
+  isMobile: boolean = false;
   constructor (
     private auth: AuthService,
     private cdRef: ChangeDetectorRef    
   ) {}
 
+  @ViewChild('drawer') drawer!: MatDrawer;
+
   ngOnInit(): void {
+    this.checkIfMobile();
     this.auth.userProfile.subscribe(user => {
       if (user) {
         this.isLoggedIn = this.auth.isAuthenticated();
@@ -52,6 +56,22 @@ export class AppComponent implements OnInit{
 
     this.auth.loadUserFromLocalStorage();
   }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkIfMobile();
+  }
+
+  checkIfMobile() {
+    this.isMobile = window.innerWidth <= 768;
+  }
+
+  toggleDrawer() {
+    if (this.drawer) {
+      this.drawer.toggle();
+    }
+  }
+  
 
   logout() {
     this.auth.logout();

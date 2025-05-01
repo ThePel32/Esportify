@@ -53,6 +53,8 @@ export class EventRoomComponent implements OnInit {
   gameKey: string = '';
   messages: { user: string; content: string }[] = [];
   newMessage: string = '';
+  isChatOpen = false;
+  isMobileView = window.innerWidth <= 768;
 
   @ViewChild('chatMessagesContainer') chatMessagesContainer!: ElementRef;
 
@@ -105,8 +107,16 @@ export class EventRoomComponent implements OnInit {
         }
       });
     }
+
+    window.addEventListener('resize', this.updateMobileView.bind(this));
+    this.updateMobileView();
   }
 
+
+  updateMobileView(): void {
+    this.isMobileView = window.innerWidth <= 768;
+  }
+  
   ngOnDestroy(): void {
     this.SocketService.disconnect();
   }
@@ -169,10 +179,10 @@ export class EventRoomComponent implements OnInit {
         this.loadFavoriteStatus();
         this.isLoading = false;
   
-        console.log('🚀 Participants:', this.eventData.participants);
-        console.log('🧪 Utilisateur connecté :', this.userId);
-        console.log('🧪 A-t-il rejoint ? =>', this.hasUserJoined());
-        console.log('🧪 Événement démarré ? =>', this.isEventStarted());
+        console.log('Participants:', this.eventData.participants);
+        console.log('Utilisateur connecté :', this.userId);
+        console.log('A-t-il rejoint ? =>', this.hasUserJoined());
+        console.log('Événement démarré ? =>', this.isEventStarted());
       }
     });
     this.loadTopScores();
@@ -401,8 +411,6 @@ export class EventRoomComponent implements OnInit {
     return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   }
   
-  
-
   getGameType(): string {
     return this.gameType;
   }
@@ -502,7 +510,6 @@ export class EventRoomComponent implements OnInit {
     });
   }
   
-
   sendMessage(): void {
     if (this.newMessage.trim()) {
       const messageData = {
@@ -524,7 +531,4 @@ export class EventRoomComponent implements OnInit {
       }
     }, 0);
   }
-  
-  
-  
 }

@@ -2,13 +2,47 @@
   <div class="event-room" *ngIf="!isBanned && eventData">
     <div class="event-info">
       <div class="header">
+        <button
+          class="mobile-chat-toggle"
+          *ngIf="isMobileView && !isChatOpen"
+          (click)="isChatOpen = true"
+        >
+          <mat-icon>chat</mat-icon>
+        </button>
         <div class="image-wrapper">
-          <button *ngIf="isOver(); else ongoingEvent" class="back-button" (click)="router.navigate(['/historic'], { queryParams: { tab: 'mes' } })">
+          <button *ngIf="isOver() && !isChatOpen && isMobileView; else ongoingEvent" class="back-button" (click)="router.navigate(['/historic'], { queryParams: { tab: 'mes' } })">
             <mat-icon class="back-icon">arrow_back</mat-icon>
           </button>
+          
+          <div class="mobile-chat-sidenav" [class.open]="isChatOpen" *ngIf="isMobileView">
+            <div class="chat-header">
+              <span>Chat</span>
+              <button class="close-chat-btn" (click)="isChatOpen = false">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <div class="chat-messages">
+              <div *ngFor="let msg of messages" class="chat-message">
+                <strong class="username">{{ msg.user }} :</strong>
+                <span class="message-text">{{ msg.content }}</span>
+              </div>
+            </div>
+
+            <div class="chat-input" *ngIf="!isOver() && !isBanned">
+              <input
+                type="text"
+                [(ngModel)]="newMessage"
+                (keydown.enter)="sendMessage()"
+                placeholder="Écris ton message..."
+              />
+              <button (click)="sendMessage()">Envoyer</button>
+            </div>
+          </div>
+
 
           <ng-template #ongoingEvent>
-            <button class="back-button" (click)="router.navigate(['/events'], { queryParams: { tab: 'liste' } })">
+            <button *ngIf="isMobileView && !isChatOpen" class="back-button" (click)="router.navigate(['/events'], { queryParams: { tab: 'liste' } })">
               <mat-icon class="back-icon">arrow_back</mat-icon>
             </button>
           </ng-template>
@@ -54,19 +88,16 @@
       </div>
       <div class="action-buttons" *ngIf="!isOver() && !isBanned">
         <ng-container *ngIf="!isEventStarted(); else startedBlock">
-          <button
-            *ngIf="!isUserRegistered()"
-            class="join-action-button"
-            (click)="joinEvent()"
-          >
-            S'inscrire
-          </button>
-      
-          <button
-            *ngIf="isUserRegistered()"
-            class="join-action-button"
-            (click)="leaveEvent()"
-          >
+          <ng-container *ngIf="!isUserRegistered()">
+            <button *ngIf="(eventData.participants?.length || 0) < eventData.max_players" class="join-action-button" (click)="joinEvent()">
+              S'inscrire
+            </button>
+            
+            <span *ngIf="(eventData.participants?.length || 0) >= eventData.max_players" class="full-label">
+              Complet !
+            </span>
+          </ng-container>
+          <button *ngIf="isUserRegistered()" class="join-action-button" (click)="leaveEvent()">
             Se désinscrire
           </button>
         </ng-container>

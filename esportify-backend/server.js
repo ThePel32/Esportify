@@ -64,10 +64,10 @@ app.use((req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('✅ Un utilisateur est connecté au chat');
+  console.log('Un utilisateur est connecté au chat');
 
   socket.on('chatMessage', (data) => {
-    console.log('✉️ Nouveau message reçu:', data);
+    console.log('Nouveau message reçu:', data);
 
     const messageData = {
       event_id: data.event_id,
@@ -78,11 +78,11 @@ io.on('connection', (socket) => {
 
     Chat.createMessage(messageData, (err, messageId) => {
       if (err) {
-        console.error('❌ Erreur lors de la sauvegarde du message:', err);
+        console.error('Erreur lors de la sauvegarde du message:', err);
         return;
       }
 
-      console.log('✅ Message enregistré avec ID:', messageId);
+      console.log('Message enregistré avec ID:', messageId);
       io.emit('receiveMessage', {
         user: messageData.username,
         content: messageData.content,
@@ -92,16 +92,16 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('❌ Un utilisateur s\'est déconnecté');
+    console.log('Un utilisateur s\'est déconnecté');
   });
 });
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
-  console.log(`✅ Serveur Express + Socket.io lancé sur http://localhost:${PORT}`);
+  console.log(`Serveur Express + Socket.io lancé sur http://localhost:${PORT}`);
 });
 
 const sql = require("./app/config/db.js");
 sql.query("SELECT * FROM events WHERE state = ?", ["pending"], (err, res) => {
-  if (err) console.error("❌ Erreur SQL directe dans Node.js :", err);
+  if (err) console.error("Erreur SQL directe dans Node.js :", err);
 });
