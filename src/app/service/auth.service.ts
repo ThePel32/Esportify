@@ -44,9 +44,22 @@ export class AuthService {
 
         if (fromLocalStorage) {
             const userInfo = JSON.parse(fromLocalStorage);
-            this.userProfile.next(userInfo.user);
+            this.userProfile.next(userInfo);
         }
     }
+
+    getUserProfile(): Observable<any> {
+        const token = localStorage.getItem('token');
+        return this.http.get('http://localhost:3000/api/users/profile', {
+            headers: { Authorization: `Bearer ${token}` }
+        }).pipe(
+            tap((user: any) => {
+                this.userProfile.next(user);
+            })
+        );
+    }
+    
+    
 
     signin(data: { email: string; password: string }): Observable<any> {
         return this.http.post(`${this.apiUrl}/login`, data).pipe(

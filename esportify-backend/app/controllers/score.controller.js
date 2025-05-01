@@ -13,15 +13,15 @@ exports.addScore = (req, res) => {
         event_id,
         score,
         result,
-        position || null, // si non défini
+        position || null,
         JSON.stringify(metadata || {})
     ];
 
-    console.log("🧾 INSERT SCORE", values); // 👈 pour debug
+    console.log("INSERT SCORE", values);
 
     db.query(query, values, (err, result) => {
         if (err) {
-            console.error('❌ Erreur insertion score :', err);
+            console.error('Erreur insertion score :', err);
             return res.status(500).json({ error: 'Erreur insertion score' });
         }
         res.status(201).json({ message: 'Score enregistré' });
@@ -41,7 +41,7 @@ exports.getScoresForEvent = (req, res) => {
 
     db.query(query, [eventId], (err, rows) => {
         if (err) {
-            console.error('❌ Erreur dans getScoresForEvent :', err);
+            console.error('Erreur dans getScoresForEvent :', err);
             return res.status(500).json({ error: 'Erreur récupération scores' });
         }
         res.status(200).json(rows);
@@ -73,7 +73,7 @@ exports.getScoreForUser = (req, res) => {
 
     db.query(query, [eventId, userId], (err, rows) => {
         if (err) {
-            console.error('❌ Erreur dans getScoreForUser :', err);
+            console.error('Erreur dans getScoreForUser :', err);
             return res.status(500).json({ error: 'Erreur récupération score utilisateur' });
         }
         res.status(200).json(rows[0] || null);

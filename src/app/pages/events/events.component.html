@@ -3,17 +3,15 @@
   <div class="overlay-wrapper">
     <div class="tab-container">
       <mat-tab-group [(selectedIndex)]="selectedTabIndex" mat-stretch-tabs="true" class="custom-tabs">
-        <!-- Onglet Ajout -->
         <mat-tab label="Ajout d'événement" *ngIf="canAddEvent">
           <app-add-event></app-add-event>
         </mat-tab>
   
-        <!-- Onglet Validation -->
         <mat-tab label="Validation" *ngIf="isAdmin">
           <div class="events-container">
             <div *ngIf="pendingEvents.length === 0">Aucun évènement à valider</div>
             <mat-card *ngFor="let event of pendingEvents" class="event-card">
-              <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}" class="event-image" />
+              <img *ngIf="event.images" [src]="event.images" alt="{{ gameService.getGameFullName(event.title) }}" class="event-image" />
               <div class="event-content-wrapper">
                 <mat-card-content>
                   <p><strong>Description :</strong> {{ event.description }}</p>
@@ -32,17 +30,16 @@
           </div>
         </mat-tab>
   
-        <!-- Onglet À démarrer -->
         <mat-tab label="À démarrer" *ngIf="isAdmin || isOrganizer">
           <div class="events-container">
             <div *ngIf="eventsToStart.length === 0">
               Aucun événement à démarrer pour le moment.
             </div>
             <mat-card *ngFor="let event of eventsToStart" class="event-card">
-              <img *ngIf="event.images" [src]="event.images" alt="{{ event.title }}" class="event-image" />
+              <img *ngIf="event.images" [src]="event.images" alt="{{ gameService.getGameFullName(event.title) }}" class="event-image" />
               <div class="event-content-wrapper">
                 <mat-card-content>
-                  <p><strong>{{ event.title }}</strong></p>
+                  <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
                   <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
                   <p><strong>Participants :</strong> {{ event.participants.length }}/{{ event.max_players }}</p>
                   <p><strong>Participants présents :</strong> {{ getConfirmedCount(event) }}/{{ event.participants.length }}</p>
@@ -60,21 +57,154 @@
           </div>
         </mat-tab>
   
-        <!-- Onglet Liste -->
         <mat-tab label="Liste d'événements">
-          <div class="main-events-layout">
+          <div *ngIf="isMobileView" class="mobile-filters-toggle-wrapper">
+            <button (click)="showFilters = !showFilters" class="toggle-filters-btn">
+              Filtres
+              <span [class.rotated]="showFilters">▾</span>
+            </button>
+          </div>
+
+          <div class="mobile-filters-panel" *ngIf="isMobileView && showFilters">
+            <div class="filter-container-column">
+              <mat-form-field appearance="fill">
+                <mat-label>Jeu</mat-label>
+                <mat-select [(ngModel)]="selectedGames" (selectionChange)="applyFilter()" multiple>
+                  <mat-option value="ALL">Tous</mat-option>
+                  <mat-option *ngFor="let game of gamesList" [value]="game.key">
+                    {{ game.name }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill">
+                <mat-label>Genre</mat-label>
+                <mat-select [(ngModel)]="selectedGenres" (selectionChange)="applyFilter()" multiple>
+                  <mat-option value="ALL">Tous</mat-option>
+                  <mat-option *ngFor="let genre of genreOptions" [value]="genre">
+                    {{ genre }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-checkbox [(ngModel)]="selectedFavorites" (change)="applyFilter()">
+                ❤️ Favoris
+              </mat-checkbox>
+            </div>
+          </div>
+
+
+          <div class="mobile-events-tabs" *ngIf="isMobileView">
+            <mat-tab-group [(selectedIndex)]="mobileEventTabIndex">
+              <mat-tab label="En cours">
+                <div class="mobile-events-list">
+                  <ng-container *ngFor="let event of ongoingEvents">
+                    <mat-card *ngIf="isUserBanned(event)" class="event-card banned">
+                      <mat-card-content>
+                        <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
+                        <p class="banned-message">Vous avez été banni de cet événement.</p>
+                      </mat-card-content>
+                    </mat-card>
+
+                    <mat-card *ngIf="!isUserBanned(event)" class="event-card">
+                      <div class="event-media-column">
+                        <img *ngIf="event.images" [src]="event.images" class="event-image" />
+                        <div class="favorite-container" *ngIf="isConnected">
+                          <button mat-icon-button (click)="toggleFavorite(event)">
+                            <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="event-content-wrapper">
+                        <mat-card-content>
+                          <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
+                          <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+                          <p><strong>Présents :</strong> {{ getConfirmedCount(event) }}/{{ event.participants.length }}</p>
+                        </mat-card-content>
+                      </div>
+                      <div class="event-content-right">
+                        <mat-card-actions>
+                          <ng-container *ngIf="isUserRegistered(event)">
+                            <ng-container *ngIf="!hasUserJoined(event)">
+                              <button mat-raised-button color="warn" (click)="confirmPresence(event.id)">Rejoindre</button>
+                            </ng-container>
+                            <span *ngIf="hasUserJoined(event)">Rejoint !</span>
+                            <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Accéder</button>
+                          </ng-container>
+                        </mat-card-actions>
+                      </div>
+                    </mat-card>
+                  </ng-container>
+                </div>
+              </mat-tab>
+
+              <mat-tab label="À venir">
+                <div class="mobile-events-list">
+                  <ng-container *ngFor="let event of upcomingEvents">
+                    <mat-card *ngIf="isUserBanned(event)" class="event-card banned">
+                      <mat-card-content>
+                        <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
+                        <p class="banned-message">Vous avez été banni de cet événement.</p>
+                      </mat-card-content>
+                    </mat-card>
+
+                    <mat-card *ngIf="!isUserBanned(event)" class="event-card">
+                      <div class="event-media-column">
+                        <img *ngIf="event.images" [src]="event.images" class="event-image" />
+                        <div class="favorite-container" *ngIf="isConnected">
+                          <button mat-icon-button (click)="toggleFavorite(event)">
+                            <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="event-content-wrapper">
+                        <mat-card-content>
+                          <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
+                          <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
+                          <p><strong>Participants :</strong> {{ getParticipantsCount(event) }}</p>
+                        </mat-card-content>
+                      </div>
+                      <div class="event-content-right">
+                        <mat-card-actions>
+                          <ng-container *ngIf="isConnected && !isUserBanned(event)">
+                            <ng-container *ngIf="!isUserRegistered(event) && event.participants.length < event.max_players">
+                              <button mat-raised-button color="primary" (click)="joinEvent(event)">S'inscrire</button>
+                            </ng-container>
+                            <ng-container *ngIf="!isUserRegistered(event) && event.participants.length >= event.max_players">
+                              <span class="full-label">Complet !</span>
+                            </ng-container>
+                            <ng-container *ngIf="isUserRegistered(event)">
+                              <ng-container *ngIf="!hasUserJoined(event) && hasStarted(event.date_time)">
+                                <button mat-raised-button color="warn" (click)="confirmPresence(event.id)">Rejoindre</button>
+                              </ng-container>
+                              <span *ngIf="hasUserJoined(event)">Rejoint !</span>
+                              <button mat-raised-button color="warn" (click)="leaveEvent(event.id)">Se désinscrire</button>
+                            </ng-container>
+                            <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Accéder</button>
+                          </ng-container>
+                        </mat-card-actions>
+                      </div>
+                    </mat-card>
+                  </ng-container>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+          </div>
+
+
+          <div class="main-events-layout" *ngIf="!isMobileView">
             <div class="events-layout">
   
-              <!-- EN COURS -->
               <div class="events-section">
                 <h3>En cours</h3>
                 <div class="scrollable-cards">
                   <div *ngIf="ongoingEvents.length === 0">Aucun événement en cours.</div>
   
                   <ng-container *ngFor="let event of ongoingEvents">
+
                     <mat-card *ngIf="isUserBanned(event)" class="event-card banned">
                       <mat-card-content>
-                        <p><strong>{{ event.title }}</strong></p>
+                        <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
                         <p class="banned-message">Vous avez été banni de cet événement.</p>
                       </mat-card-content>
                     </mat-card>
@@ -106,12 +236,10 @@
                         </mat-card-actions>
                       </div>
                     </mat-card>
-  
                   </ng-container>
                 </div>
               </div>
   
-              <!-- À VENIR -->
               <div class="events-section">
                 <h3>À venir</h3>
                 <div class="scrollable-cards">
@@ -121,7 +249,7 @@
   
                     <mat-card *ngIf="isUserBanned(event)" class="event-card banned">
                       <mat-card-content>
-                        <p><strong>{{ event.title }}</strong></p>
+                        <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
                         <p class="banned-message">Vous avez été banni de cet événement.</p>
                       </mat-card-content>
                     </mat-card>
@@ -164,7 +292,9 @@
               </div>
             </div>
           </div>
-          <div class="bottom-bar">
+          
+
+          <div class="bottom-bar" *ngIf="!isMobileView">
             <div class="filter-container-row">
               <mat-form-field appearance="fill">
                 <mat-label>Jeu</mat-label>

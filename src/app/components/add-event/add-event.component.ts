@@ -70,7 +70,6 @@ export class AddEventComponent {
 
   participantOptions: number[] = [];
 
-
   constructor(
     private fb: FormBuilder, 
     private snackBar: MatSnackBar, 
@@ -200,5 +199,4 @@ export class AddEventComponent {
       });
     }
   }
-  
 }

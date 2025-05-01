@@ -18,7 +18,7 @@ const autoStartEventsIfNeeded = () => {
         }
 
         if (!Array.isArray(rows)) {
-            console.error("⚠ rows n'est pas un tableau :", rows);
+            console.error("rows n'est pas un tableau :", rows);
             return;
         }
 
@@ -201,7 +201,7 @@ exports.joinEvent = async (req, res) => {
         return res.send({ message: "Inscription réussie !" });
 
     } catch (err) {
-        console.error("❌ Erreur joinEvent:", err);
+        console.error("Erreur joinEvent:", err);
         return res.status(500).send({ message: err.toString() });
     }
 };
@@ -233,7 +233,7 @@ exports.leaveEvent = (req, res) => {
 exports.confirmJoin = (req, res) => {
     const userId = req.user.id;
     const eventId = req.params.id;
-    console.log(`✅ Confirmation présence - event: ${eventId} | user: ${userId}`);
+    console.log(`Confirmation présence - event: ${eventId} | user: ${userId}`);
 
 
     sql.query(`

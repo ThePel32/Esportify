@@ -13,6 +13,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { lastValueFrom } from 'rxjs';
+import { MatTabsModule } from '@angular/material/tabs';
+import { ViewChild, ElementRef } from '@angular/core';
+
 
 type ExtendedEvent = Event & {
   isFavorite: boolean;
@@ -32,10 +35,12 @@ type ExtendedEvent = Event & {
     MatSelectModule,
     FormsModule,
     MatCheckboxModule,
+    MatTabsModule
   ],
   templateUrl: './user-historic.component.html',
   styleUrls: ['./user-historic.component.css']
 })
+
 export class UserHistoricComponent implements OnInit {
   userEvents: ExtendedEvent[] = [];
   allEndedEvents: ExtendedEvent[] = [];
@@ -47,9 +52,16 @@ export class UserHistoricComponent implements OnInit {
   originalAllEndedEvents: ExtendedEvent[] = [];
   filteredHistoricEvents: any[] = [];
   selectedResult: 'all' | 'win' | 'lose' = 'all';
+  isMobile = false;
+  showFilters = false;
 
 
   gamesList: [string, { name: string; image: string; genre: string }][] = [];
+
+  @ViewChild('filtersContainer') filtersRef!: ElementRef;
+  @ViewChild('toggleFiltersBtn') toggleBtnRef!: ElementRef;
+
+
 
   constructor(
     private eventService: EventService,
@@ -62,6 +74,11 @@ export class UserHistoricComponent implements OnInit {
   ngOnInit(): void {
     this.gamesList = Object.entries(this.gameService.getAllGames());
     this.userId = this.authService.userProfile.value?.id || null;
+    this.isMobile = window.innerWidth <= 768;
+
+    window.addEventListener('resize', () => {
+      this.isMobile = window.innerWidth <= 768;
+    });
 
     if (this.userId) {
       Promise.all([

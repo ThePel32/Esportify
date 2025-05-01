@@ -11,7 +11,9 @@ router.post('/signup', users.signup);
 router.post('/login', users.login);
 router.post('/refresh-token', users.refreshToken);
 
+
 router.get('/profile', verifyToken, users.getUserProfile);
+router.patch('/:id/password', users.updatePassword);
 
 router.get('/all', verifyToken, authorize(["admin"]), users.findAll);
 router.patch("/:id/role", verifyToken, authorize(["admin"]), users.updateRole);

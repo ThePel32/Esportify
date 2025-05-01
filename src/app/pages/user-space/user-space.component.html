@@ -23,57 +23,66 @@
     
         <mat-tab label="Liste des utilisateurs" *ngIf="isAdmin">
             <h3>Liste des utilisateurs</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Pseudo</th>
-                        <th>Email</th>
-                        <th>Rôle</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let user of users">
-                        <td>{{ user.id }}</td>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.role }}</td>
-                        <td>
-                            <select (change)="changeRole(user, $event)">
-                                <option value="user" [selected]="user.role === 'user'">Utilisateur</option>
-                                <option value="organizer" [selected]="user.role === 'organizer'">Organisateur</option>
-                                <option value="admin" [selected]="user.role === 'admin'">Administrateur</option>
-                            </select>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Pseudo</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let user of users">
+                            <td data-label="ID">{{ user.id }}</td>
+                            <td data-label="Pseudo">{{ user.username }}</td>
+                            <td data-label="Email">{{ user.email }}</td>
+                            <td data-label="Rôle">{{ user.role }}</td>
+                            <td data-label="Action">
+                                <div class="custom-select-wrapper">
+                                    <select (change)="changeRole(user, $event)">
+                                        <option value="user" [selected]="user.role === 'user'">Utilisateur</option>
+                                        <option value="organizer" [selected]="user.role === 'organizer'">Organisateur</option>
+                                        <option value="admin" [selected]="user.role === 'admin'">Administrateur</option>
+                                    </select>
+                                    <span class="custom-arrow">▼</span>
+                                </div>
+                            </td>
                             <button (click)="deleteUser(user.id)">Supprimer</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
         </mat-tab>
     
         <mat-tab label="Liste des bannis" *ngIf="isAdmin || isOrganizer">
             <h3>Utilisateurs bannis</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Pseudo</th>
-                        <th>Événement</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let ban of bannedUsers">
-                        <td>{{ ban.username }}</td>
-                        <td>{{ ban.event_title }}</td>
-                        <td>
-                            <button mat-raised-button color="warn" (click)="unbanUser(ban.user_id, ban.event_id)">
-                                Débannir
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pseudo</th>
+                            <th>Événement</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let ban of bannedUsers">
+                            <td data-label="Pseudo">{{ ban.username }}</td>
+                            <td data-label="Événement">{{ ban.event_title }}</td>
+                            <td data-label="Action">
+                                <button mat-raised-button color="warn" (click)="unbanUser(ban.user_id, ban.event_id)">
+                                    Débannir
+                                </button>
+                            </td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
         </mat-tab>
     
         <mat-tab label="Mes infos">
@@ -81,17 +90,22 @@
                 <h3>Mes informations</h3>
                 <p><strong>Pseudo :</strong> {{ userProfile?.username }}</p>
                 <p><strong>Email :</strong> {{ userProfile?.email }}</p>
-                <p><strong>Inscrit depuis :</strong> {{ userProfile?.created_at | date:'longDate' }}</p>
+                <p><strong>Inscrit depuis :</strong> {{ userProfile?.created_at | date:'longDate':'':'fr-FR' }}</p>
                 <h4>Changer mon mot de passe</h4>
                 <form (ngSubmit)="changePassword()" #passwordForm="ngForm">
                     <mat-form-field appearance="fill">
-                        <mat-label>Nouveau MdP</mat-label>
+                        <mat-label>Nouveau mot de passe</mat-label>
                         <input matInput type="password" name="newPassword" [(ngModel)]="newPassword" required>
+                    </mat-form-field>
+                    <mat-form-field appearance="fill">
+                        <mat-label>Confirmer le mot de passe</mat-label>
+                        <input matInput type="password" name="confirmPassword" [(ngModel)]="confirmPassword" required>
                     </mat-form-field>
                     <button mat-raised-button color="primary" type="submit" [disabled]="!passwordForm.form.valid">
                         Mettre à jour
                     </button>
                 </form>
+
             </div>
         </mat-tab>
     </mat-tab-group>

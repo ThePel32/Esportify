@@ -8,7 +8,6 @@ exports.addFavorite = (req, res) => {
         return res.status(400).json({ message: "Données manquantes" });
     }
 
-    // Récupérer le jeu (title) associé à l’événement
     const sqlGetGame = `SELECT title FROM events WHERE id = ?`;
     db.query(sqlGetGame, [event_id], (err, result) => {
         if (err || result.length === 0) {
@@ -32,9 +31,6 @@ exports.addFavorite = (req, res) => {
     });
 };
 
-
-
-
 exports.removeFavorite = (req, res) => {
     const userId = req.user?.id;
     const gameKey = req.params.gameKey?.toLowerCase();
@@ -57,7 +53,6 @@ exports.removeFavorite = (req, res) => {
     });
 };
 
-
 exports.getFavoritesByUser = (req, res) => {
     const userId = req.user.id;
 
@@ -69,7 +64,3 @@ exports.getFavoritesByUser = (req, res) => {
         res.status(200).json(games);
     });
 };
-
-
-
-

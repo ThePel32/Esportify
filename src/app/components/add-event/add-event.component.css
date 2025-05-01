@@ -116,3 +116,39 @@ button:hover {
     background-color: red;
     color: white;
 }
+
+@media (max-width: 768px) {
+    .add-event-container {
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+    }
+
+    .add-event-contain {
+        flex-direction: column;
+        gap: 20px;
+        align-items: stretch;
+    }
+
+    .add-event-game,
+    .add-event-date {
+        width: 100%;
+    }
+
+    mat-form-field {
+        width: 100%;
+    }
+
+    button[type="submit"] {
+        width: 100%;
+        align-self: center;
+        margin-left: 0;
+        font-size: 1rem;
+    }
+
+    h3 {
+        text-align: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+}

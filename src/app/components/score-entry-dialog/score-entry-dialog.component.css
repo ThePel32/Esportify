@@ -1,53 +1,41 @@
-.score-dialog {
-  border: none;
-  padding: 20px;
-  width: 50vh;
+html, body {
+  overflow-x: hidden;
 }
 
-.cdk-overlay-pane mat-mdc-dialog-panel {
+::ng-deep .mat-mdc-dialog-container,
+::ng-deep .mat-mdc-dialog-surface,
+::ng-deep .mat-mdc-dialog-panel,
+::ng-deep .cdk-overlay-pane {
   border-radius: 0 !important;
-  width: 600px !important;
-  color: white !important;
-}
-
-.full-width {
-    width: 100%;
-    margin-bottom: 15px;
-  }
-  
-  .dialog-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 5px;
-  }
-  
-  h2 {
-    color: white;
-    padding: 10px;
-  }
-
-  ::ng-deep .mat-dialog-container {
-  border-radius: 0 !important;
-  padding: 0;
+  box-shadow: none !important;
 }
 
 .score-dialog {
+  width: 100%;
+  max-width: 500px;
   padding: 1.5rem;
   color: white;
+  box-sizing: border-box;
+  background-color: rgb(54, 57, 26);
 }
 
 .score-dialog h1,
 .score-dialog h2,
 .score-dialog h3 {
-  margin-top: 0;
-  margin-bottom: 1.2rem;
+  margin: 0 0 1.2rem 0;
   font-size: 1.5rem;
+  color: white;
 }
 
 .score-dialog form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 15px;
 }
 
 .score-dialog .form-actions {
@@ -64,7 +52,10 @@ button {
   font-weight: bold;
   color: white;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 0 !important;
+  transition: all 0.3s ease;
+  min-width: 90px;
+  text-align: center;
 }
 
 button:hover {
@@ -78,7 +69,8 @@ button:hover {
   padding: 0.6rem 1.2rem;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 0 !important;
+  transition: all 0.3s ease;
 }
 
 .cancel-button:hover {
@@ -86,3 +78,29 @@ button:hover {
   color: white;
 }
 
+::ng-deep .cdk-overlay-pane {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+  .score-dialog {
+    max-width: 95vw;
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+
+  ::ng-deep .mat-mdc-dialog-panel {
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
+
+  ::ng-deep .mat-mdc-dialog-container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

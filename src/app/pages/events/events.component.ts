@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -71,6 +71,10 @@ export class EventsComponent implements OnInit {
 
   selectedTabIndex: number = 0;
   selectedFavorites: boolean = false;
+  
+  isMobileView = false;
+  mobileEventTabIndex = 0;
+  showFilters = false;
 
   constructor(
     private eventService: EventService,
@@ -79,11 +83,16 @@ export class EventsComponent implements OnInit {
     private snackBar: MatSnackBar,
     private route: ActivatedRoute,
     private favoritesService: FavoritesService,
-    private gameService: GameService,
+    public gameService: GameService,
   ) {}
 
   ngOnInit() {
     const allGames = this.gameService.getAllGames();
+
+    this.isMobileView = window.innerWidth <= 768;
+    window.addEventListener('resize', () => {
+    this.isMobileView = window.innerWidth <= 768;
+  });
 
     this.gamesList = Object.entries(allGames).map(([key, data]) => ({
       key,
@@ -113,6 +122,14 @@ export class EventsComponent implements OnInit {
       this.loadEvents();
     });
   }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent): void {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.mobile-filters-toggle-wrapper') && !target.closest('.mobile-filters-panel')) {
+    this.showFilters = false;
+  }
+}
 
   get isConnected(): boolean {
     return this.authService.isLoggedIn();
@@ -204,7 +221,7 @@ export class EventsComponent implements OnInit {
       return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
     });
   }
- 
+
   showStartButton(dateTime: string): boolean {
     const now = new Date();
     const start = new Date(dateTime);
