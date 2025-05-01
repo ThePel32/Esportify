@@ -34,6 +34,10 @@ mat-form-field {
     background-color: #4d5021;
 }
 
+mat-error {
+    white-space: nowrap;
+}
+
 @media (max-width: 768px) {
     .signin {
         display: flex;

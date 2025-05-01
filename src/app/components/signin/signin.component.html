@@ -19,13 +19,14 @@
         </mat-form-field>
         
         <mat-form-field class="form-contain">
-            <mat-label>Password</mat-label>
-            <input 
-            type="password"
-            [formControl]="loginPasswordFormControl" 
-            matInput 
-            name="password" 
-            required>
+            <mat-label>password</mat-label>
+            <input type="password" matInput name="password" [formControl]="loginPasswordFormControl" required>
+            <mat-error *ngIf="loginPasswordFormControl.hasError('required')">
+                Le mot de passe est requis
+            </mat-error>
+            <mat-error *ngIf="loginPasswordFormControl.hasError('invalidPassword')">
+                Mot de passe incorrect
+            </mat-error>
         </mat-form-field>
     </form>
     <button type="submit" class="btn" (click)="signin()">Se connecter</button>

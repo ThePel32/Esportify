@@ -4,6 +4,8 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../service/auth.service';
+import { Router } from '@angular/router';
+
 
 
 export class SignupErrorStateMatcher implements ErrorStateMatcher {
@@ -27,7 +29,8 @@ export class SignupErrorStateMatcher implements ErrorStateMatcher {
 
 export class SignupComponent {
   constructor (
-    private auth: AuthService
+    private auth: AuthService,
+    private router: Router
   ){}
 
   signupUsernameFormControl = new FormControl('', [
@@ -46,17 +49,32 @@ export class SignupComponent {
   matcher = new SignupErrorStateMatcher();
 
   signup(): void {
+    const username = this.signupUsernameFormControl.getRawValue() as string;
+    const email = this.signupEmailFormControl.getRawValue() as string;
+    const password = this.signupPasswordFormControl.getRawValue() as string;
+  
     this.auth.signup({
-      username: this.signupUsernameFormControl.getRawValue() as string,
-      email: this.signupEmailFormControl.getRawValue() as string,
-      password: this.signupPasswordFormControl.getRawValue() as string
+      username,
+      email,
+      password
     }).subscribe({
-      next: response => {
+      next: () => {
+        this.auth.signin({ email, password }).subscribe({
+          next: (loginResponse) => {
+            this.auth.saveUserToLocalStorage(loginResponse.user);
+            this.auth.userProfile.next(loginResponse.user);
+            this.router.navigate(['home']);
+          },
+          error: (loginErr) => {
+            console.error('Erreur lors de la connexion après inscription', loginErr);
+          }
+        });
       },
-      error: err => {
+      error: (err) => {
         console.error('Erreur lors de l\'inscription', err);
       }
-    })
+    });
   }
+  
 }
 
