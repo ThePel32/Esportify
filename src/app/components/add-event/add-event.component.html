@@ -49,7 +49,7 @@
                         <mat-datepicker-toggle matIconSuffix [for]="startDatePicker"></mat-datepicker-toggle>
                         <mat-datepicker #startDatePicker></mat-datepicker>
                         <mat-error *ngIf="eventForm.get('date')?.hasError('invalidDate')">
-                            La date ne peut pas être dans le passé.
+                            La date ne peut pas être passée.
                         </mat-error>
                     </mat-form-field>
 
@@ -61,7 +61,7 @@
                             </mat-option>
                         </mat-select>
                         <mat-error *ngIf="eventForm.get('heureDebut')?.hasError('invalidHour')">
-                            L'heure doit être au moins 1h après l'heure actuelle si l'événement est aujourd'hui.
+                            L'heure doit être au moins +1h.
                         </mat-error>
                     </mat-form-field>
 

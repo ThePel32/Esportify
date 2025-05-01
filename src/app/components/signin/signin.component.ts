@@ -52,8 +52,8 @@ export class SigninComponent {
         password: this.loginPasswordFormControl.getRawValue() as string
       }).pipe(
         map((response) => {
-          this.auth.saveUserToLocalStorage(response);
-          this.auth.userProfile.next(response);
+          this.auth.saveUserToLocalStorage(response.user);
+          this.auth.userProfile.next(response.user);
           this.router.navigate(["home"]);
         })
       ).subscribe({

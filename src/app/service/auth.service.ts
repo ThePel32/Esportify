@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @Injectable({
@@ -9,7 +10,10 @@ export class AuthService {
     userProfile: BehaviorSubject<any> = new BehaviorSubject<any>(null);
     private apiUrl = 'http://localhost:3000/api/users';
 
-    constructor(private http: HttpClient) {
+    constructor(
+        private http: HttpClient,
+        private router: Router
+    ) {
         this.loadUserFromLocalStorage();
     }
 
@@ -21,10 +25,12 @@ export class AuthService {
         if (this.userProfile.value) {
             return this.userProfile.value.role || '';
         }
-
+    
         const user = JSON.parse(localStorage.getItem('current-user') || '{}');
         return user.role || '';
     }
+    
+    
 
     hasRole(role: string): boolean {
         return this.getRole() === role;
@@ -65,12 +71,13 @@ export class AuthService {
         return this.http.post(`${this.apiUrl}/login`, data).pipe(
             tap((response: any) => {
                 if (response.user && response.token) {
-                    this.saveUserToLocalStorage(response.user);
+                    this.saveUserToLocalStorage(response.user);  
                     localStorage.setItem('token', response.token);
                 }
             })
         );
     }
+    
 
     signup(data: { username: string; email: string; password: string }): Observable<any> {
         return this.http.post(`${this.apiUrl}/signup`, data);
@@ -78,6 +85,9 @@ export class AuthService {
 
     logout() {
         localStorage.removeItem('current-user');
+        localStorage.removeItem('token');
         this.userProfile.next(null);
+        this.router.navigate(['/home']);
     }
+    
 }
