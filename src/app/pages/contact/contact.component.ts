@@ -33,6 +33,7 @@ export class ContactErrorStateMatcher implements ErrorStateMatcher {
   templateUrl: './contact.component.html',
   styleUrl: './contact.component.css'
 })
+
 export class ContactComponent implements OnInit {
   emailFormControl = new FormControl('', [Validators.required,Validators.email]);
   messageFormControl = new FormControl('', [Validators.required]);
@@ -44,7 +45,6 @@ export class ContactComponent implements OnInit {
   ) {}
 
   sendMessage() {
-  
     if (this.emailFormControl.valid && this.messageFormControl.valid) {
       const formData = {
         email: this.emailFormControl.value ?? '',
@@ -71,11 +71,10 @@ export class ContactComponent implements OnInit {
     }
   }
   
-
   ngOnInit(): void {
     const userData = { name: '', email: '' };
     this.user$ = of(userData);
   }
-
+  
   matcher = new ContactErrorStateMatcher();
 }

@@ -8,13 +8,7 @@
 
         <mat-form-field class="form-contain">
             <mat-label>Email</mat-label>
-            <input 
-                type="email"
-                matInput 
-                [formControl]="signupEmailFormControl" 
-                [errorStateMatcher]="matcher" 
-                name="email" 
-                required>
+            <input type="email" matInput [formControl]="signupEmailFormControl" [errorStateMatcher]="matcher" name="email" required>
             @if (signupEmailFormControl.hasError('email')) {
                 <mat-error>Veuillez entrer un email valide</mat-error>
             }

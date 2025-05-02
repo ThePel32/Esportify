@@ -116,7 +116,7 @@ const User = {
                 } else if (res.affectedRows == 0) {
                     reject({ kind: "not_found" });
                 } else {
-                    resolve({ message: "User deleted successfully" });
+                    resolve({ message: "Utilisateur supprimé avec succès" });
                 }
             });
         });
@@ -128,7 +128,7 @@ const User = {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve({ message: "All users deleted successfully" });
+                    resolve({ message: "Tous les utilisateurs ont été supprimés avec succès" });
                 }
             });
         });

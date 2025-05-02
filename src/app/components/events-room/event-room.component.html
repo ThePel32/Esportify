@@ -2,11 +2,7 @@
   <div class="event-room" *ngIf="!isBanned && eventData">
     <div class="event-info">
       <div class="header">
-        <button
-          class="mobile-chat-toggle"
-          *ngIf="isMobileView && !isChatOpen"
-          (click)="isChatOpen = true"
-        >
+        <button class="mobile-chat-toggle" *ngIf="isMobileView && !isChatOpen" (click)="isChatOpen = true">
           <mat-icon>chat</mat-icon>
         </button>
         <div class="image-wrapper">
@@ -30,16 +26,10 @@
             </div>
 
             <div class="chat-input" *ngIf="!isOver() && !isBanned">
-              <input
-                type="text"
-                [(ngModel)]="newMessage"
-                (keydown.enter)="sendMessage()"
-                placeholder="Écris ton message..."
-              />
+              <input type="text" [(ngModel)]="newMessage" (keydown.enter)="sendMessage()" placeholder="Écris ton message..."/>
               <button (click)="sendMessage()">Envoyer</button>
             </div>
           </div>
-
 
           <ng-template #ongoingEvent>
             <button *ngIf="isMobileView && !isChatOpen" class="back-button" (click)="router.navigate(['/events'], { queryParams: { tab: 'liste' } })">
@@ -120,33 +110,26 @@
             <h3>Ton score</h3>
             <ng-container *ngIf="userScore; else noScore">
               <p *ngIf="userScore.metadata?.kills"><strong>Kills :</strong> {{ userScore.metadata.kills }}</p>
-            
               <p *ngIf="getGameType() === 'starcraft2'">
                 <span 
                   [ngClass]="{ 'result-win': userScore.result === 'win', 'result-lose': userScore.result === 'lose' }">
                 </span>
               </p>
-              
-
               <p *ngIf="getGameType() === 'balatro' && userScore.score">
                 <strong>Points :</strong> {{ userScore.score }} pts
               </p>
-              
               <p *ngIf="getGameType() === 'supermeatboy' && userScore.score">
                 <strong>Temps :</strong> {{ formatSecondsToTime(userScore.score) }}
               </p>
-            
               <p *ngIf="getGameType() !== 'supermeatboy' && userScore.metadata?.score">
                 <strong>Score :</strong> {{ userScore.metadata.score }} - {{ userScore.metadata.score_opponent }}
               </p>
-            
               <p>
                 <span [ngClass]="{ 'result-win': userScore.result === 'win', 'result-lose': userScore.result === 'lose' }">
                   {{ userScore.result === 'win' ? 'Gagné' : 'Perdu' }}
                 </span>
               </p>
             </ng-container>
-            
             <ng-template #noScore><p>Aucun score enregistré.</p></ng-template>
           </div>
 
@@ -173,25 +156,16 @@
 
     <div class="chat-section">
       <h3>Chat</h3>
-    
       <div class="chat-messages" #chatMessagesContainer>
         <div *ngFor="let msg of messages" class="chat-message">
           <strong class="username">{{ msg.user }} : </strong> <span class="message-text">{{ msg.content }}</span>
         </div>
       </div>
-    
       <div class="chat-input" *ngIf="!isOver() && !isBanned">
-        <input 
-          type="text" 
-          [(ngModel)]="newMessage"
-          (keydown.enter)="sendMessage()"
-          placeholder="Écris ton message..."
-        />
+        <input type="text" [(ngModel)]="newMessage" (keydown.enter)="sendMessage()" placeholder="Écris ton message..."/>
         <button (click)="sendMessage()">Envoyer</button>
       </div>
     </div>
-    
-
   <div *ngIf="isBanned" class="banned-wrapper">
     <div class="banned-message">Vous avez été banni de cet événement.</div>
   </div>

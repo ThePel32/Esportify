@@ -34,8 +34,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  console.log(`[${req.method}] ${req.url} - Auth: ${req.headers.authorization || "No Token"}`);
+app.use((next) => {
   next();
 });
 
@@ -48,8 +47,7 @@ app.use('/api/favorites', verifyToken, favoritesRoutes);
 app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
 app.use('/api/message', contactRouter);
 
-app.use('/api/events', verifyToken, (req, res, next) => {
-  console.log(`[${req.method}] ${req.url} - Token validé`);
+app.use('/api/events', verifyToken, (next) => {
   next();
 }, eventsRouter);
 
@@ -64,10 +62,8 @@ app.use((req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('Un utilisateur est connecté au chat');
 
   socket.on('chatMessage', (data) => {
-    console.log('Nouveau message reçu:', data);
 
     const messageData = {
       event_id: data.event_id,
@@ -76,13 +72,12 @@ io.on('connection', (socket) => {
       content: data.content,
     };
 
-    Chat.createMessage(messageData, (err, messageId) => {
+    Chat.createMessage(messageData, (err) => {
       if (err) {
         console.error('Erreur lors de la sauvegarde du message:', err);
         return;
       }
 
-      console.log('Message enregistré avec ID:', messageId);
       io.emit('receiveMessage', {
         user: messageData.username,
         content: messageData.content,
@@ -92,7 +87,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('Un utilisateur s\'est déconnecté');
   });
 });
 

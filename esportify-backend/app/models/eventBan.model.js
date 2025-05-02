@@ -40,7 +40,6 @@ exports.getBannedUsers = (eventId) => {
       });
     });
   };
-  
 
 exports.unbanUser = (eventId, userId) => {
     return new Promise((resolve, reject) => {
@@ -70,5 +69,3 @@ exports.isUserBannedFromGame = (gameKey, userId) => {
       });
     });
   };
-  
-  

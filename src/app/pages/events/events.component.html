@@ -1,5 +1,4 @@
 <div class="main-content">
-
   <div class="overlay-wrapper">
     <div class="tab-container">
       <mat-tab-group [(selectedIndex)]="selectedTabIndex" mat-stretch-tabs="true" class="custom-tabs">
@@ -191,17 +190,14 @@
             </mat-tab-group>
           </div>
 
-
           <div class="main-events-layout" *ngIf="!isMobileView">
             <div class="events-layout">
-  
               <div class="events-section">
                 <h3>En cours</h3>
                 <div class="scrollable-cards">
                   <div *ngIf="ongoingEvents.length === 0">Aucun événement en cours.</div>
   
                   <ng-container *ngFor="let event of ongoingEvents">
-
                     <mat-card *ngIf="isUserBanned(event)" class="event-card banned">
                       <mat-card-content>
                         <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
@@ -246,7 +242,6 @@
                   <div *ngIf="upcomingEvents.length === 0">Aucun événement à venir.</div>
   
                   <ng-container *ngFor="let event of upcomingEvents">
-  
                     <mat-card *ngIf="isUserBanned(event)" class="event-card banned">
                       <mat-card-content>
                         <p><strong>{{ gameService.getGameFullName(event.title) }}</strong></p>
@@ -293,7 +288,6 @@
             </div>
           </div>
           
-
           <div class="bottom-bar" *ngIf="!isMobileView">
             <div class="filter-container-row">
               <mat-form-field appearance="fill">
@@ -305,7 +299,7 @@
                   </mat-option>
                 </mat-select>
               </mat-form-field>
-            
+              
               <mat-form-field appearance="fill">
                 <mat-label>Genre</mat-label>
                 <mat-select [(ngModel)]="selectedGenres" (selectionChange)="applyFilter()" multiple>
@@ -315,7 +309,7 @@
                   </mat-option>
                 </mat-select>
               </mat-form-field>
-            
+              
               <mat-checkbox [(ngModel)]="selectedFavorites" (change)="applyFilter()" class="favoris-checkbox">
                 ❤️ Favoris
               </mat-checkbox>

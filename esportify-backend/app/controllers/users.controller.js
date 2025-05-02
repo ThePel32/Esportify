@@ -6,7 +6,7 @@ require("dotenv").config();
 exports.create = (req, res) => {
     if (!req.body) {
         return res.status(400).send({
-        message: "Content can not be empty!"
+        message: "Le contenu ne peut pas être vide !"
         });
     }
 
@@ -21,34 +21,33 @@ exports.create = (req, res) => {
     User.create(user, (err, data) => {
         if (err)
         return res.status(500).send({
-            message: err.message || "Some error occurred while creating the User."
+            message: err.message || "Une erreur s'est produite lors de la création de l'utilisateur."
         });
         else res.send(data);
     });
 };
-
 
 exports.signup = async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
         if (!username || !email || !password) {
-            return res.status(400).send({ message: "All fields are required!" });
+            return res.status(400).send({ message: "Tous les champs sont obligatoires !" });
         }
 
         const existingUser = await User.findByEmail(email);
         if (existingUser) {
-            return res.status(400).send({ message: "Email already in use!" });
+            return res.status(400).send({ message: "Email déjà utilisé !" });
         }
 
         const hashedPassword = bcrypt.hashSync(password, 10);
         const newUser = { username, role: "user", email, password: hashedPassword, created_at: new Date() };
         const userData = await User.create(newUser);
 
-        res.status(201).send({ message: "User registered successfully!", user: userData });
+        res.status(201).send({ message: "Utilisateur enregistré avec succès !", user: userData });
 
     } catch (error) {
-        res.status(500).send({ message: error.message || "Error during signup." });
+        res.status(500).send({ message: error.message || "Erreur lors de l'inscription." });
     }
 };
 
@@ -57,17 +56,17 @@ exports.login = async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).send({ message: "Email and password are required!" });
+            return res.status(400).send({ message: "L'email et le mot de passe sont obligatoires !" });
         }
 
         const user = await User.findByEmail(email);
         if (!user) {
-            return res.status(404).send({ message: "User not found!" });
+            return res.status(404).send({ message: "Utilisateur introuvable !" });
         }
 
         const passwordIsValid = bcrypt.compareSync(password, user.password);
         if (!passwordIsValid) {
-            return res.status(401).send({ message: "Invalid password!" });
+            return res.status(401).send({ message: "Mot de passe invalide !" });
         }
 
         const token = jwt.sign(
@@ -77,13 +76,13 @@ exports.login = async (req, res) => {
         );
 
         res.status(200).send({
-            message: "Login successful!",
+            message: "Connexion réussie !",
             token,
             user: { id: user.id, username: user.username, email: user.email, role: user.role }
         });
 
     } catch (error) {
-        res.status(500).send({ message: error.message || "Error during login." });
+        res.status(500).send({ message: error.message || "Erreur lors de la connexion." });
     }
 };
 
@@ -91,15 +90,13 @@ exports.refreshToken = async (req, res) => {
     try {
         const oldToken = req.headers["authorization"]?.split(" ")[1];
         if (!oldToken) {
-            return res.status(403).send({ message: "No token provided!" });
+            return res.status(403).send({ message: "Aucun token fourni !" });
         }
-
 
         jwt.verify(oldToken, process.env.JWT_SECRET, (err, decoded) => {
             if (err) {
-                return res.status(401).send({ message: "Unauthorized or token expired!" });
+                return res.status(401).send({ message: "Token non autorisé ou expiré !" });
             }
-
 
             const newToken = jwt.sign(
                 { id: decoded.id, role: decoded.role },
@@ -107,12 +104,11 @@ exports.refreshToken = async (req, res) => {
                 { expiresIn: "7d" }
             );
 
-
             res.status(200).send({ token: newToken });
         });
 
     } catch (error) {
-        res.status(500).send({ message: error.message || "Error during token refresh." });
+        res.status(500).send({ message: error.message || "Erreur lors de l'actualisation du token." });
     }
 };
 
@@ -121,12 +117,12 @@ exports.getUserProfile = async (req, res) => {
     try {
         const userId = req.userId;
         if (!userId) {
-            return res.status(403).send({ message: "No user ID found!" });
+            return res.status(403).send({ message: "Aucun identifiant d'utilisateur trouvé!" });
         }
 
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(404).send({ message: "User not found" });
+            return res.status(404).send({ message: "Utilisateur introuvable" });
         }
         res.status(200).json({
             id: user.id,
@@ -137,10 +133,9 @@ exports.getUserProfile = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).send({ message: "Error retrieving user profile" });
+        res.status(500).send({ message: "Erreur lors de la récupération du profil utilisateur" });
     }
 };
-
 
 exports.findAll = async (req, res) => {
     try {
@@ -160,16 +155,15 @@ exports.findAll = async (req, res) => {
     }
 };
 
-
 exports.findOne = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
-            return res.status(404).send({ message: `User not found with id ${req.params.id}.` });
+            return res.status(404).send({ message: `Utilisateur non trouvé avec l'id ${req.params.id}.` });
         }
         res.status(200).json(user);
     } catch (error) {
-        res.status(500).send({ message: "Error retrieving user." });
+        res.status(500).send({ message: "Erreur lors de la récupération de l'utilisateur." });
     }
 };
 
@@ -180,12 +174,12 @@ exports.update = async (req, res) => {
 
         const updatedUser = await User.updateById(id, updatedData);
         if (!updatedUser) {
-            return res.status(404).send({ message: `User not found with id ${id}.` });
+            return res.status(404).send({ message: `Utilisateur non trouvé avec l'id ${id}.` });
         }
 
-        res.status(200).json({ message: "User updated successfully!", updatedUser });
+        res.status(200).json({ message: "L'utilisateur a été mis à jour avec succès!", updatedUser });
     } catch (error) {
-        res.status(500).send({ message: "Error updating user." });
+        res.status(500).send({ message: "Erreur lors de la mise à jour de l'utilisateur." });
     }
 };
 
@@ -237,14 +231,11 @@ exports.updatePassword = async (req, res) => {
                 res.status(200).send({ message: "Mot de passe mis à jour avec succès !" });
             }
         );
-
     } catch (error) {
         console.error("Erreur MAJ mot de passe :", error);
         res.status(500).send({ message: "Erreur lors de la mise à jour du mot de passe." });
     }
 };
-
-
 
 exports.delete = async (req, res) => {
     try {
@@ -267,7 +258,6 @@ exports.deleteAll = async (req, res) => {
         res.status(500).send({ message: "Error deleting all users." });
     }
 };
-
 
 module.exports = {
     signup: exports.signup,

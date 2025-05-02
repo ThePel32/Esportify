@@ -32,7 +32,7 @@ Event.findById = (id, result) => {
         WHERE e.id = ?
     `, [id], (err, res) => {
         if (err) {
-            console.error("❌ Erreur SQL dans findById :", err);
+            console.error("Erreur SQL dans findById :", err);
             result(err, null);
             return;
         }
@@ -208,6 +208,5 @@ Event.getUserFinishedEvents = (userId, result) => {
         }
     );
 };
-
 
 module.exports = Event;

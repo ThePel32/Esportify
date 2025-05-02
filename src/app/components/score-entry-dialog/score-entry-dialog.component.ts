@@ -28,6 +28,7 @@ import { MatRadioModule } from '@angular/material/radio';
     NgFor,
   ]
 })
+
 export class ScoreEntryDialogComponent {
   scoreForm!: FormGroup;
   participants: any[] = [];
@@ -170,7 +171,6 @@ export class ScoreEntryDialogComponent {
       return;
     }
     
-
     const result = score > scoreOpponent ? 'win' : (score < scoreOpponent ? 'lose' : 'draw');
 
     const payload = {

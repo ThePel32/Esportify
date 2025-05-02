@@ -21,7 +21,6 @@ exports.banUserFromEvent = async (req, res) => {
   }
 };
 
-
 exports.unbanUser = async (req, res) => {
   const { eventId, userId } = req.params;
   try {

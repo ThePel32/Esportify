@@ -30,8 +30,6 @@ export class AuthService {
         return user.role || '';
     }
     
-    
-
     hasRole(role: string): boolean {
         return this.getRole() === role;
     }
@@ -65,8 +63,6 @@ export class AuthService {
         );
     }
     
-    
-
     signin(data: { email: string; password: string }): Observable<any> {
         return this.http.post(`${this.apiUrl}/login`, data).pipe(
             tap((response: any) => {
@@ -78,7 +74,6 @@ export class AuthService {
         );
     }
     
-
     signup(data: { username: string; email: string; password: string }): Observable<any> {
         return this.http.post(`${this.apiUrl}/signup`, data);
     }
@@ -89,5 +84,4 @@ export class AuthService {
         this.userProfile.next(null);
         this.router.navigate(['/home']);
     }
-    
 }

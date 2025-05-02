@@ -13,7 +13,6 @@ export class SigninErrorStateMatcher implements ErrorStateMatcher {
     const isSubmitted = form && form.submitted;
     return !!(control && control.invalid && (control.dirty || control.touched || isSubmitted));
   }
-
 }
 
 @Component({
@@ -69,6 +68,5 @@ export class SigninComponent {
         }
       });
     }
-    
 }
 

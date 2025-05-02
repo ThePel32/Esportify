@@ -31,6 +31,8 @@ export class AppComponent implements OnInit{
   isLoggedIn: any;
   pseudo: string = '';
   isMobile: boolean = false;
+  currentYear: number = new Date().getFullYear();
+
   constructor (
     private auth: AuthService,
     private cdRef: ChangeDetectorRef    
@@ -71,7 +73,6 @@ export class AppComponent implements OnInit{
       this.drawer.toggle();
     }
   }
-  
 
   logout() {
     this.auth.logout();

@@ -16,7 +16,6 @@ import { lastValueFrom } from 'rxjs';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ViewChild, ElementRef } from '@angular/core';
 
-
 type ExtendedEvent = Event & {
   isFavorite: boolean;
   userScore?: any;
@@ -55,13 +54,10 @@ export class UserHistoricComponent implements OnInit {
   isMobile = false;
   showFilters = false;
 
-
   gamesList: [string, { name: string; image: string; genre: string }][] = [];
 
   @ViewChild('filtersContainer') filtersRef!: ElementRef;
   @ViewChild('toggleFiltersBtn') toggleBtnRef!: ElementRef;
-
-
 
   constructor(
     private eventService: EventService,
@@ -149,7 +145,6 @@ export class UserHistoricComponent implements OnInit {
     const all = Object.values(this.gameService.getAllGames()).map(g => g.genre);
     return Array.from(new Set(all));
   }
-  
 
   applyFilter(): void {
     const selectedGamesSet = new Set(this.selectedGames);

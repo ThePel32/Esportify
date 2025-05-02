@@ -8,9 +8,9 @@ const Game = function(game) {
     this.quantity = game.quantity;
     this.image_path = game.image_path;
     this.gender = game.gender;
-  };
+};
 
-  Game.create = (newGame, result) => {
+Game.create = (newGame, result) => {
     sql.query("INSERT INTO game SET ?", newGame, (err, res) => {
         if(err){
             result(err, null);
@@ -18,9 +18,9 @@ const Game = function(game) {
         }
         result(null, {id: res.insertId, ...newGame});
     });
-  };
+};
 
-  Game.findById = (id, result) => {
+Game.findById = (id, result) => {
     sql.query(`SELECT * FROM game WHERE id = ${id}`, (err, res) => {
         if(err){
             result(err, null);
@@ -32,9 +32,9 @@ const Game = function(game) {
         }
         result({ kind: "not_found"}, null);
     });
-  };
+};
 
-  Game.getAll = (name, result) => {
+Game.getAll = (name, result) => {
     let query = "SELECT * FROM game";
 
     if(name){
@@ -48,9 +48,9 @@ const Game = function(game) {
         }
         result(null, res);
     });
-  };
+};
 
-  Game.updateById = (id, game, result) => {
+Game.updateById = (id, game, result) => {
     sql.query(
         "UPDATE game SET name = ?, pegi = ?, description = ?, price = ?, quantity = ?, image_path = ?, gender = ? WHERE id = ?",
         [game.name, game.pegi, game.description, game.price, game.quantity, game.image_path, game.gender, id], 
@@ -65,9 +65,9 @@ const Game = function(game) {
             };
         }
     );
-  };
+};
 
-  Game.remove = (id, result) => {
+Game.remove = (id, result) => {
     sql.query("DELETE FROM game WHERE id = ?", id, (err, res) => {
         if (err){
             result(null, err);
@@ -79,9 +79,9 @@ const Game = function(game) {
         }
         result(null, res);
     });
-  };
+};
 
-  Game.removeALl = (result) => {
+Game.removeALl = (result) => {
     sql.query("DELETED FROM game", (err, res) => {
         if(err){
             result(null, err);
@@ -89,6 +89,6 @@ const Game = function(game) {
         }
         result(null, res);
     });
-  };
+};
 
-  module.exports = Game;
+module.exports = Game;

@@ -6,8 +6,6 @@ import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../service/auth.service';
 import { Router } from '@angular/router';
 
-
-
 export class SignupErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const isSubmitted = form && form.submitted;
@@ -75,6 +73,4 @@ export class SignupComponent {
       }
     });
   }
-  
 }
-

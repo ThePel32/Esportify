@@ -27,7 +27,6 @@ export class GameService {
     getGameImage(key: string): string {
         return this.gameMap[key.toLowerCase()]?.image;
     }
-    
 
     getGenre(key: string): string {
         return this.gameMap[key.toLowerCase()]?.genre || '';
@@ -42,5 +41,4 @@ export class GameService {
     getGameFullName(key: string): string {
         return this.gameMap[key.toLowerCase()]?.name || key;
     }
-    
 }

@@ -360,7 +360,6 @@ html, body {
 }
 
 @media (max-width: 768px) {
-
   .event-room {
     flex-direction: column;
     min-width: 100%;
@@ -400,8 +399,6 @@ html, body {
     top: auto;
     right: auto;
   }
-  
-  
 
   .score-section,
   .chat-section {
@@ -521,4 +518,3 @@ html, body {
     padding: 0;
   }
 }
-

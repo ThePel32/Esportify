@@ -233,8 +233,6 @@ exports.leaveEvent = (req, res) => {
 exports.confirmJoin = (req, res) => {
     const userId = req.user.id;
     const eventId = req.params.id;
-    console.log(`Confirmation présence - event: ${eventId} | user: ${userId}`);
-
 
     sql.query(`
         SELECT * FROM event_bans WHERE event_id = ? AND user_id = ?

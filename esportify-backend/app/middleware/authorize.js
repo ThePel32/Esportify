@@ -9,7 +9,7 @@ const authorize = (roles = []) => {
         }
 
         if (roles.length && !roles.includes(req.user.role.toLowerCase())) {
-            return res.status(403).send({ message: "Forbidden: You don't have access!" });
+            return res.status(403).send({ message: "Accès interdit : Vous n'avez pas accès !" });
         }
 
         next();

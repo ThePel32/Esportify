@@ -47,6 +47,7 @@ mat-toolbar .btnNav {
 mat-toolbar .btnNav:hover {
     background-color: #4d5021;
 }
+
 .desktop-actions {
     display: flex;
     align-items: center;
