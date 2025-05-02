@@ -17,11 +17,9 @@ import { FavoritesService } from '../../service/favorites.service';
 import { MatIconModule } from '@angular/material/icon';
 import { ViewChild, ElementRef } from '@angular/core';
 
-
 type ExtendedScore = Score & {
   displayScore?: string;
 };
-
 
 @Component({
   selector: 'app-event-room',
@@ -57,7 +55,6 @@ export class EventRoomComponent implements OnInit {
   isMobileView = window.innerWidth <= 768;
 
   @ViewChild('chatMessagesContainer') chatMessagesContainer!: ElementRef;
-
 
   constructor(
     private route: ActivatedRoute,
@@ -111,7 +108,6 @@ export class EventRoomComponent implements OnInit {
     window.addEventListener('resize', this.updateMobileView.bind(this));
     this.updateMobileView();
   }
-
 
   updateMobileView(): void {
     this.isMobileView = window.innerWidth <= 768;
@@ -172,23 +168,16 @@ export class EventRoomComponent implements OnInit {
           organizer_name: event.organizer_name || 'Inconnu'
         };
         this.cdr.detectChanges();
-
         this.gameType = event.title.toLowerCase();
         this.gameKey = this.gameType;
         this.eventData.images = this.gameService.getGameImage(this.gameType);
         this.loadFavoriteStatus();
         this.isLoading = false;
-  
-        console.log('Participants:', this.eventData.participants);
-        console.log('Utilisateur connecté :', this.userId);
-        console.log('A-t-il rejoint ? =>', this.hasUserJoined());
-        console.log('Événement démarré ? =>', this.isEventStarted());
       }
     });
     this.loadTopScores();
   }
   
-
   isStarted(): boolean {
     return !!this.eventData?.started;
   }
@@ -324,7 +313,6 @@ export class EventRoomComponent implements OnInit {
           result = metadata.win ? 'win' : 'lose';
         }
         
-  
         this.userScore = { ...userScore, result };
       },
       error: (err) => {
@@ -400,8 +388,6 @@ export class EventRoomComponent implements OnInit {
   
     if (type === 'balatro') return metadata.points || 0;
     if (type === 'starcraft2') return metadata.win ? 1 : 0;
-
-  
     return 0;
   }
   

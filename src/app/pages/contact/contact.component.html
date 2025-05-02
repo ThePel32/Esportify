@@ -3,13 +3,7 @@
     <form class="form-container" (ngSubmit)="sendMessage()">
         <mat-form-field appearance="fill">
             <mat-label>Email</mat-label>
-            <input 
-            type="email"
-            matInput 
-            [formControl]="emailFormControl" 
-            [errorStateMatcher]="matcher" 
-            name="email" 
-            required>
+            <input type="email" matInput [formControl]="emailFormControl" [errorStateMatcher]="matcher" name="email" required>
             <mat-error *ngIf="emailFormControl.hasError('email')">Veuillez entrer un email valide</mat-error>
             <mat-error *ngIf="emailFormControl.hasError('required')">L'email est <strong>requis</strong></mat-error>
         </mat-form-field>

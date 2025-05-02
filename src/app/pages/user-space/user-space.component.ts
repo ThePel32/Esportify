@@ -56,22 +56,20 @@ export class UserSpaceComponent implements OnInit {
   ngOnInit(): void {
     this.authService.getUserProfile().subscribe({
       next: (user) => {
-          this.userProfile = user;
-          this.checkRoles();
-          this.loadFavorites();
-          this.loadBannedUsers();
-          if (this.isAdmin) {
-              this.loadUsers();
-          }
+        this.userProfile = user;
+        this.checkRoles();
+        this.loadFavorites();
+        this.loadBannedUsers();
+        if (this.isAdmin) {
+          this.loadUsers();
+        }
       },
       error: (err) => {
-          console.error('Erreur chargement profil:', err);
+        console.error('Erreur chargement profil:', err);
       }
-  });
-  
+    });
 
     this.checkRoles();
-
     this.loadFavorites();
     this.loadBannedUsers();
 
@@ -125,8 +123,6 @@ export class UserSpaceComponent implements OnInit {
     });
   }
   
-  
-
   removeFromFavorites(gameKey: string): void {
     this.favoritesService.removeFavorite(gameKey).subscribe({
       next: () => {
@@ -136,10 +132,6 @@ export class UserSpaceComponent implements OnInit {
     });
   }
   
-  
-  
-
-
   loadBannedUsers(): void {
     this.http.get<any[]>(`http://localhost:3000/api/event-bans`).subscribe({
       next: (res) => this.bannedUsers = res,
@@ -160,32 +152,31 @@ export class UserSpaceComponent implements OnInit {
     const userId = this.userProfile?.id;
 
     if (this.newPassword !== this.confirmPassword) {
-        this.snackBar.open("Les mots de passe ne correspondent pas.", "Fermer", {
-            duration: 3000,
-            panelClass: ['snackbar-error']
-        });
-        return;
+      this.snackBar.open("Les mots de passe ne correspondent pas.", "Fermer", {
+        duration: 3000,
+        panelClass: ['snackbar-error']
+      });
+      return;
     }
 
     this.http.patch(`http://localhost:3000/api/users/${userId}/password`, {
-        password: this.newPassword
+      password: this.newPassword
     }).subscribe({
-        next: () => {
-            this.snackBar.open("Mot de passe mis à jour avec succès !", "Fermer", {
-                duration: 3000,
-                panelClass: ['snackbar-success']
-            });
-            this.newPassword = '';
-            this.confirmPassword = '';
-        },
-        error: (err) => {
-            console.error("Erreur MAJ mot de passe", err);
-            this.snackBar.open("Erreur lors de la mise à jour du mot de passe.", "Fermer", {
-                duration: 3000,
-                panelClass: ['snackbar-error']
-            });
-        }
+      next: () => {
+        this.snackBar.open("Mot de passe mis à jour avec succès !", "Fermer", {
+          duration: 3000,
+          panelClass: ['snackbar-success']
+        });
+        this.newPassword = '';
+        this.confirmPassword = '';
+      },
+      error: (err) => {
+        console.error("Erreur MAJ mot de passe", err);
+        this.snackBar.open("Erreur lors de la mise à jour du mot de passe.", "Fermer", {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+      }
     });
-}
-
+  }
 }

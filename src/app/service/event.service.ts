@@ -4,7 +4,6 @@ import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Event } from '../models/event.model';
 
-
 @Injectable({
     providedIn: 'root'
 })
@@ -32,29 +31,25 @@ export class EventService {
         }).pipe(
             switchMap(response => {
                 localStorage.setItem("token", response.token); 
-
-                const storedToken = localStorage.getItem("token");
-
                 const updatedHeaders = new HttpHeaders({
                     "Authorization": `Bearer ${response.token}`
                 });
 
-        const method = error.error.config.method;
-        const url = error.error.config.url;
-        const body = error.error.config.body;
+                const method = error.error.config.method;
+                const url = error.error.config.url;
+                const body = error.error.config.body;
 
-        const updatedRequest = new HttpRequest<any>(method, url, body, {
-            headers: updatedHeaders
-        });
+                const updatedRequest = new HttpRequest<any>(method, url, body, {
+                    headers: updatedHeaders
+                });
 
-        return this.http.request(updatedRequest);
-    }),
-    catchError(err => {
-        console.error("Échec du rafraîchissement du token :", err);
-        return throwError(() => new Error("Erreur lors du rafraîchissement du token."));
-    })
-);
-
+                return this.http.request(updatedRequest);
+            }),
+            catchError(err => {
+                console.error("Échec du rafraîchissement du token :", err);
+                return throwError(() => new Error("Erreur lors du rafraîchissement du token."));
+            })
+        );
     }
 
     getEvents(status?: string): Observable<Event[]> {
@@ -86,9 +81,11 @@ export class EventService {
     startEvent(eventId: number) {
         return this.http.patch(`${this.apiUrl}/${eventId}/start`, {});
     }
+
     stopEvent(eventId: number): Observable<any> {
         return this.http.patch(`${this.apiUrl}/${eventId}/stop`, {}, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
+
     joinEvent(eventId: number, gameKey: string, userId: number): Observable<any> {
         const bannedGameUrl = `http://localhost:3000/api/event-bans/is-banned-game/${gameKey}/${userId}`;
         const bannedEventUrl = `http://localhost:3000/api/event-bans/${eventId}/is-banned/${userId}`;
@@ -108,7 +105,6 @@ export class EventService {
                 if (eventBan.banned) {
                     return throwError(() => new Error("Vous êtes banni de cet événement."));
                 }
-
                 return this.http.post<any>(
                     `${this.apiUrl}/${eventId}/join`,
                     {},
@@ -127,7 +123,6 @@ export class EventService {
         return this.http.get<{ banned: boolean }>(`http://localhost:3000/api/event-bans/is-banned-game/${gameKey}/${userId}`);
     }
 
-
     leaveEvent(eventId: number): Observable<any> {
         return this.http.post<any>(`${this.apiUrl}/${eventId}/leave`, {}, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
@@ -139,7 +134,6 @@ export class EventService {
     deleteEvent(eventId: number): Observable<any> {
         return this.http.delete<any>(`${this.apiUrl}/${eventId}`, { headers: this.getAuthHeaders() }).pipe(catchError(this.handleError));
     }
-
 
     confirmJoin(eventId: number) {
         const token = localStorage.getItem('token');
@@ -195,5 +189,4 @@ export class EventService {
             'Authorization': token ? `Bearer ${token}` : ''
         });
     }
-    
 }

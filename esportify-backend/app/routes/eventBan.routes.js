@@ -10,5 +10,4 @@ router.get('/is-banned-game/:gameKey/:userId', eventBanController.checkIfUserBan
 
 router.delete('/:eventId/unban/:userId', eventBanController.unbanUser);
 
-
 module.exports = router;

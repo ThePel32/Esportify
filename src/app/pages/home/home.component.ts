@@ -18,23 +18,21 @@ import { RouterModule } from '@angular/router';
 export class HomeComponent implements OnInit {
   upcomingEvents: Event[] = [];
   ongoingEvents: Event[] = [];
-slideImages: string[] = [
-  'assets/img/Balatro.jpg',
-  'assets/img/CS2.png',
-  'assets/img/fifa.png',
-  'assets/img/LoL.png',
-  'assets/img/rocketLeague.png',
-  'assets/img/starcraft2.png',
-  'assets/img/valorant.png',
-  'assets/img/pubg.jpg',
-  'assets/img/supermeatboy.jpg'
-];
-clonedSlideImages: string[] = [];
-currentSlideIndex = 0;
-slideInterval: any;
-noTransition = false;
-
-  
+  slideImages: string[] = [
+    'assets/img/Balatro.jpg',
+    'assets/img/CS2.png',
+    'assets/img/fifa.png',
+    'assets/img/LoL.png',
+    'assets/img/rocketLeague.png',
+    'assets/img/starcraft2.png',
+    'assets/img/valorant.png',
+    'assets/img/pubg.jpg',
+    'assets/img/supermeatboy.jpg'
+  ];
+  clonedSlideImages: string[] = [];
+  currentSlideIndex = 0;
+  slideInterval: any;
+  noTransition = false;
 
   constructor(private eventService: EventService) {}
 
@@ -48,12 +46,9 @@ noTransition = false;
       this.ongoingEvents = events.filter((event: Event) => {
         const eventDate = new Date(event.date_time);
         const endDate = new Date(eventDate.getTime() + event.duration * 60 * 60 * 1000);
-        // console.log("now", now, "event", event.date_time, "end", endDate);
         return eventDate <= now && now < endDate;
-
       });
     });
-    
   }
 
   startSlider(): void {

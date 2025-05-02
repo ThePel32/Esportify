@@ -231,7 +231,6 @@ button[color="warn"]:hover {
 }
 
 @media (max-width: 768px) {
-
   .mobile-filters-toggle-wrapper {
     position: relative;
     z-index: 1000;
@@ -270,23 +269,21 @@ button[color="warn"]:hover {
     gap: 0.5rem;
     box-sizing: border-box;
     border-bottom: 1px solid #7A8024;
-}
+  }
 
+  .mobile-filters-panel mat-form-field {
+    width: 100%;
+    background-color: #1a1f30;
+    border-radius: 0;
+  }
 
-.mobile-filters-panel mat-form-field {
-  width: 100%;
-  background-color: #1a1f30;
-  border-radius: 0;
-}
-
-.mobile-filters-panel mat-checkbox {
-  color: white;
-  font-weight: 500;
-  margin-left: 4px;
-  margin-top: 5px;
-  font-size: 14px;
-}
-
+  .mobile-filters-panel mat-checkbox {
+    color: white;
+    font-weight: 500;
+    margin-left: 4px;
+    margin-top: 5px;
+    font-size: 14px;
+  }
 
   .mobile-events-tabs {
     padding: 10px;

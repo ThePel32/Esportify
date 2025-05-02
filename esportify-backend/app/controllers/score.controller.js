@@ -17,8 +17,6 @@ exports.addScore = (req, res) => {
         JSON.stringify(metadata || {})
     ];
 
-    console.log("INSERT SCORE", values);
-
     db.query(query, values, (err, result) => {
         if (err) {
             console.error('Erreur insertion score :', err);

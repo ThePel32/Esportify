@@ -111,7 +111,6 @@ export class AddEventComponent {
     }
     return options;
   }
-  
 
   generateParticipantsOptions(): number[] {
     const options: number[] = [];

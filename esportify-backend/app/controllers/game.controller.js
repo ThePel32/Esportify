@@ -3,7 +3,7 @@ const Game = require("../models/game.model.js");
 exports.create = (req, res) => {
     if(!req.body){
         return res.status(400).send({
-            message: "Content can not be empty!"
+            message: "Le contenu ne peut pas être vide!"
         });
     }
 
@@ -20,7 +20,7 @@ exports.create = (req, res) => {
     Game.create(game, (err, data) => {
         if(err)
             return res.status(500).send({
-        message: err.message || "Some error occurred while creating the game."
+        message: err.message || "Une erreur s'est produite lors de la création du jeu."
     });
     else res.send(data);
     });
@@ -32,7 +32,7 @@ exports.findAll = (req, res) => {
     Game.getAll(name, (err, data) => {
         if(err)
             return res.status(500).send({
-                message: err.message || "Some error occurred while retrieving games."
+                message: err.message || "Une erreur s'est produite lors de la récupération des jeux."
         });
         else res.send(data);
     });
@@ -43,11 +43,11 @@ exports.findOne =  (req, res) => {
         if(err){
             if(err.kind === "not_found"){
                 return res.status(404).send({
-                    message: `Not found Game with id ${req.params.id}.`
+                    message: `Jeu non trouvé avec l'id ${req.params.id}.`
                 });
             } else {
                 return res.status(500).send({
-                    message: "Error retrieving Game with id " + req.params.id
+                    message: "Erreur lors de la récupération du jeu avec l'id " + req.params.id
                 });
             }
         } else res.send(data);
@@ -57,7 +57,7 @@ exports.findOne =  (req, res) => {
 exports.update = (req, res) => {
     if(!req.body){
         return res.status(400).send({
-            message: "Content can not be empty!"
+            message: "Le contenu ne peut pas être vide!"
         });
     }
 
@@ -68,11 +68,11 @@ exports.update = (req, res) => {
             if(err){
                 if(err.kind === "not_found"){
                     return res.status(404).send({
-                        message: `Not found Game with id ${req.params.id}.`
+                        message: `Jeu non trouvé avec l'id ${req.params.id}.`
                     });
                 } else {
                     return res.status(500).send({
-                        message: "Error updating Game with id" + req.params.id
+                        message: "Erreur lors de la mise à jour du jeu avec l'id" + req.params.id
                     });
                 }
             } else res.send(data);
@@ -85,14 +85,14 @@ exports.delete = (req, res) => {
         if(err){
             if(err.kind === "not_found"){
                 return res.status(404).send({
-                    message: `Not found Game with id ${req.params.id}.`
+                    message: `Jeu non trouvé avec l'id ${req.params.id}.`
                 });
             } else {
                 return res.status(500).send({
-                    message: "Could not delete Game with id " + req.params.id
+                    message: "Impossible de supprimer le jeu avec l'id" + req.params.id
                 });
             }
-        } else res.send({message: `Game was deleted successfully!`});
+        } else res.send({message: `Jeu supprimé avec succès!`});
     });
 };
 
@@ -100,8 +100,8 @@ exports.deleteAll = (req, res) => {
     Game.removeALl((err, data) => {
         if(err)
             return res.status(500).send({
-        message: err.message || "Some error occurred while removing all games."
+        message: err.message || "Une erreur est survenue lors de la suppression de tout les événements."
         });
-        else res.send({message: `All Games were deleted successfully!`});
+        else res.send({message: `Tous les jeux ont été supprimés avec succès!`});
     });
 };

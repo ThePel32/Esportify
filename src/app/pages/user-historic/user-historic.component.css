@@ -16,7 +16,6 @@ mat-card-actions {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-
 }
 
 .result {
@@ -94,7 +93,6 @@ mat-option:hover {
   padding: 0.5rem;
   overflow: hidden;
 }
-
 
 .scrollable-list {
   overflow-y: auto;
@@ -235,4 +233,3 @@ mat-checkbox {
     justify-content: space-between;
   }
 }
-
