@@ -7,8 +7,6 @@ const verifyToken = require("./app/middleware/auth.js");
 
 const usersRouter = require("./app/routes/users.routes");
 const gameRouter = require("./app/routes/game.routes");
-const shopRouter = require("./app/routes/shop.routes");
-const saleRouter = require("./app/routes/sale.routes");
 const eventsRouter = require("./app/routes/events.routes");
 const contactRouter = require("./app/routes/contact.routes.js");
 const scoreRouter = require("./app/routes/scores.routes.js");
@@ -34,22 +32,18 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((next) => {
+app.use((req, res, next) => {
   next();
 });
 
 app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
-app.use('/api/shop', shopRouter);
-app.use('/api/sale', saleRouter);
 app.use('/api/scores', scoreRouter);
 app.use('/api/favorites', verifyToken, favoritesRoutes);
 app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
 app.use('/api/message', contactRouter);
 
-app.use('/api/events', verifyToken, (next) => {
-  next();
-}, eventsRouter);
+app.use('/api/events', verifyToken, eventsRouter);
 
 app.use('/api/chat', verifyToken, chatRoutes);
 

@@ -8,14 +8,12 @@
   gap: 0.5rem;
 }
 
-.details_result {
-  display: flex;
-}
-
 mat-card-actions {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .result {
@@ -40,28 +38,6 @@ mat-form-field {
   border-radius: 0px;
   margin-right: 1rem;
   min-width: 160px;
-}
-
-.mat-mdc-select {
-  color: white;
-  font-family: 'Orbitron', sans-serif;
-  font-weight: bold;
-}
-
-.mat-mdc-select-arrow {
-  color: white;
-}
-
-.mat-mdc-form-field-infix {
-  padding: 0.5rem 0.75rem;
-}
-
-.mat-mdc-select-panel {
-  color: white;
-}
-
-mat-form-field.mat-form-field {
-  color: white !important;
 }
 
 mat-select {
@@ -103,6 +79,8 @@ mat-option:hover {
 .historic-card {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
   background-color: #101625;
   border-radius: 0;
@@ -121,11 +99,10 @@ mat-option:hover {
   background-color: #242A36;
   padding: 1rem 0.5rem;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 0.5rem;
   z-index: 10000;
   position: relative;
-  border-bottom: 1px solid #7A8024;
 }
 
 .filters-container mat-form-field {
@@ -136,16 +113,6 @@ mat-option:hover {
 
 mat-checkbox {
   color: white;
-}
-
-.result-win {
-  color: green;
-  font-weight: bold;
-}
-
-.result-lose {
-  color: red;
-  font-weight: bold;
 }
 
 @media (max-width: 768px) {
@@ -184,10 +151,6 @@ mat-checkbox {
 
   .toggle-filters-btn span {
     transition: transform 0.3s ease;
-  }
-
-  .toggle-filters-btn span.rotated {
-    transform: rotate(180deg);
   }
   
   .filters-container {
