@@ -230,6 +230,11 @@ button[color="warn"]:hover {
     max-height: none !important;
   }
 
+  .edit-container {
+    display: flex;
+    flex-direction: row;
+  }
+
   .mobile-filters-toggle-wrapper {
     position: relative;
     z-index: 1000;

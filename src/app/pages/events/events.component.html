@@ -156,11 +156,18 @@
                             <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
                           </button>
                         </div>
-                        <div class="edit-container" *ngIf="isAdmin && event.state === 'validated' && !event.started">
-                          <button mat-icon-button (click)="startEdit(event)">
-                              <mat-icon>edit</mat-icon>
-                          </button>
-                      </div>
+                        <div class="edit-container">
+                          <div *ngIf="isAdmin && event.state === 'validated' && !event.started">
+                            <button mat-icon-button (click)="startEdit(event)">
+                                <mat-icon>edit</mat-icon>
+                            </button>
+                          </div>
+                          <div *ngIf="isAdmin && event.state === 'validated' && !event.started">
+                            <button mat-icon-button (click)="deleteEvent(event.id)">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </div>
+                        </div>
                       
                       </div>
                       <div class="event-content-wrapper">
@@ -254,10 +261,10 @@
                       </button>
                     </div>
                     <div *ngIf="isAdmin && event.state === 'validated' && !event.started">
-                    <button mat-icon-button (click)="deleteEvent(event.id)">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
+                      <button mat-icon-button (click)="deleteEvent(event.id)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
                   </div>
                   <mat-card-actions>
                     <ng-container *ngIf="isConnected && !isUserBanned(event)">
