@@ -150,11 +150,17 @@
                     <mat-card *ngIf="!isUserBanned(event)" class="event-card">
                       <div class="event-media-column">
                         <img *ngIf="event.images" [src]="event.images" class="event-image" />
-                        <div class="favorite-container" *ngIf="isConnected">
+                        <!-- <div class="favorite-container" *ngIf="isConnected">
                           <button mat-icon-button (click)="toggleFavorite(event)">
                             <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
                           </button>
                         </div>
+                        <div class="edit-container" *ngIf="isAdmin && event.state === 'validated' && !event.started">
+                          <button mat-icon-button (click)="editEvent(event)">
+                              <mat-icon>edit</mat-icon>
+                          </button>
+                      </div> -->
+                      
                       </div>
                       <div class="event-content-wrapper">
                         <mat-card-content>
@@ -226,6 +232,16 @@
               <h2>À venir</h2>
               <div class="scrollable-list">
                 <mat-card *ngFor="let event of upcomingEvents" class="event-card">
+                  <div class="favorite-container" *ngIf="isConnected">
+                    <button mat-icon-button (click)="toggleFavorite(event)">
+                      <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
+                    </button>
+                  </div>
+                  <div class="edit-container" *ngIf="isAdmin && event.state === 'validated' && !event.started">
+                    <button mat-icon-button (click)="editEvent(event)">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                </div>
                   <img
                     *ngIf="event.images"
                     [src]="event.images"

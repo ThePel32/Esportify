@@ -211,16 +211,36 @@ exports.update = (req, res) => {
         return res.status(400).send({ message: "Le contenu ne peut pas être vide !" });
     }
 
-    Event.updateById(req.params.id, new Event(req.body), (err, data) => {
+    Event.findById(req.params.id, (err, event) => {
         if (err) {
             if (err.kind === "not_found") {
                 return res.status(404).send({ message: `Événement non trouvé avec l'ID ${req.params.id}.` });
             }
-            return res.status(500).send({ message: "Erreur lors de la mise à jour de l'événement." });
+            return res.status(500).send({ message: "Erreur lors de la récupération de l'événement." });
         }
-        res.send(data);
+
+        if (event.started) {
+            return res.status(400).send({ message: "Impossible de modifier un événement déjà démarré." });
+        }
+
+        const updatedEvent = {
+            ...req.body,
+            state: 'pending',
+            updated_at: new Date()
+        };
+
+        Event.updateById(req.params.id, new Event(updatedEvent), (err, data) => {
+            if (err) {
+                if (err.kind === "not_found") {
+                    return res.status(404).send({ message: `Événement non trouvé avec l'ID ${req.params.id}.` });
+                }
+                return res.status(500).send({ message: "Erreur lors de la mise à jour de l'événement." });
+            }
+            res.send({ message: "Événement mis à jour et repassé en attente de validation.", data });
+        });
     });
 };
+
 
 exports.leaveEvent = (req, res) => {
     const userId = req.user.id;
@@ -277,11 +297,25 @@ exports.kickParticipant = (req, res) => {
 };
 
 exports.delete = (req, res) => {
-    Event.remove(req.params.id, (err) => {
-        if (err) return res.status(500).send({ message: "Erreur lors de la suppression de l'événement." });
-        res.send({ message: "Événement supprimé avec succès !" });
+    Event.findById(req.params.id, (err, event) => {
+        if (err) {
+            if (err.kind === "not_found") {
+                return res.status(404).send({ message: `Événement non trouvé avec l'ID ${req.params.id}.` });
+            }
+            return res.status(500).send({ message: "Erreur lors de la récupération de l'événement." });
+        }
+
+        if (event.started) {
+            return res.status(400).send({ message: "Impossible de supprimer un événement déjà démarré." });
+        }
+
+        Event.remove(req.params.id, (err) => {
+            if (err) return res.status(500).send({ message: "Erreur lors de la suppression de l'événement." });
+            res.send({ message: "Événement supprimé avec succès !" });
+        });
     });
 };
+
 
 exports.deleteAll = (req, res) => {
     Event.removeAll((err) => {
