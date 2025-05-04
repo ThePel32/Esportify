@@ -26,6 +26,14 @@ export class UserService {
         );
     }
 
+    getAllOrganizers(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/organizers`, { headers: this.getAuthHeaders() }).pipe(
+            catchError(this.handleError)
+        );
+    }
+    
+    
+
     updateUser(id: number, data: any): Observable<any> {
         return this.http.put(`${this.apiUrl}/${id}`, data, { headers: this.getAuthHeaders() }).pipe(
             catchError(this.handleError)

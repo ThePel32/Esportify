@@ -108,6 +108,17 @@ const User = {
         });
     },
 
+    getAllByRoles: (roles, result) => {
+        const placeholders = roles.map(() => '?').join(',');
+        db.query(`SELECT id, username FROM users WHERE role IN (${placeholders})`, roles, (err, res) => {
+            if (err) {
+                result(err, null);
+                return;
+            }
+            result(null, res);
+        });
+    },
+
     remove: (id) => {
         return new Promise((resolve, reject) => {
             db.query("DELETE FROM users WHERE id = ?", [id], (err, res) => {
