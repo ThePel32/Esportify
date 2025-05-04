@@ -140,6 +140,14 @@ exports.getUserProfile = async (req, res) => {
     }
 };
 
+exports.findAllOrganizers = (req, res) => {
+    User.getAllByRoles(['organizer', 'admin'], (err, data) => {
+        if (err)
+            res.status(500).send({ message: err.message || "Erreur lors de la récupération des organisateurs." });
+        else res.json(data);
+    });
+};
+
 exports.findAll = async (req, res) => {
     try {
         const users = await User.getAll();
@@ -267,6 +275,7 @@ module.exports = {
     login: exports.login,
     refreshToken: exports.refreshToken,
     getUserProfile: exports.getUserProfile,
+    findAllOrganizers: exports.findAllOrganizers,
     findAll: exports.findAll,
     findOne: exports.findOne,
     update: exports.update,

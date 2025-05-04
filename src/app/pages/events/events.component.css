@@ -43,7 +43,7 @@ mat-tab-group {
   height: calc(100% - 100px);
   width: 100%;
   overflow: hidden;
-  min-height: 70vh;
+  min-height: 68vh;
 }
 
 .events-section {
@@ -174,8 +174,8 @@ mat-card-actions button {
   font-weight: bold;
   padding: 4px 16px;
   border-radius: 0;
-  width: 120px; /* largeur fixe */
-  height: 40px; /* hauteur fixe */
+  width: 120px;
+  height: 40px;
   text-align: center;
   display: inline-flex;
   justify-content: center;

@@ -13,7 +13,7 @@ import { EventBusService } from '../../service/event-bus.service';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatOptionModule } from '@angular/material/core';
+import { MatNativeDateModule, MatOptionModule } from '@angular/material/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
@@ -21,6 +21,9 @@ import { FavoritesService } from '../../service/favorites.service';
 import { MatIconModule } from '@angular/material/icon';
 import { GameService } from '../../service/game.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { UserService } from '../../service/user.service';
 
 type ExtendedEvent = Event & {
   isBanned?: boolean;
@@ -45,7 +48,10 @@ type ExtendedEvent = Event & {
     MatOptionModule,
     RouterModule,
     MatIconModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatInputModule,
   ],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.css']
@@ -63,6 +69,7 @@ export class EventsComponent implements OnInit {
   isOrganizer: boolean = false;
   hasJoined: boolean = false;
   allEvents: ExtendedEvent[] = [];
+  organizers: { id: number; username: string }[] = [];
 
   selectedGames: string[] = [];
   selectedGenres: string[] = [];
@@ -71,12 +78,16 @@ export class EventsComponent implements OnInit {
 
   selectedTabIndex: number = 0;
   selectedFavorites: boolean = false;
+  selectedOrganizer: string = '';
+
   
   isMobileView = false;
   mobileEventTabIndex = 0;
   showFilters = false;
 
   editEventData: Event | null = null;
+  selectedDate: Date | null = null;
+
 
 
   constructor(
@@ -86,10 +97,13 @@ export class EventsComponent implements OnInit {
     private snackBar: MatSnackBar,
     private route: ActivatedRoute,
     private favoritesService: FavoritesService,
+    private userService: UserService,
     public gameService: GameService,
   ) {}
 
   ngOnInit() {
+    this.loadOrganizers();
+
     const allGames = this.gameService.getAllGames();
 
     this.isMobileView = window.innerWidth <= 768;
@@ -132,6 +146,17 @@ export class EventsComponent implements OnInit {
   if (!target.closest('.mobile-filters-toggle-wrapper') && !target.closest('.mobile-filters-panel')) {
     this.showFilters = false;
   }
+}
+
+loadOrganizers() {
+  this.userService.getAllOrganizers().subscribe({
+      next: (data) => {
+          this.organizers = data;
+      },
+      error: (err) => {
+          console.error('Erreur lors du chargement des organisateurs', err);
+      }
+  });
 }
 
   get isConnected(): boolean {
@@ -216,6 +241,22 @@ export class EventsComponent implements OnInit {
     if (this.selectedFavorites) {
       filtered = filtered.filter(e => this.isFavorite(this.gameService.getGameKeyFromTitle(e.title)));
     }
+
+    if (this.selectedDate) {
+      filtered = filtered.filter(e => {
+        const eventDate = new Date(e.date_time);
+        return eventDate.toDateString() === this.selectedDate!.toDateString();
+      });
+    }
+    
+    if (this.selectedOrganizer.trim() !== '') {
+      filtered = filtered.filter(e => {
+        const organizer = e.organizer_name?.toLowerCase() || '';
+        return organizer.includes(this.selectedOrganizer.toLowerCase());
+      });
+    }
+    
+  
   
     this.upcomingEvents = filtered.filter(e => new Date(e.date_time) > now);
     this.ongoingEvents = filtered.filter(e => {
@@ -281,6 +322,10 @@ export class EventsComponent implements OnInit {
   }
 
   applyFilter() {
+    console.log('Organizers chargés:', this.organizers);
+console.log('Filtre choisi:', this.selectedOrganizer);
+console.log('Events avant filtre:', this.allEvents);
+
     this.filterEvents();
   }
 
