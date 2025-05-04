@@ -79,6 +79,8 @@ export class EventsComponent implements OnInit {
   selectedTabIndex: number = 0;
   selectedFavorites: boolean = false;
   selectedOrganizer: string = '';
+  sortByPlayers: 'none' | 'asc' | 'desc' = 'none';
+
 
   
   isMobileView = false;
@@ -255,6 +257,14 @@ loadOrganizers() {
         return organizer.includes(this.selectedOrganizer.toLowerCase());
       });
     }
+
+    // Tri par nombre de joueurs si demandé
+    if (this.sortByPlayers === 'asc') {
+      filtered = filtered.sort((a, b) => (a.participants?.length || 0) - (b.participants?.length || 0));
+    } else if (this.sortByPlayers === 'desc') {
+      filtered = filtered.sort((a, b) => (b.participants?.length || 0) - (a.participants?.length || 0));
+    }
+
     
   
   
@@ -271,6 +281,16 @@ loadOrganizers() {
       return !e.started && diffInMs <= 30 * 60 * 1000 && diffInMs >= 0;
     });
   }
+
+  setSort(order: 'asc' | 'desc') {
+    if (this.sortByPlayers === order) {
+      this.sortByPlayers = 'none';
+    } else {
+      this.sortByPlayers = order;
+    }
+    this.applyFilter();
+  }
+  
 
   showStartButton(dateTime: string): boolean {
     const now = new Date();

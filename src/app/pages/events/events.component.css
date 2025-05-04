@@ -134,6 +134,11 @@ mat-checkbox {
   color: white;
 }
 
+.player-sort-buttons {
+  display: flex;
+  flex-direction: row;
+}
+
 mat-form-field {
   color: white;
   border-radius: 0px;
@@ -228,6 +233,11 @@ button[color="warn"]:hover {
     flex: none !important;
     overflow: visible !important;
     max-height: none !important;
+  }
+
+  .player-sort-buttons {
+    display: flex;
+    justify-content: space-between;
   }
 
   .edit-container {

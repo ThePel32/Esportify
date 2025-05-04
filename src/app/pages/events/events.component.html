@@ -104,6 +104,18 @@
                 </mat-select>
               </mat-form-field>
 
+              <div class="player-sort-buttons">
+                <span>Nb de joueurs :</span>
+                <div>
+                  <button mat-icon-button (click)="setSort('asc')" [color]="sortByPlayers === 'asc' ? 'accent' : undefined">
+                    <mat-icon>arrow_upward</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="setSort('desc')" [color]="sortByPlayers === 'desc' ? 'accent' : undefined">
+                    <mat-icon>arrow_downward</mat-icon>
+                  </button>
+                </div>
+              </div>
+
               <mat-checkbox [(ngModel)]="selectedFavorites" (change)="applyFilter()">
                 ❤️ Favoris
               </mat-checkbox>
@@ -341,6 +353,15 @@
               </mat-select>
             </mat-form-field>
             
+            <div class="player-sort-buttons">
+              <span>Nb de joueurs</span>
+              <button mat-icon-button (click)="setSort('asc')" [color]="sortByPlayers === 'asc' ? 'accent' : undefined">
+                <mat-icon>arrow_upward</mat-icon>
+              </button>
+              <button mat-icon-button (click)="setSort('desc')" [color]="sortByPlayers === 'desc' ? 'accent' : undefined">
+                <mat-icon>arrow_downward</mat-icon>
+              </button>
+            </div>
             
           
             <mat-checkbox [(ngModel)]="selectedFavorites" (change)="applyFilter()">
