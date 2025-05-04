@@ -85,8 +85,8 @@
     </div>
   </mat-tab>
 </mat-tab-group>
-<div class="historic-wrapper">
 
+<div class="historic-wrapper">
   <div class="historic-section">
     <h2>Mes événements</h2>
     <div class="scrollable-list">
@@ -129,6 +129,15 @@
           <p><strong>Durée :</strong> {{ event.duration }}h</p>
         </mat-card-content>
         <mat-card-actions>
+          <div *ngIf="event.userScore?.result" class="result">
+            <span 
+              [ngClass]="{
+                'result-win': event.userScore.result === 'win',
+                'result-lose': event.userScore.result === 'lose'
+              }">
+              {{ event.userScore.result === 'win' ? '🏆 Gagné' : '💀 Perdu' }}
+            </span>
+          </div>
           <button mat-raised-button color="primary" [routerLink]="['/events', event.id]">Détails</button>
         </mat-card-actions>
       </mat-card>

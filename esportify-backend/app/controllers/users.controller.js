@@ -75,6 +75,9 @@ exports.login = async (req, res) => {
             { expiresIn: "7d" }
         );
 
+        console.log("TOKEN GÉNÉRÉ POUR", user.email, ":", token);
+
+
         res.status(200).send({
             message: "Connexion réussie !",
             token,

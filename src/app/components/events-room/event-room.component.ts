@@ -363,6 +363,15 @@ export class EventRoomComponent implements OnInit {
     });
   }
 
+  navigateBack(): void {
+    if (this.isOver()) {
+      this.router.navigate(['/historic'], { queryParams: { tab: 'mes' } });
+    } else {
+      this.router.navigate(['/events'], { queryParams: { tab: 'liste' } });
+    }
+  }
+  
+
   getMainScoreFromMetadata(metadata: any): number {
     const type = this.gameType;
   

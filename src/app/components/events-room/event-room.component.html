@@ -6,9 +6,14 @@
           <mat-icon>chat</mat-icon>
         </button>
         <div class="image-wrapper">
-          <button *ngIf="isOver() && !isChatOpen && isMobileView; else ongoingEvent" class="back-button" (click)="router.navigate(['/historic'], { queryParams: { tab: 'mes' } })">
+          <button *ngIf="!isMobileView" class="back-button" (click)="navigateBack()">
             <mat-icon class="back-icon">arrow_back</mat-icon>
           </button>
+
+          <button *ngIf="isMobileView && !isChatOpen" class="back-button" (click)="navigateBack()">
+            <mat-icon class="back-icon">arrow_back</mat-icon>
+          </button>
+
           
           <div class="mobile-chat-sidenav" [class.open]="isChatOpen" *ngIf="isMobileView">
             <div class="chat-header">
@@ -31,11 +36,6 @@
             </div>
           </div>
 
-          <ng-template #ongoingEvent>
-            <button *ngIf="isMobileView && !isChatOpen" class="back-button" (click)="router.navigate(['/events'], { queryParams: { tab: 'liste' } })">
-              <mat-icon class="back-icon">arrow_back</mat-icon>
-            </button>
-          </ng-template>
           <button class="favorite-btn" (click)="toggleFavorite()" [ngClass]="{ active: isFavorite }" aria-label="Favori">
             <mat-icon>{{ isFavorite ? 'favorite' : 'favorite_border' }}</mat-icon>
           </button>
@@ -166,7 +166,7 @@
         <button (click)="sendMessage()">Envoyer</button>
       </div>
     </div>
-  <div *ngIf="isBanned" class="banned-wrapper">
-    <div class="banned-message">Vous avez été banni de cet événement.</div>
-  </div>
+    <div *ngIf="isBanned" class="banned-wrapper">
+      <div class="banned-message">Vous avez été banni de cet événement.</div>
+    </div>
 </div>
