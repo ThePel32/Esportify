@@ -87,6 +87,23 @@
                 </mat-select>
               </mat-form-field>
 
+              <mat-form-field appearance="fill">
+                <mat-label>Date</mat-label>
+                <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" (dateChange)="applyFilter()">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+              
+              <mat-form-field appearance="fill">
+                <mat-label>Organisateur</mat-label>
+                <mat-select [(value)]="selectedOrganizer" (selectionChange)="applyFilter()">
+                  <mat-option value="">Tous</mat-option>
+                  <mat-option *ngFor="let organizer of organizers" [value]="organizer.username">
+                    {{ organizer.username }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
               <mat-checkbox [(ngModel)]="selectedFavorites" (change)="applyFilter()">
                 ❤️ Favoris
               </mat-checkbox>
