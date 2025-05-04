@@ -247,11 +247,18 @@
                     <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
                     <p><strong>Participants :</strong> {{ getParticipantsCount(event) }}</p>
                   </mat-card-content>
-                  <div class="edit-container" *ngIf="isAdmin && event.state === 'validated' && !event.started">
-                    <button mat-icon-button (click)="startEdit(event)">
-                        <mat-icon>edit</mat-icon>
+                  <div class="edit-container">
+                    <div *ngIf="isAdmin && event.state === 'validated' && !event.started">
+                      <button mat-icon-button (click)="startEdit(event)">
+                          <mat-icon>edit</mat-icon>
+                      </button>
+                    </div>
+                    <div *ngIf="isAdmin && event.state === 'validated' && !event.started">
+                    <button mat-icon-button (click)="deleteEvent(event.id)">
+                      <mat-icon>delete</mat-icon>
                     </button>
-                </div>
+                  </div>
+                  </div>
                   <mat-card-actions>
                     <ng-container *ngIf="isConnected && !isUserBanned(event)">
                       <ng-container *ngIf="!isUserRegistered(event) && event.participants.length < event.max_players">
