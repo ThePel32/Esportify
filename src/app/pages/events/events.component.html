@@ -3,7 +3,8 @@
     <div class="tab-container">
       <mat-tab-group [(selectedIndex)]="selectedTabIndex" mat-stretch-tabs="true" class="custom-tabs">
         <mat-tab label="Ajout d'événement" *ngIf="canAddEvent">
-          <app-add-event></app-add-event>
+          <app-add-event [eventToEdit]="editEventData"></app-add-event>
+
         </mat-tab>
   
         <mat-tab label="Validation" *ngIf="isAdmin">
@@ -150,16 +151,16 @@
                     <mat-card *ngIf="!isUserBanned(event)" class="event-card">
                       <div class="event-media-column">
                         <img *ngIf="event.images" [src]="event.images" class="event-image" />
-                        <!-- <div class="favorite-container" *ngIf="isConnected">
+                        <div class="favorite-container" *ngIf="isConnected">
                           <button mat-icon-button (click)="toggleFavorite(event)">
                             <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
                           </button>
                         </div>
                         <div class="edit-container" *ngIf="isAdmin && event.state === 'validated' && !event.started">
-                          <button mat-icon-button (click)="editEvent(event)">
+                          <button mat-icon-button (click)="startEdit(event)">
                               <mat-icon>edit</mat-icon>
                           </button>
-                      </div> -->
+                      </div>
                       
                       </div>
                       <div class="event-content-wrapper">
@@ -237,11 +238,6 @@
                       <mat-icon>{{ isFavorite(event.title.toLowerCase()) ? 'favorite' : 'favorite_border' }}</mat-icon>
                     </button>
                   </div>
-                  <div class="edit-container" *ngIf="isAdmin && event.state === 'validated' && !event.started">
-                    <button mat-icon-button (click)="editEvent(event)">
-                        <mat-icon>edit</mat-icon>
-                    </button>
-                </div>
                   <img
                     *ngIf="event.images"
                     [src]="event.images"
@@ -251,6 +247,11 @@
                     <p><strong>Date :</strong> {{ formatDate(event.date_time) }}</p>
                     <p><strong>Participants :</strong> {{ getParticipantsCount(event) }}</p>
                   </mat-card-content>
+                  <div class="edit-container" *ngIf="isAdmin && event.state === 'validated' && !event.started">
+                    <button mat-icon-button (click)="startEdit(event)">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                </div>
                   <mat-card-actions>
                     <ng-container *ngIf="isConnected && !isUserBanned(event)">
                       <ng-container *ngIf="!isUserRegistered(event) && event.participants.length < event.max_players">

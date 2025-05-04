@@ -76,6 +76,9 @@ export class EventsComponent implements OnInit {
   mobileEventTabIndex = 0;
   showFilters = false;
 
+  editEventData: Event | null = null;
+
+
   constructor(
     private eventService: EventService,
     private authService: AuthService,
@@ -180,6 +183,12 @@ export class EventsComponent implements OnInit {
       });
     }
   }
+
+  startEdit(event: Event) {
+    this.editEventData = event;
+    this.selectedTabIndex = 0;
+  }
+  
 
   filterEvents() {
     const now = new Date();
