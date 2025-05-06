@@ -1,4 +1,3 @@
-import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { Component, OnInit, ViewChild, HostListener } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { MatDrawer, MatSidenavModule } from '@angular/material/sidenav';
@@ -22,7 +21,6 @@ import { ChangeDetectorRef } from '@angular/core';
     MatIconModule,
     CommonModule,
     MatSnackBarModule,
-    NgxDaterangepickerMd
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
