@@ -5,7 +5,8 @@ import {MatDividerModule} from '@angular/material/divider';
 
 @Component({
   selector: 'login.component',
-  styleUrl: 'login.component.css',
+  standalone: true,
+  styleUrls: ['login.component.css'],
   templateUrl: 'login.component.html',
   imports: [
     SignupComponent,

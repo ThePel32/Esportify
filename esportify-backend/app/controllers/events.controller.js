@@ -46,40 +46,34 @@ exports.create = (req, res) => {
         return res.status(400).send({ message: "Le contenu ne peut pas être vide !" });
     }
 
-    const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
-    if (!token) {
-        return res.status(401).send({ message: "Token manquant, veuillez vous authentifier." });
+    if (!req.user) {
+        return res.status(401).send({ message: "Utilisateur non authentifié." });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    const event = new Event({
+        title: req.body.title,
+        description: req.body.description,
+        date_time: req.body.date_time,
+        max_players: req.body.max_players,
+        organizer_id: req.user.id,
+        state: "pending",
+        images: req.body.images,
+        duration: req.body.duration || 1,
+        created_at: new Date(),
+        updated_at: new Date(),
+    });
+
+    Event.create(event, (err, data) => {
         if (err) {
-            return res.status(401).send({ message: "Token invalide ou expiré." });
+            console.error("Erreur SQL dans create event:", err);
+            return res.status(500).send({
+                message: err.sqlMessage || err.message || "Erreur lors de la création de l'événement."
+            });
         }
-
-        const event = new Event({
-            title: req.body.title,
-            description: req.body.description,
-            date_time: req.body.date_time,
-            max_players: req.body.max_players,
-            organizer_id: decoded.id,
-            state: "pending",
-            images: req.body.images,
-            duration: req.body.duration || 1,
-            created_at: new Date(),
-            updated_at: new Date(),
-        });
-
-        Event.create(event, (err, data) => {
-            if (err) {
-                console.error("Erreur SQL dans create event:", err);
-                return res.status(500).send({
-                    message: err.sqlMessage || err.message || "Erreur lors de la création de l'événement."
-                });
-            }
-            res.send(data);
-        });
+        res.send(data);
     });
 };
+
 
 exports.findAll = (req, res) => {
     const title = req.query.title || "";
