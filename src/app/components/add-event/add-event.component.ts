@@ -16,6 +16,7 @@ import { EventBusService } from '../../service/event-bus.service';
 
 @Component({
   selector: 'app-add-event',
+  // standalone: true,
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'fr-FR' },
     provideNativeDateAdapter()
@@ -32,7 +33,7 @@ import { EventBusService } from '../../service/event-bus.service';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './add-event.component.html',
-  styleUrl: './add-event.component.css'
+  styleUrls: ['./add-event.component.css']
 })
 export class AddEventComponent implements OnChanges {
   @Input() eventToEdit: any = null;

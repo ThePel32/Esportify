@@ -15,6 +15,7 @@ export class SignupErrorStateMatcher implements ErrorStateMatcher {
 
 @Component({
   selector: 'app-signup',
+  standalone: true,
   imports: [
       FormsModule, 
       MatFormFieldModule, 
@@ -22,7 +23,7 @@ export class SignupErrorStateMatcher implements ErrorStateMatcher {
       ReactiveFormsModule,
   ],
   templateUrl: './signup.component.html',
-  styleUrl: './signup.component.css'
+  styleUrls: ['./signup.component.css']
 })
 
 export class SignupComponent {
