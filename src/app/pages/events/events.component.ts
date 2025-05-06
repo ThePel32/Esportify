@@ -104,7 +104,9 @@ export class EventsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.loadOrganizers();
+    if (this.authService.isLoggedIn()) {
+      this.loadOrganizers();
+    }
 
     const allGames = this.gameService.getAllGames();
 
@@ -258,7 +260,6 @@ loadOrganizers() {
       });
     }
 
-    // Tri par nombre de joueurs si demandé
     if (this.sortByPlayers === 'asc') {
       filtered = filtered.sort((a, b) => (a.participants?.length || 0) - (b.participants?.length || 0));
     } else if (this.sortByPlayers === 'desc') {
@@ -342,10 +343,6 @@ loadOrganizers() {
   }
 
   applyFilter() {
-    console.log('Organizers chargés:', this.organizers);
-console.log('Filtre choisi:', this.selectedOrganizer);
-console.log('Events avant filtre:', this.allEvents);
-
     this.filterEvents();
   }
 

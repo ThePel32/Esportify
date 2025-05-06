@@ -161,7 +161,7 @@
           <strong class="username">{{ msg.user }} : </strong> <span class="message-text">{{ msg.content }}</span>
         </div>
       </div>
-      <div class="chat-input" *ngIf="!isOver() && !isBanned">
+      <div class="chat-input" *ngIf="!isOver() && !isBanned && isUserRegistered()">
         <input type="text" [(ngModel)]="newMessage" (keydown.enter)="sendMessage()" placeholder="Écris ton message..."/>
         <button (click)="sendMessage()">Envoyer</button>
       </div>

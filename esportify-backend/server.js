@@ -29,6 +29,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'],
   credentials: true,
 }));
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -43,7 +45,7 @@ app.use('/api/favorites', verifyToken, favoritesRoutes);
 app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
 app.use('/api/message', contactRouter);
 
-app.use('/api/events', verifyToken, eventsRouter);
+app.use('/api/events', eventsRouter);
 
 app.use('/api/chat', verifyToken, chatRoutes);
 
