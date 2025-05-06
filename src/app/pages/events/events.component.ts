@@ -343,10 +343,6 @@ loadOrganizers() {
   }
 
   applyFilter() {
-    console.log('Organizers chargés:', this.organizers);
-console.log('Filtre choisi:', this.selectedOrganizer);
-console.log('Events avant filtre:', this.allEvents);
-
     this.filterEvents();
   }
 
