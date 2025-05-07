@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, HttpRequest } from '@angula
 import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Event } from '../models/event.model';
-import { environment } from '../../environments/environments';
+import { environment } from '../../environments/environment';
 
 
 @Injectable({

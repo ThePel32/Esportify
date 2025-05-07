@@ -14,7 +14,7 @@ import { FavoritesService } from '../../service/favorites.service';
 import { registerLocaleData } from '@angular/common';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import localeFr from '@angular/common/locales/fr';
-import { environment } from '../../../environments/environments';
+import { environment } from '../../../environments/environment';
 
 registerLocaleData(localeFr);
 
