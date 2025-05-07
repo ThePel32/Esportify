@@ -221,6 +221,40 @@ tbody td {
   color: white;
 }
 
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #242A36;
+  padding: 2rem 1rem;
+  border-bottom: 1px solid #7A8024;
+}
+
+.profile-section h3{
+  color: #7A8024;
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #7A8024;
+  padding-bottom: 0.5rem;
+  width: 100%;
+  text-align: center;
+}
+
+.password {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.passwordInput {
+  width: 25%;
+  padding: 10px;
+  color: #fff;
+  border-radius: 0;
+  font-size: 0.9rem;
+}
+
 @media screen and (max-width: 768px) {
   table, thead, tbody, th, td, tr {
     display: block;
@@ -285,7 +319,6 @@ tbody td {
     align-items: center;
     background-color: #242A36;
     padding: 2rem 1rem;
-    border-top: 1px solid #7A8024;
     border-bottom: 1px solid #7A8024;
   }
 

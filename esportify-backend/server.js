@@ -90,8 +90,3 @@ const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`Serveur Express + Socket.io lancé sur http://localhost:${PORT}`);
 });
-
-const sql = require("./app/config/db.js");
-sql.query("SELECT * FROM events WHERE state = ?", ["pending"], (err, res) => {
-  if (err) console.error("Erreur SQL directe dans Node.js :", err);
-});
