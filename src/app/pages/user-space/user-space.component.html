@@ -92,12 +92,12 @@
             <p><strong>Email :</strong> {{ userProfile?.email }}</p>
             <p><strong>Inscrit depuis :</strong> {{ userProfile?.created_at | date:'longDate':'':'fr-FR' }}</p>
             <h4>Changer mon mot de passe</h4>
-            <form (ngSubmit)="changePassword()" #passwordForm="ngForm">
-                <mat-form-field appearance="fill">
+            <form class="password" (ngSubmit)="changePassword()" #passwordForm="ngForm">
+                <mat-form-field class="passwordInput" appearance="fill">
                     <mat-label>Nouveau mot de passe</mat-label>
                     <input matInput type="password" name="newPassword" [(ngModel)]="newPassword" required>
                 </mat-form-field>
-                <mat-form-field appearance="fill">
+                <mat-form-field class="passwordInput" appearance="fill">
                     <mat-label>Confirmer le mot de passe</mat-label>
                     <input matInput type="password" name="confirmPassword" [(ngModel)]="confirmPassword" required>
                 </mat-form-field>
