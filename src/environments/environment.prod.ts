@@ -1,4 +1,4 @@
 export const environment = {
     production: true,
-    apiUrl: 'http://esportify-production.up.railway.app/api',
+    apiUrl: 'https://esportify-production.up.railway.app/api',
 }
