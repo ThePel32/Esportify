@@ -2,12 +2,13 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { Score } from "../models/score.model";
+import { environment } from '../../environments/environments';
 
 @Injectable({
     providedIn: 'root'
 })
 export class ScoreService {
-    private apiUrl = 'http://localhost:3000/api/scores';
+    private apiUrl = `${environment.apiUrl}/scores`;
     
     constructor(private http: HttpClient) {}
 
@@ -15,7 +16,7 @@ export class ScoreService {
         const token = localStorage.getItem('token');
         return new HttpHeaders({
             'Content-Type': 'application/json',
-            'Authorization': token? `Bearer ${token}` : ''
+            'Authorization': token ? `Bearer ${token}` : ''
         });
     }
 
