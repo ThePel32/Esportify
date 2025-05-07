@@ -16,20 +16,31 @@ const Chat = require('./app/service/chat.service');
 
 const app = express();
 const httpServer = http.createServer(app);
+
+const allowedOrigins = [
+  'http://localhost:4200',
+  'https://dapper-swan-96f438.netlify.app'
+];
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:4200",
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:4200",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['POST', 'PUT', 'DELETE', 'GET', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'],
   credentials: true,
 }));
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -44,9 +55,7 @@ app.use('/api/scores', scoreRouter);
 app.use('/api/favorites', verifyToken, favoritesRoutes);
 app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
 app.use('/api/message', contactRouter);
-
 app.use('/api/events', eventsRouter);
-
 app.use('/api/chat', verifyToken, chatRoutes);
 
 app.get("/", (req, res) => {
@@ -58,9 +67,7 @@ app.use((req, res) => {
 });
 
 io.on('connection', (socket) => {
-
   socket.on('chatMessage', (data) => {
-
     const messageData = {
       event_id: data.event_id,
       user_id: data.user_id,
@@ -82,8 +89,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('disconnect', () => {
-  });
+  socket.on('disconnect', () => {});
 });
 
 const PORT = process.env.PORT || 3000;
