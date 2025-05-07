@@ -18,17 +18,30 @@ const app = express();
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL,
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
 
+
+const allowedOrigins = [
+  'http://localhost:4200',
+  'https://dapper-swan-96f438.netlify.app'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['POST', 'PUT', 'DELETE', 'GET', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'],
   credentials: true,
 }));
+
 
 
 app.use(express.json());
