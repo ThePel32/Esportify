@@ -3,12 +3,14 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, HttpRequest } from '@angula
 import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Event } from '../models/event.model';
+import { environment } from '../../environments/environments';
+
 
 @Injectable({
     providedIn: 'root'
 })
 export class EventService {
-    private apiUrl = 'http://localhost:3000/api/events';
+    private apiUrl = `${environment.apiUrl}/events`;
 
     constructor(private http: HttpClient) {}
 
@@ -24,7 +26,7 @@ export class EventService {
     private refreshTokenAndRetry(error: HttpErrorResponse): Observable<any> {
         const oldToken = localStorage.getItem("token");
         if (!oldToken) return throwError(() => new Error("Token expiré et non récupérable."));
-        return this.http.post<any>("http://localhost:3000/api/users/refresh-token", {}, {
+        return this.http.post<any>(`${environment.apiUrl}/users/refresh-token`, {}, {
             headers: new HttpHeaders({
                 "Authorization": `Bearer ${oldToken}`
             })
@@ -87,8 +89,8 @@ export class EventService {
     }
 
     joinEvent(eventId: number, gameKey: string, userId: number): Observable<any> {
-        const bannedGameUrl = `http://localhost:3000/api/event-bans/is-banned-game/${gameKey}/${userId}`;
-        const bannedEventUrl = `http://localhost:3000/api/event-bans/${eventId}/is-banned/${userId}`;
+        const bannedGameUrl = `${environment.apiUrl.replace('/events', '')}/event-bans/is-banned-game/${gameKey}/${userId}`;
+        const bannedEventUrl = `${environment.apiUrl.replace('/events', '')}/event-bans/${eventId}/is-banned/${userId}`;
 
         return forkJoin([
             this.http.get<{ banned: boolean }>(bannedGameUrl, { headers: this.getAuthHeaders() }).pipe(
@@ -116,11 +118,11 @@ export class EventService {
     }
 
     isUserBanned(eventId: number, userId: number) {
-        return this.http.get<{ banned: boolean }>(`http://localhost:3000/api/event-bans/${eventId}/is-banned/${userId}`);
+        return this.http.get<{ banned: boolean }>(`${environment.apiUrl.replace('/events', '')}/event-bans/${eventId}/is-banned/${userId}`);
     }
 
     isUserBannedFromGame(gameKey: string, userId: number) {
-        return this.http.get<{ banned: boolean }>(`http://localhost:3000/api/event-bans/is-banned-game/${gameKey}/${userId}`);
+        return this.http.get<{ banned: boolean }>(`${environment.apiUrl.replace('/events', '')}/event-bans/is-banned-game/${gameKey}/${userId}`);
     }
 
     leaveEvent(eventId: number): Observable<any> {
@@ -167,14 +169,14 @@ export class EventService {
     }
     
     getMessages(eventId: number) {
-        return this.http.get<any[]>(`http://localhost:3000/api/chat/messages/${eventId}`, {
+        return this.http.get<any[]>(`${environment.apiUrl.replace('/events', '')}/chat/messages/${eventId}`, {
             headers: this.getAuthHeaders()
         });
     }
     
 
     saveMessage(messageData: any) {
-        return this.http.post('/api/chat/send-message', messageData, { headers: this.getAuthHeaders() });
+        return this.http.post(`${environment.apiUrl.replace('/events', '')}/chat/send-message`, messageData, { headers: this.getAuthHeaders() });
     }
 
     private getAuthHeaders(): HttpHeaders {

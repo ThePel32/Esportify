@@ -14,6 +14,7 @@ import { FavoritesService } from '../../service/favorites.service';
 import { registerLocaleData } from '@angular/common';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import localeFr from '@angular/common/locales/fr';
+import { environment } from '../../../environments/environments';
 
 registerLocaleData(localeFr);
 
@@ -34,6 +35,9 @@ registerLocaleData(localeFr);
   styleUrls: ['./user-space.component.css']
 })
 export class UserSpaceComponent implements OnInit {
+  private apiUrl = environment.apiUrl;
+
+
   users: any[] = [];
   bannedUsers: any[] = [];
   favoriteGames: any[] = [];
@@ -50,7 +54,7 @@ export class UserSpaceComponent implements OnInit {
     private http: HttpClient,
     private gameService: GameService,
     private favoritesService: FavoritesService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
   ) {}
 
   ngOnInit(): void {
@@ -133,14 +137,14 @@ export class UserSpaceComponent implements OnInit {
   }
   
   loadBannedUsers(): void {
-    this.http.get<any[]>(`http://localhost:3000/api/event-bans`).subscribe({
+    this.http.get<any[]>(`${this.apiUrl}/event-bans`).subscribe({
       next: (res) => this.bannedUsers = res,
       error: (err) => console.error("Erreur chargement bannis:", err)
     });
   }
 
   unbanUser(userId: number, eventId: number): void {
-    this.http.delete(`http://localhost:3000/api/event-bans/${eventId}/unban/${userId}`).subscribe({
+    this.http.delete(`${this.apiUrl}/event-bans/${eventId}/unban/${userId}`).subscribe({
       next: () => {
         this.bannedUsers = this.bannedUsers.filter(b => b.user_id !== userId || b.event_id !== eventId);
       },
@@ -150,7 +154,6 @@ export class UserSpaceComponent implements OnInit {
 
   changePassword(): void {
     const userId = this.userProfile?.id;
-
     if (this.newPassword !== this.confirmPassword) {
       this.snackBar.open("Les mots de passe ne correspondent pas.", "Fermer", {
         duration: 3000,
@@ -159,7 +162,7 @@ export class UserSpaceComponent implements OnInit {
       return;
     }
 
-    this.http.patch(`http://localhost:3000/api/users/${userId}/password`, {
+    this.http.patch(`${this.apiUrl}/users/${userId}/password`, {
       password: this.newPassword
     }).subscribe({
       next: () => {

@@ -2,13 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { environment } from '../../environments/environments';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
     userProfile: BehaviorSubject<any> = new BehaviorSubject<any>(null);
-    private apiUrl = 'http://localhost:3000/api/users';
+    private apiUrl = `${environment.apiUrl}/users`;
 
     constructor(
         private http: HttpClient,
@@ -54,7 +55,7 @@ export class AuthService {
 
     getUserProfile(): Observable<any> {
         const token = localStorage.getItem('token');
-        return this.http.get('http://localhost:3000/api/users/profile', {
+        return this.http.get(`${this.apiUrl}/profile`, {
             headers: { Authorization: `Bearer ${token}` }
         }).pipe(
             tap((user: any) => {
