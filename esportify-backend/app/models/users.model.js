@@ -124,6 +124,7 @@ const User = {
             const sql = require("../config/db");
     
             const queries = [
+                "DELETE FROM chat_messages WHERE user_id = ?",
                 "DELETE FROM event_participants WHERE user_id = ?",
                 "DELETE FROM favorites WHERE user_id = ?",
                 "DELETE FROM scores WHERE user_id = ?",
