@@ -105,8 +105,22 @@ export class UserSpaceComponent implements OnInit {
 
   deleteUser(userId: number): void {
     this.userService.deleteUser(userId).subscribe({
-      next: () => this.users = this.users.filter(u => u.id !== userId),
-      error: (err) => console.error("Erreur suppression utilisateur:", err)
+      next: () => {
+        this.users = this.users.filter(u => u.id !== userId);
+        this.snackBar.open("Utilisateur supprimé avec succès", "Fermer", {
+          duration: 3000,
+          panelClass: ['snackbar-success']
+        });
+      },
+      error: (err) => {
+        console.error("Erreur suppression utilisateur:", err);
+        console.log("Contenu error.error :", err.error);
+        const msg = err?.error?.message || err?.message || 'Erreur inconnue.';
+        this.snackBar.open(msg, 'Fermer', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+      }
     });
   }
 
