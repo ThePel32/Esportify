@@ -125,7 +125,7 @@ const User = {
                 if (err) {
                     reject(err);
                 } else if (res.affectedRows == 0) {
-                    reject({ kind: "not_found" });
+                    reject({ message: `Aucun utilisateur trouvé avec l'id ${id}.`, kind: "not_found" });
                 } else {
                     resolve({ message: "Utilisateur supprimé avec succès" });
                 }
