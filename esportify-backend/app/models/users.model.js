@@ -121,17 +121,38 @@ const User = {
 
     remove: (id) => {
         return new Promise((resolve, reject) => {
-            db.query("DELETE FROM users WHERE id = ?", [id], (err, res) => {
-                if (err) {
-                    reject(err);
-                } else if (res.affectedRows == 0) {
-                    reject({ message: `Aucun utilisateur trouvé avec l'id ${id}.`, kind: "not_found" });
-                } else {
-                    resolve({ message: "Utilisateur supprimé avec succès" });
-                }
-            });
+            const sql = require("../config/db");
+    
+            const queries = [
+                "DELETE FROM event_participants WHERE user_id = ?",
+                "DELETE FROM favorites WHERE user_id = ?",
+                "DELETE FROM scores WHERE user_id = ?",
+                "DELETE FROM event_bans WHERE user_id = ?"
+            ];
+    
+            Promise.all(queries.map(q => 
+                new Promise((res, rej) => {
+                    sql.query(q, [id], (err) => {
+                        if (err) return rej(err);
+                        res();
+                    });
+                })
+            ))
+            .then(() => {
+                sql.query("DELETE FROM users WHERE id = ?", [id], (err, res) => {
+                    if (err) {
+                        reject(err);
+                    } else if (res.affectedRows == 0) {
+                        reject({ message: `Utilisateur introuvable avec l'id ${id}.` });
+                    } else {
+                        resolve({ message: "Utilisateur supprimé avec succès" });
+                    }
+                });
+            })
+            .catch(reject);
         });
     },
+    
 
     removeAll: () => {
         return new Promise((resolve, reject) => {
