@@ -50,7 +50,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
+// app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.get('/api/health', (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'dev' }));
 
 app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
