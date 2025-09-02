@@ -1,0 +1,180 @@
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #101625;
+    display: flex;
+    flex-direction: column;
+}
+
+mat-toolbar {
+    height: 64px;
+    width: 100%;
+    background-color: #101625;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    position: relative;
+    padding: 0 1rem;
+}
+
+mat-toolbar .homeBtnNav {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 30px;
+    text-align: center;
+}
+
+mat-toolbar .btnNav {
+    background-color: #7A8024;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+    padding: 10px 15px;
+    margin-left: 1rem;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+mat-toolbar .btnNav:hover {
+    background-color: #4d5021;
+}
+
+.desktop-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.burger-icon,
+.connexion-icon {
+    display: none;
+    color: white;
+}
+
+.burger-icon {
+    position: absolute;
+    left: 1rem;
+}
+
+.connexion-icon {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    color: white;
+}
+
+.app-container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+mat-drawer-container {
+    flex: 1 1 auto;
+    display: flex;
+    height: calc(100vh - 64px - 40px);
+    overflow: hidden;
+}
+
+mat-drawer {
+    width: 16%;
+    background-color: #242A36;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-radius: 0;
+}
+
+mat-drawer-content {
+    flex: 1;
+    background-color: #101625;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sideNav {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.menuNav {
+    width: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.contactBtn {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.contactBtn a.btnNav {
+    text-align: center;
+}
+
+mat-drawer a.btnNav {
+    background-color: #7A8024;
+    color: white;
+    text-decoration: none;
+    padding: 15px;
+    margin: 5px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+mat-drawer a.btnNav:hover {
+    background-color: #4d5021;
+}
+
+.main {
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+.footer {
+    height: 40px;
+    background-color: #101625;
+    color: #dcdcdc;
+    text-align: center;
+    line-height: 40px;
+    width: 100%;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    mat-toolbar .btnNav,
+    .pseudo-text {
+        display: none !important;
+    }
+
+    .homeBtnNav {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+    }
+
+    .burger-icon,
+    .connexion-icon {
+        display: block;
+    }
+
+    mat-drawer {
+        width: 50vw;
+    }
+}

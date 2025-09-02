@@ -1,0 +1,19 @@
+* {
+    font-family: 'Bruno Ace', sans-serif ;
+}
+
+@font-face {
+    font-family: 'Bruno Ace';
+    src: url(../public/font/Bruno_Ace/BrunoAce-Regular.ttf);
+}
+
+html, body { 
+    height: 100%; 
+}
+
+body { 
+    margin: 0; 
+    font-family: Roboto, "Helvetica Neue", sans-serif; 
+}
+
+

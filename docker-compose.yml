@@ -1,10 +1,11 @@
-version: "3.8"
+# version: "3.8"
 services:
   backend:
     build:
-      context: ./backend
+      context: ./esportify-backend
+      dockerfile: Dockerfile
     env_file:
-      - ./backend/.env.example
+      - ./.env
     ports:
       - "3000:3000"
     depends_on:
@@ -13,7 +14,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./esportify-frontend
     ports:
       - "4200:80"
     depends_on:
@@ -24,10 +25,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQLPASSWORD}
       MYSQL_DATABASE: ${MYSQLDATABASE}
-      MYSQL_USER: ${MYSQLUSER}
-      MYSQL_PASSWORD: ${MYSQLPASSWORD}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
 

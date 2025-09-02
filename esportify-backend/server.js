@@ -1,54 +1,56 @@
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 require('./app/config/mongo');
-const express = require("express");
-const cors = require("cors");
+
+const express = require('express');
+const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-const verifyToken = require("./app/middleware/auth.js");
+const verifyToken = require('./app/middleware/auth.js');
 
-const usersRouter = require("./app/routes/users.routes");
-const gameRouter = require("./app/routes/game.routes");
-const eventsRouter = require("./app/routes/events.routes");
-const contactRouter = require("./app/routes/contact.routes.js");
-const scoreRouter = require("./app/routes/scores.routes.js");
+const usersRouter = require('./app/routes/users.routes');
+const gameRouter = require('./app/routes/game.routes');
+const eventsRouter = require('./app/routes/events.routes');
+const contactRouter = require('./app/routes/contact.routes.js');
+const scoreRouter = require('./app/routes/scores.routes.js');
 const favoritesRoutes = require('./app/routes/favorites.routes.js');
 const chatRoutes = require('./app/routes/chat.routes.js');
 const Chat = require('./app/service/chat.service');
 
 const app = express();
+app.set('trust proxy', 1);
+
 const httpServer = http.createServer(app);
 
-const allowedOrigins = [
-  'http://localhost:4200',
-  'https://dapper-swan-96f438.netlify.app'
-];
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4200')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"]
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS (socket.io)'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true
   }
 });
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
   },
-  methods: ['POST', 'PUT', 'DELETE', 'GET', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token'],
-  credentials: true,
+  credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  next();
-});
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
@@ -59,12 +61,12 @@ app.use('/api/message', contactRouter);
 app.use('/api/events', eventsRouter);
 app.use('/api/chat', verifyToken, chatRoutes);
 
-app.get("/", (req, res) => {
-  res.json({ message: "Bienvenue sur Esportify." });
+app.get('/', (req, res) => {
+  res.json({ message: 'Bienvenue sur Esportify.' });
 });
 
 app.use((req, res) => {
-  res.status(404).json({ message: "Route not found." });
+  res.status(404).json({ message: 'Route not found.' });
 });
 
 io.on('connection', (socket) => {
@@ -81,7 +83,6 @@ io.on('connection', (socket) => {
         console.error('Erreur lors de la sauvegarde du message:', err);
         return;
       }
-
       io.emit('receiveMessage', {
         user: messageData.username,
         content: messageData.content,
@@ -93,7 +94,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {});
 });
 
-const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
-  console.log(`Serveur Express + Socket.io lancé sur http://localhost:${PORT}`);
+const PORT = Number(process.env.PORT || 3000);
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Serveur Express + Socket.io lancé sur :${PORT}`);
+  console.log(`CORS origins: ${allowedOrigins.join(', ')}`);
 });

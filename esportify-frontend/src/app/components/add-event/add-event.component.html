@@ -1,0 +1,84 @@
+<mat-card *ngIf="submittedEvent" class="event-card">
+    <img *ngIf="submittedEvent" [src]="gameOptions[submittedEvent.jeu]" alt="{{ submittedEvent.jeu }}">
+    <div class="card-content">
+        <mat-card-header>
+            <mat-card-title>{{ gameNames[submittedEvent.jeu] | titlecase }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <p><strong>Description :</strong> {{ submittedEvent.description }}</p>
+            <p><strong>Nb de joueurs : </strong> {{ submittedEvent.nbParticipants }}</p>
+            <p><strong>Début :</strong> {{ submittedEvent.date | date:'dd/MM/yyyy' }} à {{ submittedEvent.heureDebut }}</p>
+        </mat-card-content>
+    </div>
+</mat-card>
+
+<ng-container *ngIf="canAddEvent">
+    <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
+        <div class="add-event-container">
+            <h3>Ajouter un événement</h3>
+            <div class="add-event-contain">
+                <div class="add-event-game">
+                    <mat-form-field>
+                        <mat-label>Jeu</mat-label>
+                        <mat-select formControlName="jeu">
+                            <mat-option *ngFor="let game of gameOptions | keyvalue" [value]="game.key">
+                                {{ gameNames[game.key] | titlecase }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field>
+                        <mat-label>Description</mat-label>
+                        <textarea matInput formControlName="description"></textarea>
+                    </mat-form-field>
+
+                    <mat-form-field class="participant">
+                        <mat-label>Nb participant(s)</mat-label>
+                        <mat-select formControlName="nbParticipants">
+                            <mat-option *ngFor="let participants of participantOptions" [value]="participants">
+                                {{ participants }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="add-event-date">
+                    <mat-form-field>
+                        <mat-label>Date</mat-label>
+                        <input matInput [matDatepicker]="startDatePicker" formControlName="date">
+                        <mat-datepicker-toggle matIconSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+                        <mat-datepicker #startDatePicker></mat-datepicker>
+                        <mat-error *ngIf="eventForm.get('date')?.hasError('invalidDate')">
+                            La date ne peut pas être passée.
+                        </mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field>
+                        <mat-label>Heure de début</mat-label>
+                        <mat-select formControlName="heureDebut">
+                            <mat-option *ngFor="let hour of hourOptions" [value]="hour">
+                                {{ hour }}
+                            </mat-option>
+                        </mat-select>
+                        <mat-error *ngIf="eventForm.get('heureDebut')?.hasError('invalidHour')">
+                            L'heure doit être au moins +1h.
+                        </mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field>
+                        <mat-label>Durée (en heures)</mat-label>
+                        <mat-select formControlName="duration">
+                            <mat-option *ngFor="let d of durationOptions" [value]="d">
+                                {{ d }}h
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <button mat-raised-button color="primary" type="submit" [disabled]="eventForm.invalid">
+                Soumettre
+            </button>
+        </div>
+    </form>
+</ng-container>
