@@ -1,5 +1,4 @@
-// src/environments/environment.ts
 export const environment = {
     production: true,
-    apiUrl: '/api'
+    apiBaseUrl: 'https://esportify-api-3455c6f40d7f.herokuapp.com/api'
 };
