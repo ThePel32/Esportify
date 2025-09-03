@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 require('./app/config/mongo');
 
 const express = require('express');
@@ -16,6 +16,9 @@ const favoritesRoutes = require('./app/routes/favorites.routes.js');
 const chatRoutes = require('./app/routes/chat.routes.js');
 const Chat = require('./app/service/chat.service');
 
+const mongoose = require('mongoose');
+const mysql = require('mysql2/promise');
+
 const app = express();
 app.set('trust proxy', 1);
 
@@ -25,6 +28,39 @@ const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4200')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
+
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/api/db-check', async (req, res) => {
+    const mongoOk = mongoose.connection.readyState === 1;
+    let mysqlOk = false;
+    let mysqlError = null;
+
+    try {
+      const conn = await mysql.createConnection(
+        process.env.JAWSDB_URL || {
+          host: process.env.MYSQLHOST,
+          port: process.env.MYSQLPORT,
+          user: process.env.MYSQLUSER,
+          password: process.env.MYSQLPASSWORD,
+          database: process.env.MYSQLDATABASE,
+        }
+      );
+      await conn.query('SELECT 1');
+      await conn.end();
+      mysqlOk = true;
+    } catch (e) {
+      mysqlError = e.message;
+    }
+
+    res.json({
+      ok: mongoOk && mysqlOk,
+      mongoOk,
+      mysqlOk,
+      env: process.env.NODE_ENV || 'development',
+      mysqlError
+    });
+  });
+}
 
 const io = new Server(httpServer, {
   cors: {
@@ -50,7 +86,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.get('/api/health', (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'dev' }));
 
 app.use('/api/users', usersRouter);
@@ -80,10 +115,7 @@ io.on('connection', (socket) => {
     };
 
     Chat.createMessage(messageData, (err) => {
-      if (err) {
-        console.error('Erreur lors de la sauvegarde du message:', err);
-        return;
-      }
+      if (err) return;
       io.emit('receiveMessage', {
         user: messageData.username,
         content: messageData.content,
