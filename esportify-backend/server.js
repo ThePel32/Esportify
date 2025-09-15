@@ -17,11 +17,10 @@ const chatRoutes = require('./app/routes/chat.routes.js');
 const Chat = require('./app/service/chat.service');
 
 const mongoose = require('mongoose');
-const mysql = require('mysql2/promise');
+const { query } = require('./app/config/db');
 
 const app = express();
 app.set('trust proxy', 1);
-
 const httpServer = http.createServer(app);
 
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:4200')
@@ -36,17 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
     let mysqlError = null;
 
     try {
-      const conn = await mysql.createConnection(
-        process.env.JAWSDB_URL || {
-          host: process.env.MYSQLHOST,
-          port: process.env.MYSQLPORT,
-          user: process.env.MYSQLUSER,
-          password: process.env.MYSQLPASSWORD,
-          database: process.env.MYSQLDATABASE,
-        }
-      );
-      await conn.query('SELECT 1');
-      await conn.end();
+      await query('SELECT 1');
       mysqlOk = true;
     } catch (e) {
       mysqlError = e.message;
@@ -86,7 +75,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/api/health', (req, res) => res.json({ ok: true, env: process.env.NODE_ENV || 'dev' }));
+app.get('/api/health', (req, res) =>
+  res.json({ ok: true, env: process.env.NODE_ENV || 'dev' })
+);
 
 app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
