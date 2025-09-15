@@ -1,6 +1,6 @@
 [build]
-  command = "npm ci && npm run build --prefix esportify-frontend"
-  publish = "esportify-frontend/dist/esportify/browser"
+  command = "npm ci && npm run build"
+  publish = "dist/esportify/browser"
 
 [[plugins]]
   package = "@netlify/angular-runtime"
