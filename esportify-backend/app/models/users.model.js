@@ -1,171 +1,127 @@
-const db = require("../config/db");
+const { query, getPool } = require("../config/db");
 
 const User = {
-    create: (newUser) => {
-        return new Promise((resolve, reject) => {
-            db.query("INSERT INTO users SET ?", newUser, (err, res) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ id: res.insertId, ...newUser });
-                }
-            });
-        });
+    async create(newUser) {
+        const result = await query("INSERT INTO users SET ?", [newUser]);
+        return { id: result.insertId, ...newUser };
     },
 
-    findById: (id) => {
-        return new Promise((resolve, reject) => {
-            db.query("SELECT * FROM users WHERE id = ?", [id], (err, res) => {
-                if (err) {
-                    reject(err);
-                } else if (res.length) {
-                    resolve(res[0]);
-                } else {
-                    reject({ kind: "not_found" });
-                }
-            });
-        });
+    async findById(id) {
+        const rows = await query("SELECT * FROM users WHERE id = ?", [id]);
+        return rows[0] || null;
     },
 
-    findByEmail: (email) => {
-        return new Promise((resolve, reject) => {
-            db.query("SELECT * FROM users WHERE LOWER(email) = LOWER(?)", [email], (err, results) => {
-                if (err) {
-                    console.error("Erreur SQL :", err);
-                    reject(err);
-                } else if (results.length === 0) {
-                    resolve(null);
-                } else {
-                    resolve(results[0]);
-                }
-            });
-        });
+    async findByEmail(email) {
+        const rows = await query(
+            "SELECT * FROM users WHERE LOWER(email) = LOWER(?)",
+            [email]
+        );
+        return rows[0] || null;
     },
 
-    findByResetToken: (token) => {
-        return new Promise((resolve, reject) => {
-            db.query("SELECT * FROM users WHERE resetPasswordToken = ?", [token], (err, res) => {
-                if (err) {
-                    reject(err);
-                } else if (res.length) {
-                    resolve(res[0]);
-                } else {
-                    reject({ kind: "not_found" });
-                }
-            });
-        });
+    async findByResetToken(token) {
+        const rows = await query(
+            "SELECT * FROM users WHERE resetPasswordToken = ?",
+            [token]
+        );
+        return rows[0] || null;
     },
 
-    getAll: (role) => {
-        return new Promise((resolve, reject) => {
-            let query = "SELECT * FROM users";
-            let params = [];
+    async getAll(role) {
+        let sql = "SELECT * FROM users";
+        const params = [];
+        if (role) {
+            sql += " WHERE role LIKE ?";
+            params.push(`%${role}%`);
+        }
+        return query(sql, params);
+    },
 
-            if (role) {
-                query += " WHERE role LIKE ?";
-                params.push(`%${role}%`);
+    async updateById(id, userData) {
+        const fields = [];
+        const values = [];
+
+        const allowed = ["role", "username", "email", "password", "created_at"];
+        for (const key of allowed) {
+            if (userData[key] !== undefined) {
+                fields.push(`${key} = ?`);
+                values.push(userData[key]);
             }
+        }
 
-            db.query(query, params, (err, res) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(res);
-                }
-            });
-        });
+        if (fields.length === 0) {
+            return this.findById(id);
+        }
+
+        values.push(id);
+        const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+        const res = await query(sql, values);
+
+        if (!res.affectedRows) return null;
+        return this.findById(id);
     },
 
-    updateById: (id, userData) => {
-        return new Promise((resolve, reject) => {
-            db.query(
-                "UPDATE users SET role = ?, username = ?, email = ?, password = ?, created_at = ? WHERE id = ?",
-                [userData.role, userData.username, userData.email, userData.password, userData.created_at, id],
-                (err, res) => {
-                    if (err) {
-                        reject(err);
-                    } else if (res.affectedRows == 0) {
-                        reject({ kind: "not_found" });
-                    } else {
-                        resolve({ id, ...userData });
-                    }
-                }
-            );
-        });
+    async findByIdAndUpdate(id, updateData) {
+        const res = await query("UPDATE users SET role = ? WHERE id = ?", [
+            updateData.role,
+            id,
+        ]);
+        if (!res.affectedRows) return null;
+        return { id, role: updateData.role };
     },
 
-    findByIdAndUpdate: (id, updateData) => {
-        return new Promise((resolve, reject) => {
-            db.query("UPDATE users SET role = ? WHERE id = ?", [updateData.role, id], (err, res) => {
-                if (err) {
-                    reject(err);
-                } else if (res.affectedRows == 0) {
-                    reject({ kind: "not_found" });
-                } else {
-                    resolve({ id, role: updateData.role });
-                }
-            });
-        });
-    },
-
-    getAllByRoles: (roles, result) => {
-        const placeholders = roles.map(() => '?').join(',');
-        db.query(`SELECT id, username FROM users WHERE role IN (${placeholders})`, roles, (err, res) => {
-            if (err) {
+    getAllByRoles(roles, result) {
+        (async () => {
+            try {
+                const placeholders = roles.map(() => "?").join(",");
+                const rows = await query(
+                    `SELECT id, username FROM users WHERE role IN (${placeholders})`,
+                    roles
+                );
+                result(null, rows);
+            } catch (err) {
                 result(err, null);
-                return;
             }
-            result(null, res);
-        });
+        })();
     },
 
-    remove: (id) => {
-        return new Promise((resolve, reject) => {
-            const sql = require("../config/db");
-    
-            const queries = [
-                "DELETE FROM chat_messages WHERE user_id = ?",
-                "DELETE FROM event_participants WHERE user_id = ?",
-                "DELETE FROM favorites WHERE user_id = ?",
-                "DELETE FROM scores WHERE user_id = ?",
-                "DELETE FROM event_bans WHERE user_id = ?"
+    async remove(id) {
+        const pool = getPool();
+        const conn = await pool.getConnection();
+        try {
+            await conn.beginTransaction();
+
+            const deletes = [
+                ["DELETE FROM chat_messages WHERE user_id = ?", [id]],
+                ["DELETE FROM event_participants WHERE user_id = ?", [id]],
+                ["DELETE FROM favorites WHERE user_id = ?", [id]],
+                ["DELETE FROM scores WHERE user_id = ?", [id]],
+                ["DELETE FROM event_bans WHERE user_id = ?", [id]],
             ];
-    
-            Promise.all(queries.map(q => 
-                new Promise((res, rej) => {
-                    sql.query(q, [id], (err) => {
-                        if (err) return rej(err);
-                        res();
-                    });
-                })
-            ))
-            .then(() => {
-                sql.query("DELETE FROM users WHERE id = ?", [id], (err, res) => {
-                    if (err) {
-                        reject(err);
-                    } else if (res.affectedRows == 0) {
-                        reject({ message: `Utilisateur introuvable avec l'id ${id}.` });
-                    } else {
-                        resolve({ message: "Utilisateur supprimé avec succès" });
-                    }
-                });
-            })
-            .catch(reject);
-        });
-    },
-    
 
-    removeAll: () => {
-        return new Promise((resolve, reject) => {
-            db.query("DELETE FROM users", (err, res) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ message: "Tous les utilisateurs ont été supprimés avec succès" });
-                }
-            });
-        });
-    }
+            for (const [sql, params] of deletes) {
+                await conn.query(sql, params);
+            }
+
+            const [res] = await conn.query("DELETE FROM users WHERE id = ?", [id]);
+            if (!res.affectedRows) {
+                throw { kind: "not_found", message: `Utilisateur introuvable avec l'id ${id}.` };
+            }
+
+            await conn.commit();
+            return { message: "Utilisateur supprimé avec succès" };
+        } catch (err) {
+            try { await conn.rollback(); } catch { }
+            throw err;
+        } finally {
+            conn.release();
+        }
+    },
+
+    async removeAll() {
+        await query("DELETE FROM users");
+        return { message: "Tous les utilisateurs ont été supprimés avec succès" };
+    },
 };
 
 module.exports = User;
