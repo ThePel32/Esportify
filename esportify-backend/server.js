@@ -7,6 +7,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 const verifyToken = require('./app/middleware/auth.js');
 
+const auth = require('./app/controllers/auth.controller');
+
+
 const usersRouter = require('./app/routes/users.routes');
 const gameRouter = require('./app/routes/game.routes');
 const eventsRouter = require('./app/routes/events.routes');
@@ -78,6 +81,27 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/api/health', (req, res) =>
   res.json({ ok: true, env: process.env.NODE_ENV || 'dev' })
 );
+
+app.post('/api/users/login',  (req, res, next) => { 
+  console.log('[auth-route] /login'); 
+  return auth.login(req, res, next); 
+});
+
+app.post('/api/users/signup', (req, res, next) => { 
+  console.log('[auth-route] /signup'); 
+  return auth.signup(req, res, next); 
+});
+
+app.post('/api/users/refresh-token', verifyToken, (req, res, next) => { 
+  console.log('[auth-route] /refresh-token'); 
+  return auth.refreshToken(req, res, next); 
+});
+
+app.get('/api/users/profile', verifyToken, (req, res, next) => { 
+  console.log('[auth-route] /profile'); 
+  return auth.getUserProfile(req, res, next); 
+});
+
 
 app.use('/api/users', usersRouter);
 app.use('/api/game', gameRouter);
