@@ -20,7 +20,7 @@ const chatRoutes = require('./app/routes/chat.routes.js');
 const Chat = require('./app/service/chat.service');
 
 const mongoose = require('mongoose');
-const { query } = require('./app/config/db');
+// const { query } = require('./app/config/db');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -38,6 +38,7 @@ if (process.env.NODE_ENV !== 'production') {
     let mysqlError = null;
 
     try {
+      const { query } = require('./app/config/db');
       await query('SELECT 1');
       mysqlOk = true;
     } catch (e) {

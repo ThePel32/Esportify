@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 if (process.env.DISABLE_SQL === '1') {
-  // 🔌 Mode "SQL coupé" : aucune connexion ni requête MySQL
+  // 🔌 Mode "SQL coupé" : aucune connexion ni requête
   module.exports = {
     query: async () => {
       const err = new Error('SQL_DISABLED');
