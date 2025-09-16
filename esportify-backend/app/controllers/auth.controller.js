@@ -10,6 +10,7 @@ if (!JWT_SECRET) {
 console.log('[AUTH] Controller Mongo chargé');
 
 exports.signup = async (req, res, next) => {
+    console.log('[auth] signup', req.body?.email);
     console.log('[AUTH] signup via Mongo', { username: req.body?.username, email: req.body?.email, role: req.body?.role });
 
     try {
@@ -29,6 +30,7 @@ exports.signup = async (req, res, next) => {
 };
 
 exports.login = async (req, res, next) => {
+    console.log('[auth] login', req.body?.email);
     console.log('[AUTH] login via Mongo', { email: req.body?.email });
 
     try {
