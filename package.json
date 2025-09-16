@@ -1,0 +1,9 @@
+{
+    "name": "esportify-root",
+    "private": true,
+    "engines": { "node": "18.x" },
+    "scripts": {
+        "start": "node esportify-backend/server.js",
+        "postinstall": "npm --prefix esportify-backend install --omit=dev"
+    }
+}
