@@ -17,8 +17,15 @@ function mustUseSSL(host) {
   return /\.rds\.amazonaws\.com$/.test(host);
 }
 function sslOptionFor(host) {
-  return mustUseSSL(host) ? { rejectUnauthorized: true } : undefined;
+  if (!mustUseSSL(host)) return undefined;
+
+  if (process.env.MYSQL_CA_PEM) {
+    const ca = process.env.MYSQL_CA_PEM.replace(/\\n/g, '\n');
+    return { ca, rejectUnauthorized: true, minVersion: 'TLSv1.2' };
+  }
+  return { rejectUnauthorized: false, minVersion: 'TLSv1.2' };
 }
+
 
 let promisePool = null;
 
