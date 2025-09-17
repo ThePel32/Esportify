@@ -52,25 +52,45 @@ export class AuthService {
     getUserProfile(): Observable<any> {
         const token = localStorage.getItem('token');
         return this.http.get<{ user: any } | any>(`${this.apiUrl}/profile`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
         }).pipe(
-        tap((res: any) => {
-            const user = res?.user ?? res;
-            this.saveUserToLocalStorage(user);
-        })
+            tap((res) => {
+                const raw = (res as any)?.user ?? res; // accepte {user:{...}} ou {...}
+                const user = {
+                    id: raw.id,
+                    username: raw.username ?? raw.pseudo ?? raw.name ?? '',
+                    pseudo:   raw.pseudo   ?? raw.username ?? '',
+                    email:    raw.email ?? '',
+                    role:     raw.role ?? '',
+                    created_at:  raw.created_at ?? raw.createdAt ?? null,
+                    createdAt:   raw.createdAt ?? raw.created_at ?? null
+                };
+                this.saveUserToLocalStorage(user);
+            })
         );
     }
 
     signin(data: { email: string; password: string }): Observable<any> {
         return this.http.post<{ token: string; user: any }>(`${this.apiUrl}/login`, data).pipe(
-        tap((response) => {
-            if (response?.user && response?.token) {
-            localStorage.setItem('token', response.token);
-            this.saveUserToLocalStorage(response.user);
-            }
-        })
+            tap((response) => {
+                if (response?.user && response?.token) {
+                    localStorage.setItem('token', response.token);
+                    const raw = response.user;
+                    const user = {
+                        id: raw.id,
+                        username: raw.username ?? raw.pseudo ?? raw.name ?? '',
+                        pseudo:   raw.pseudo   ?? raw.username ?? '',
+                        email:    raw.email ?? '',
+                        role:     raw.role ?? '',
+                        created_at:  raw.created_at ?? raw.createdAt ?? null,
+                        createdAt:   raw.createdAt ?? raw.created_at ?? null
+                        };
+                    this.saveUserToLocalStorage(user);
+                }
+            })
         );
     }
+
 
     signup(data: { username: string; email: string; password: string }): Observable<any> {
         return this.http.post(`${this.apiUrl}/signup`, data);
