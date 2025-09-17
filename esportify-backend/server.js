@@ -118,14 +118,17 @@ app.get('/', (req, res) => {
   res.json({ message: 'Bienvenue sur Esportify.' });
 });
 
-app.get('/health/db', async (req, res) => {
-  try {
-    const rows = await db.query('SELECT 1 AS ok');
-    res.json({ ok: true, rows });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/health/db', async (req, res) => {
+    try {
+      const rows = await db.query('SELECT 1 AS ok');
+      res.json({ ok: true, rows });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
+}
+
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found.' });

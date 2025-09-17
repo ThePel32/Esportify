@@ -1,98 +1,101 @@
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('../models/mongo/user.model');
+const { query } = require('../config/db');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    console.warn('[AUTH] JWT_SECRET absent !');
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
+function signToken(user) {
+    return jwt.sign(
+        { id: user.id, email: user.email, role: user.role, username: user.username },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+    );
 }
 
-console.log('[AUTH] Controller Mongo chargé');
+exports.login = async (req, res, next) => {
+    try {
+        const { email, password } = req.body || {};
+        if (!email || !password) return res.status(400).json({ message: 'Email et mot de passe requis.' });
+
+        console.log('[AUTH] login via MySQL', { email });
+
+        const rows = await query(
+        'SELECT id, username, email, password, role FROM users WHERE email = ? LIMIT 1',
+        [email]
+        );
+        if (!rows.length) {
+        console.log('[AUTH] login: user not found', { email });
+        return res.status(401).json({ message: 'Identifiants invalides.' });
+        }
+
+        const user = rows[0];
+        const ok = await bcrypt.compare(password, user.password || '');
+        if (!ok) {
+        console.log('[AUTH] login: bad password', { email });
+        return res.status(401).json({ message: 'Identifiants invalides.' });
+        }
+
+        const token = signToken(user);
+        return res.json({
+        token,
+        user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        }
+        });
+    } catch (e) {
+        console.error('[AUTH] login error', e);
+        return res.status(500).json({ message: 'Erreur serveur.' });
+    }
+};
 
 exports.signup = async (req, res, next) => {
-    console.log('[auth] signup', req.body?.email);
-    console.log('[AUTH] signup via Mongo', { username: req.body?.username, email: req.body?.email, role: req.body?.role });
-
     try {
-        const { username, email, password, role } = req.body;
-        const u = new User({ username, email, password, role });
-        await u.save();
-        console.log('[AUTH] signup OK', { id: u._id.toString(), email: u.email });
-        res.status(201).json(u.toJSON());
-    } catch (err) {
-        if (err.code === 11000) {
-        console.warn('[AUTH] signup conflit (dup key)', err.keyValue);
-        return res.status(409).json({ message: 'Email ou username déjà utilisé' });
-        }
-        console.error('[AUTH] signup error', err);
-        next(err);
-    }
-};
-
-exports.login = async (req, res, next) => {
-    console.log('[auth] login', req.body?.email);
-    console.log('[AUTH] login via Mongo', { email: req.body?.email });
-
-    try {
-        const { email, password } = req.body;
-
-        const u = await User.findOne({ email }).select('+password');
-        if (!u) {
-        console.warn('[AUTH] login: user not found', { email });
-        return res.status(401).json({ message: 'Identifiants invalides' });
+        const { username, email, password, role = 'user' } = req.body || {};
+        if (!username || !email || !password) {
+        return res.status(400).json({ message: 'username, email et password sont requis.' });
         }
 
-        const ok = await bcrypt.compare(password, u.password);
-        console.log('[AUTH] login: password', ok ? 'OK' : 'KO', { email });
+        const exists = await query('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
+        if (exists.length) return res.status(409).json({ message: 'Un compte existe déjà avec cet email.' });
 
-        if (!ok) return res.status(401).json({ message: 'Identifiants invalides' });
-
-        const token = jwt.sign(
-        { sub: u._id.toString(), role: u.role || 'player' },
-        JWT_SECRET,
-        { expiresIn: '7d' }
+        const hash = await bcrypt.hash(password, 10);
+        const result = await query(
+        'INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, ?, NOW())',
+        [username, email, hash, role]
         );
 
-        console.log('[AUTH] login OK', { id: u._id.toString(), email: u.email });
-        res.json({
-        token,
-        user: { id: u._id.toString(), username: u.username, email: u.email, role: u.role }
-        });
-    } catch (err) {
-        console.error('[AUTH] login error', err);
-        next(err);
+        const user = { id: result.insertId, username, email, role };
+        const token = signToken(user);
+        return res.status(201).json({ token, user });
+    } catch (e) {
+        console.error('[AUTH] signup error', e);
+        return res.status(500).json({ message: 'Erreur serveur.' });
     }
 };
 
-exports.getUserProfile = async (req, res, next) => {
-    console.log('[AUTH] profile', { userId: req.user?.sub });
-
+exports.refreshToken = async (req, res) => {
     try {
-        const userId = req.user?.sub;
-        if (!userId) return res.status(401).json({ message: 'Non authentifié' });
-
-        const u = await User.findById(userId);
-        if (!u) return res.status(404).json({ message: 'Utilisateur introuvable' });
-
-        res.json(u.toJSON());
-    } catch (err) {
-        console.error('[AUTH] profile error', err);
-        next(err);
-    }
-};
-
-exports.refreshToken = async (req, res, next) => {
-    console.log('[AUTH] refresh-token', { userId: req.user?.sub });
-
-    try {
-        const userId = req.user?.sub;
-        const role = req.user?.role || 'player';
-        if (!userId) return res.status(401).json({ message: 'Non authentifié' });
-
-        const token = jwt.sign({ sub: userId, role }, JWT_SECRET, { expiresIn: '7d' });
+        const token = signToken(req.user);
         res.json({ token });
-    } catch (err) {
-        console.error('[AUTH] refresh-token error', err);
-        next(err);
+    } catch (e) {
+        res.status(500).json({ message: 'Erreur serveur.' });
+    }
+};
+
+exports.getUserProfile = async (req, res) => {
+    try {
+        const rows = await query(
+        'SELECT id, username, email, role FROM users WHERE id = ? LIMIT 1',
+        [req.user.id]
+        );
+        if (!rows.length) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+        return res.json({ user: rows[0] });
+    } catch (e) {
+        res.status(500).json({ message: 'Erreur serveur.' });
     }
 };
