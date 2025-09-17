@@ -15,12 +15,12 @@ const Event = function (event) {
 };
 
 Event.create = async (newEvent) => {
-    const [res] = await db.query(`INSERT INTO events SET ?`, [newEvent]);
+    const res = await db.query(`INSERT INTO events SET ?`, [newEvent]);
     return { id: res.insertId, ...newEvent };
 };
 
 Event.findById = async (id) => {
-    const [rows] = await db.query(
+    const rows = await db.query(
         `
         SELECT e.*, u.username AS organizer_name
         FROM events e
@@ -33,14 +33,14 @@ Event.findById = async (id) => {
 };
 
 Event.getByState = async (state) => {
-    const [rows] = await db.query(`SELECT * FROM events WHERE state = ?`, [state]);
+    const rows = await db.query(`SELECT * FROM events WHERE state = ?`, [state]);
     return rows;
 };
 
 Event.getAll = async (title, state) => {
     const where = [];
     const params = [];
-    
+
     if (state) {
         where.push(`events.state = ?`);
         params.push(state);
@@ -49,10 +49,10 @@ Event.getAll = async (title, state) => {
         where.push(`events.title LIKE ?`);
         params.push(`%${title}%`);
     }
-    
+
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-    
-    const [rows] = await db.query(
+
+    const rows = await db.query(
         `
         SELECT
         events.*,
@@ -74,25 +74,25 @@ Event.getAll = async (title, state) => {
         `,
         params
     );
-    
+
     return rows.map((e) => {
         let participants = [];
         if (typeof e.participants === 'string' && e.participants.trim() !== '') {
-            try {
-                participants = JSON.parse(`[${e.participants}]`).map((p) => ({
-                    ...p,
-                    has_joined: p.has_joined === 1 || p.has_joined === true
-                }));
-            } catch {
-                participants = [];
-            }
+        try {
+            participants = JSON.parse(`[${e.participants}]`).map((p) => ({
+            ...p,
+            has_joined: p.has_joined === 1 || p.has_joined === true,
+            }));
+        } catch {
+            participants = [];
+        }
         }
         return { ...e, participants };
     });
 };
 
 Event.updateById = async (id, event) => {
-    const [res] = await db.query(
+    const res = await db.query(
         `
         UPDATE events
         SET title = ?, description = ?, date_time = ?, max_players = ?, organizer_id = ?, state = ?,
@@ -100,17 +100,17 @@ Event.updateById = async (id, event) => {
         WHERE id = ?
         `,
         [
-            event.title,
-            event.description,
-            event.date_time,
-            event.max_players,
-            event.organizer_id,
-            event.state,
-            event.images,
-            event.duration,
-            event.started,
-            new Date(),
-            id
+        event.title,
+        event.description,
+        event.date_time,
+        event.max_players,
+        event.organizer_id,
+        event.state,
+        event.images,
+        event.duration,
+        event.started,
+        new Date(),
+        id,
         ]
     );
     if (!res.affectedRows) return null;
@@ -118,7 +118,7 @@ Event.updateById = async (id, event) => {
 };
 
 Event.remove = async (id) => {
-    const [res] = await db.query(`DELETE FROM events WHERE id = ?`, [id]);
+    const res = await db.query(`DELETE FROM events WHERE id = ?`, [id]);
     if (!res.affectedRows) return null;
     return { id };
 };
@@ -129,7 +129,7 @@ Event.removeAll = async () => {
 };
 
 Event.startById = async (id) => {
-    const [res] = await db.query(
+    const res = await db.query(
         `UPDATE events SET started = TRUE, updated_at = ? WHERE id = ?`,
         [new Date(), id]
     );
@@ -139,7 +139,7 @@ Event.startById = async (id) => {
 
 Event.getFinishedEvents = async () => {
     const now = new Date();
-    const [rows] = await db.query(
+    const rows = await db.query(
         `
         SELECT e.*, u.username AS organizer_name
         FROM events e
@@ -154,7 +154,7 @@ Event.getFinishedEvents = async () => {
 
 Event.getUserFinishedEvents = async (userId) => {
     const now = new Date();
-    const [rows] = await db.query(
+    const rows = await db.query(
         `
         SELECT e.*, u.username AS organizer_name
         FROM events e
