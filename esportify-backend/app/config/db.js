@@ -2,7 +2,8 @@ require('dotenv').config();
 const mysql = require('mysql2');
 const cfg = require('./db.config');
 
-const SQL_DISABLED = process.env.DISABLE_SQL === '1' || process.env.DISABLE_SQL === 'true';
+const SQL_DISABLED =
+  process.env.DISABLE_SQL === '1' || process.env.DISABLE_SQL === 'true';
 console.log(`[db] SQL_DISABLED=${SQL_DISABLED} | JAWSDB_URL=${process.env.JAWSDB_URL ? 'set' : 'unset'}`);
 
 function boom() {
@@ -11,13 +12,22 @@ function boom() {
   return err;
 }
 
+function mustUseSSL(host) {
+  if (process.env.MYSQL_SSL === 'true') return true;
+  return /\.rds\.amazonaws\.com$/.test(host);
+}
+function sslOptionFor(host) {
+  return mustUseSSL(host) ? { rejectUnauthorized: true } : undefined;
+}
+
 let promisePool = null;
 
 if (!SQL_DISABLED) {
   function poolFromUrl(urlStr) {
     const u = new URL(urlStr);
+    const host = u.hostname;
     return mysql.createPool({
-      host: u.hostname,
+      host,
       port: u.port ? Number(u.port) : 3306,
       user: decodeURIComponent(u.username || ''),
       password: decodeURIComponent(u.password || ''),
@@ -25,7 +35,7 @@ if (!SQL_DISABLED) {
       waitForConnections: true,
       connectionLimit: Number(process.env.MYSQL_POOL_LIMIT || 10),
       connectTimeout: Number(process.env.MYSQL_CONNECT_TIMEOUT || 10000),
-      ssl: process.env.MYSQL_SSL === 'true'
+      ssl: sslOptionFor(host),
     });
   }
 
@@ -39,7 +49,8 @@ if (!SQL_DISABLED) {
         database: cfg.DB,
         waitForConnections: true,
         connectionLimit: Number(process.env.MYSQL_POOL_LIMIT || 10),
-        connectTimeout: cfg.connectTimeout
+        connectTimeout: cfg.connectTimeout,
+        ssl: cfg.ssl ? { rejectUnauthorized: true } : undefined,
       });
 
   promisePool = pool.promise();
