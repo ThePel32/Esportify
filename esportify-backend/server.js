@@ -118,6 +118,15 @@ app.get('/', (req, res) => {
   res.json({ message: 'Bienvenue sur Esportify.' });
 });
 
+app.get('/health/db', async (req, res) => {
+  try {
+    const rows = await db.query('SELECT 1 AS ok');
+    res.json({ ok: true, rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found.' });
 });
@@ -144,14 +153,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {});
 });
 
-app.get('/health/db', async (req, res) => {
-  try {
-    const rows = await db.query('SELECT 1 AS ok');
-    res.json({ ok: true, rows });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
+
 
 const PORT = Number(process.env.PORT || 3000);
 httpServer.listen(PORT, '0.0.0.0', () => {
