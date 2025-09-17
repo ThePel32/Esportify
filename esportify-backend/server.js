@@ -20,18 +20,8 @@ const chatRoutes = require('./app/routes/chat.routes.js');
 const Chat = require('./app/service/chat.service');
 
 const mongoose = require('mongoose');
-// const { query } = require('./app/config/db');
 
 const db = require('./app/config/db');
-app.get('/health/db', async (req, res) => {
-  try {
-    const rows = await db.query('SELECT 1 AS ok');
-    res.json({ ok: true, rows });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
 
 const app = express();
 app.set('trust proxy', 1);
@@ -152,6 +142,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {});
+});
+
+app.get('/health/db', async (req, res) => {
+  try {
+    const rows = await db.query('SELECT 1 AS ok');
+    res.json({ ok: true, rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 const PORT = Number(process.env.PORT || 3000);
