@@ -22,7 +22,7 @@ const Chat = require('./app/service/chat.service');
 const mongoose = require('mongoose');
 // const { query } = require('./app/config/db');
 
-const db = require('./config/db');
+const db = require('./app/config/db');
 app.get('/health/db', async (req, res) => {
   try {
     const rows = await db.query('SELECT 1 AS ok');
