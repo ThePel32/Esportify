@@ -63,11 +63,25 @@ if (!SQL_DISABLED) {
   promisePool = pool.promise();
 }
 
-async function query(sql, params = []) {
-  if (SQL_DISABLED) throw boom();
-  const [rows] = await promisePool.query(sql, params);
-  return rows;
+function query(sql, params, cb) {
+  if (SQL_DISABLED) {
+    const e = boom();
+    if (typeof cb === 'function') return cb(e);
+    return Promise.reject(e);
+  }
+
+  if (typeof params === 'function') { cb = params; params = []; }
+  if (params == null) params = [];
+
+  const p = promisePool.query(sql, params).then(([rows]) => rows);
+
+  if (typeof cb === 'function') {
+    p.then(rows => cb(null, rows)).catch(cb);
+    return;
+  }
+  return p;
 }
+
 
 function getPool() {
   if (SQL_DISABLED) throw boom();
