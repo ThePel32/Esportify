@@ -30,8 +30,9 @@ export class AuthService {
     }
 
     hasRole(role: string): boolean {
-        return this.getRole() === role;
+        return (this.getRole() || '').toLowerCase() === role.toLowerCase();
     }
+
 
     isAuthenticated(): boolean {
         return !!this.userProfile.value && !!localStorage.getItem('token');

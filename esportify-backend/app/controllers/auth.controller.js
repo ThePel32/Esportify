@@ -90,12 +90,25 @@ exports.refreshToken = async (req, res) => {
 exports.getUserProfile = async (req, res) => {
     try {
         const rows = await query(
-        'SELECT id, username, email, role FROM users WHERE id = ? LIMIT 1',
+        'SELECT id, username, email, role, created_at FROM users WHERE id = ? LIMIT 1',
         [req.user.id]
         );
-        if (!rows.length) return res.status(404).json({ message: 'Utilisateur introuvable.' });
-        return res.json({ user: rows[0] });
+    if (!rows.length) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+
+    const u = rows[0];
+    return res.json({
+        user: {
+            id: u.id,
+            username: u.username,
+            pseudo: u.username,
+            email: u.email,
+            role: u.role,
+            created_at: u.created_at,
+            createdAt: u.created_at
+        }
+        });
     } catch (e) {
-        res.status(500).json({ message: 'Erreur serveur.' });
+        return res.status(500).json({ message: 'Erreur serveur.' });
     }
 };
+
