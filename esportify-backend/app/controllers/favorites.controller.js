@@ -1,5 +1,22 @@
 const db = require('../config/db.js');
 
+const GAME_SLUGS = {
+    'counter strike 2': 'cs2',
+    'cs2': 'cs2',
+    'valorant': 'valorant',
+    'fifa': 'fifa',
+    'league of legends': 'lol',
+    'lol': 'lol',
+    'rocket league': 'rocketleague',
+    'pubg': 'pubg',
+    'balatro': 'balatro',
+    'super meat boy': 'supermeatboy',
+    'starcraft 2': 'starcraft2',
+};
+const toSlug = (title='') =>
+    GAME_SLUGS[title.trim().toLowerCase()] ||
+    title.trim().toLowerCase().replace(/\s+/g, '');
+
 function toGameKey(title = '') {
     const s = String(title).toLowerCase().replace(/[\s\-_.]/g, '');
     if (s.includes('counter') || s.includes('cs2')) return 'cs2';
@@ -8,6 +25,8 @@ function toGameKey(title = '') {
     if (s.includes('balatro')) return 'balatro';
     return s;
 }
+
+
 
 exports.addFavorite = (req, res) => {
     const userId = Number(req.user?.id);
@@ -19,7 +38,7 @@ exports.addFavorite = (req, res) => {
         if (err) return res.status(500).json({ message: 'Erreur SQL', err });
         if (!rows?.length) return res.status(404).json({ message: 'Événement introuvable' });
 
-        const gameKey = toGameKey(rows[0].title);
+        const gameKey = toSlug(result[0].title);
         const insertSql = 'INSERT IGNORE INTO favorites (user_id, game_key) VALUES (?, ?)';
         db.query(insertSql, [userId, gameKey], (err2) => {
         if (err2) return res.status(500).json({ message: 'Erreur ajout favori', err: err2 });
@@ -30,7 +49,7 @@ exports.addFavorite = (req, res) => {
 
 exports.removeFavorite = (req, res) => {
     const userId = Number(req.user?.id);
-    const gameKey = toGameKey(req.params.gameKey || '');
+    const gameKey = toSlug(req.params.gameKey || '');
     if (!userId || !gameKey) return res.status(400).json({ message: 'Données manquantes' });
 
     const sql = 'DELETE FROM favorites WHERE user_id = ? AND game_key = ?';

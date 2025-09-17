@@ -3,9 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class FavoritesService {
   private apiUrl = `${environment.apiUrl}/favorites`;
 
@@ -14,12 +12,16 @@ export class FavoritesService {
   addFavorite(eventId: number): Observable<any> {
     return this.http.post(this.apiUrl, { event_id: eventId });
   }
-  
+
   removeFavorite(gameKey: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${gameKey}`);
   }
-  
+
   getFavoritesByUser(): Observable<string[]> {
     return this.http.get<string[]>(this.apiUrl);
+  }
+
+  list(): Observable<string[]> {
+    return this.getFavoritesByUser();
   }
 }
