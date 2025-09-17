@@ -105,11 +105,11 @@ app.get('/api/users/profile', verifyToken, (req, res, next) => {
 });
 
 
-app.use('/api/users', usersRouter);
+app.use('/api/users', verifyToken, usersRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/scores', scoreRouter);
 app.use('/api/favorites', verifyToken, favoritesRoutes);
-app.use('/api/event-bans', require('./app/routes/eventBan.routes'));
+app.use('/api/event-bans', verifyToken, require('./app/routes/eventBan.routes'));
 app.use('/api/message', contactRouter);
 app.use('/api/events', eventsRouter);
 app.use('/api/chat', verifyToken, chatRoutes);
