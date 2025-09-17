@@ -74,23 +74,26 @@ export class AuthService {
     signin(data: { email: string; password: string }): Observable<any> {
         return this.http.post<{ token: string; user: any }>(`${this.apiUrl}/login`, data).pipe(
             tap((response) => {
-                if (response?.user && response?.token) {
-                    localStorage.setItem('token', response.token);
-                    const raw = response.user;
-                    const user = {
-                        id: raw.id,
-                        username: raw.username ?? raw.pseudo ?? raw.name ?? '',
-                        pseudo:   raw.pseudo   ?? raw.username ?? '',
-                        email:    raw.email ?? '',
-                        role:     raw.role ?? '',
-                        created_at:  raw.created_at ?? raw.createdAt ?? null,
-                        createdAt:   raw.createdAt ?? raw.created_at ?? null
-                        };
-                    this.saveUserToLocalStorage(user);
-                }
+            if (response?.user && response?.token) {
+                localStorage.setItem('token', response.token);
+                const raw = response.user;
+                const user = {
+                id: raw.id,
+                username: raw.username ?? raw.pseudo ?? raw.name ?? '',
+                pseudo:   raw.pseudo   ?? raw.username ?? '',
+                email:    raw.email ?? '',
+                role:     raw.role ?? '',
+                created_at:  raw.created_at ?? raw.createdAt ?? null,
+                createdAt:   raw.createdAt ?? raw.created_at ?? null
+                };
+                this.saveUserToLocalStorage(user);
+
+                this.getUserProfile().subscribe();
+            }
             })
         );
     }
+
 
 
     signup(data: { username: string; email: string; password: string }): Observable<any> {

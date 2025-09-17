@@ -77,6 +77,15 @@ app.use(cors({
   credentials: true
 }));
 
+app.set('etag', false);
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
