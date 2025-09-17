@@ -42,13 +42,27 @@ exports.removeFavorite = (req, res) => {
 };
 
 exports.getFavoritesByUser = (req, res) => {
-    const userId = Number(req.user?.id);
-    if (!userId) return res.status(401).json({ message: 'Token requis' });
+    const userId = req.user.id;
 
-    const sql = 'SELECT game_key FROM favorites WHERE user_id = ? ORDER BY game_key ASC';
-    db.query(sql, [userId], (err, rows) => {
-        if (err) return res.status(500).json({ message: 'Erreur récupération favoris', err });
-        const keys = [...new Set((rows || []).map(r => toGameKey(r.game_key)))];
-        res.status(200).json(keys);
+    const sql = `
+        SELECT 
+        LOWER(e.title) AS game_key,
+        e.title AS title,
+        e.images AS image
+        FROM favorites f
+        JOIN events e ON LOWER(e.title) = f.game_key
+        WHERE f.user_id = ?
+        GROUP BY LOWER(e.title), e.title, e.images
+        ORDER BY e.title ASC
+    `;
+
+    db.query(sql, [userId], (err, results) => {
+        if (err) return res.status(500).json({ message: "Erreur récupération favoris", err });
+        res.status(200).json(results.map(r => ({
+        game_key: r.game_key,
+        title: r.title,
+        image: r.image
+        })));
     });
 };
+
