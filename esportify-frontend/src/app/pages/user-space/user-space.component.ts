@@ -60,23 +60,18 @@ export class UserSpaceComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.userProfile.subscribe(u => {
+  this.authService.getUserProfile().subscribe({
+    next: (u) => {
       this.userProfile = u;
-
       this.updateRoleFlags(u);
       this.loadFavorites();
       this.loadBannedUsers();
-      if (this.isAdmin) {
-        this.loadUsers();
-      }
-    });
+      if (this.isAdmin) this.loadUsers();
+    },
+    error: (err) => console.error('Erreur chargement profil:', err)
+  });
+}
 
-    if (localStorage.getItem('token')) {
-      this.authService.getUserProfile().subscribe({
-        error: () => this.authService.logout()
-      });
-    }
-  }
 
   private updateRoleFlags(u: any): void {
     const role = (u?.role || '').toLowerCase();

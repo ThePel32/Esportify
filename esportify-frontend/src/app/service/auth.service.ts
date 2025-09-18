@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -52,19 +53,19 @@ export class AuthService {
 
     getUserProfile(): Observable<any> {
         const token = localStorage.getItem('token');
+
         return this.http.get<{ user: any } | any>(`${this.apiUrl}/profile`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {}
         }).pipe(
-            tap((res) => {
-                const raw = (res as any)?.user ?? res; // accepte {user:{...}} ou {...}
+            tap((raw) => {
                 const user = {
                     id: raw.id,
                     username: raw.username ?? raw.pseudo ?? raw.name ?? '',
                     pseudo:   raw.pseudo   ?? raw.username ?? '',
                     email:    raw.email ?? '',
                     role:     raw.role ?? '',
-                    created_at:  raw.created_at ?? raw.createdAt ?? null,
-                    createdAt:   raw.createdAt ?? raw.created_at ?? null
+                    created_at: raw.created_at ?? raw.createdAt ?? null,
+                    createdAt:  raw.createdAt  ?? raw.created_at ?? null,
                 };
                 this.saveUserToLocalStorage(user);
             })
