@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -15,9 +14,7 @@ export class AuthService {
 
         const token = localStorage.getItem('token');
         if (token && !this.userProfile.value) {
-        this.getUserProfile().subscribe({
-            error: () => this.logout()
-        });
+        this.getUserProfile().subscribe({ error: () => this.logout() });
         }
     }
 
@@ -26,14 +23,15 @@ export class AuthService {
     }
 
     getRole(): string {
-        const current = this.userProfile.value || JSON.parse(localStorage.getItem('current-user') || 'null');
+        const current =
+        this.userProfile.value ||
+        JSON.parse(localStorage.getItem('current-user') || 'null');
         return current?.role || '';
     }
 
     hasRole(role: string): boolean {
         return (this.getRole() || '').toLowerCase() === role.toLowerCase();
     }
-
 
     isAuthenticated(): boolean {
         return !!this.userProfile.value && !!localStorage.getItem('token');
@@ -54,27 +52,34 @@ export class AuthService {
     getUserProfile(): Observable<any> {
         const token = localStorage.getItem('token');
 
-        return this.http.get<{ user: any } | any>(`${this.apiUrl}/profile`, {
+        return new Observable<any>((observer) => {
+        this.http.get<any>(`${this.apiUrl}/profile`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {}
-        }).pipe(
-            tap((raw) => {
-                const user = {
-                    id: raw.id,
-                    username: raw.username ?? raw.pseudo ?? raw.name ?? '',
-                    pseudo:   raw.pseudo   ?? raw.username ?? '',
-                    email:    raw.email ?? '',
-                    role:     raw.role ?? '',
-                    created_at: raw.created_at ?? raw.createdAt ?? null,
-                    createdAt:  raw.createdAt  ?? raw.created_at ?? null,
-                };
-                this.saveUserToLocalStorage(user);
-            })
-        );
+        }).subscribe({
+            next: (res) => {
+            const raw = res?.user ?? res;
+            const user = {
+                id: raw.id,
+                username: raw.username ?? raw.pseudo ?? raw.name ?? '',
+                pseudo:   raw.pseudo   ?? raw.username ?? '',
+                email:    raw.email ?? '',
+                role:     raw.role ?? '',
+                created_at: raw.created_at ?? raw.createdAt ?? null,
+                createdAt:  raw.createdAt  ?? raw.created_at ?? null,
+            };
+            this.saveUserToLocalStorage(user);
+            observer.next(user);
+            observer.complete();
+            },
+            error: (err) => observer.error(err),
+        });
+        });
     }
 
     signin(data: { email: string; password: string }): Observable<any> {
-        return this.http.post<{ token: string; user: any }>(`${this.apiUrl}/login`, data).pipe(
-            tap((response) => {
+        return new Observable<any>((observer) => {
+        this.http.post<any>(`${this.apiUrl}/login`, data).subscribe({
+            next: (response) => {
             if (response?.user && response?.token) {
                 localStorage.setItem('token', response.token);
                 const raw = response.user;
@@ -84,18 +89,18 @@ export class AuthService {
                 pseudo:   raw.pseudo   ?? raw.username ?? '',
                 email:    raw.email ?? '',
                 role:     raw.role ?? '',
-                created_at:  raw.created_at ?? raw.createdAt ?? null,
-                createdAt:   raw.createdAt ?? raw.created_at ?? null
+                created_at: raw.created_at ?? raw.createdAt ?? null,
+                createdAt:  raw.createdAt  ?? raw.created_at ?? null,
                 };
                 this.saveUserToLocalStorage(user);
-
-                this.getUserProfile().subscribe();
             }
-            })
-        );
+            observer.next(response);
+            observer.complete();
+            },
+            error: (err) => observer.error(err),
+        });
+        });
     }
-
-
 
     signup(data: { username: string; email: string; password: string }): Observable<any> {
         return this.http.post(`${this.apiUrl}/signup`, data);

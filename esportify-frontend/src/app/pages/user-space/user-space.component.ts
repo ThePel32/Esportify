@@ -60,18 +60,19 @@ export class UserSpaceComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-  this.authService.getUserProfile().subscribe({
-    next: (u) => {
+    this.authService.userProfile.subscribe((u) => {
       this.userProfile = u;
       this.updateRoleFlags(u);
-      this.loadFavorites();
-      this.loadBannedUsers();
-      if (this.isAdmin) this.loadUsers();
-    },
-    error: (err) => console.error('Erreur chargement profil:', err)
-  });
-}
 
+      if (u?.id) {
+        this.loadFavorites();
+        this.loadBannedUsers();
+        if (this.isAdmin) this.loadUsers();
+      }
+    });
+
+    this.authService.getUserProfile().subscribe();
+  }
 
   private updateRoleFlags(u: any): void {
     const role = (u?.role || '').toLowerCase();
@@ -81,8 +82,8 @@ export class UserSpaceComponent implements OnInit {
 
   loadUsers(): void {
     this.userService.getAllUsers().subscribe({
-      next: data => (this.users = data),
-      error: err => console.error('Erreur chargement utilisateurs:', err)
+      next: (data) => (this.users = data),
+      error: (err) => console.error('Erreur chargement utilisateurs:', err)
     });
   }
 
@@ -90,20 +91,20 @@ export class UserSpaceComponent implements OnInit {
     const newRole = (event.target as HTMLSelectElement).value;
     this.userService.updateUserRole(user.id, { role: newRole }).subscribe({
       next: () => (user.role = newRole),
-      error: err => console.error('Erreur mise à jour rôle:', err)
+      error: (err) => console.error('Erreur mise à jour rôle:', err)
     });
   }
 
   deleteUser(userId: number): void {
     this.userService.deleteUser(userId).subscribe({
       next: () => {
-        this.users = this.users.filter(u => u.id !== userId);
+        this.users = this.users.filter((u) => u.id !== userId);
         this.snackBar.open('Utilisateur supprimé avec succès', 'Fermer', {
           duration: 3000,
           panelClass: ['snackbar-success']
         });
       },
-      error: err => {
+      error: (err) => {
         console.error('Erreur suppression utilisateur:', err);
         const msg = err?.error?.message || err?.message || 'Erreur inconnue.';
         this.snackBar.open(msg, 'Fermer', {
@@ -120,30 +121,31 @@ export class UserSpaceComponent implements OnInit {
     this.favoritesService.getFavoritesByUser().subscribe({
       next: (games) => {
         const map = this.gameService.getAllGames();
-        this.favoriteGames = (games || []).map(gameKey => ({
+        this.favoriteGames = (games || []).map((gameKey) => ({
           key: gameKey,
           name: map[gameKey]?.name || gameKey,
           image: map[gameKey]?.image
         }));
       },
-      error: err => console.error('Erreur chargement favoris', err)
+      error: (err) => console.error('Erreur chargement favoris', err)
     });
   }
 
   removeFromFavorites(gameKey: string): void {
     this.favoritesService.removeFavorite(gameKey).subscribe({
       next: () => {
-        this.favoriteGames = this.favoriteGames.filter(f => f.key !== gameKey);
+        this.favoriteGames = this.favoriteGames.filter((f) => f.key !== gameKey);
       },
-      error: err => console.error('Erreur suppression favori', err)
+      error: (err) => console.error('Erreur suppression favori', err)
     });
   }
 
   loadBannedUsers(): void {
     if (!this.userProfile?.id) return;
+
     this.http.get<any[]>(`${this.apiUrl}/event-bans`).subscribe({
-      next: res => (this.bannedUsers = res),
-      error: err => console.error('Erreur chargement bannis:', err)
+      next: (res) => (this.bannedUsers = res),
+      error: (err) => console.error('Erreur chargement bannis:', err)
     });
   }
 
@@ -151,10 +153,10 @@ export class UserSpaceComponent implements OnInit {
     this.http.delete(`${this.apiUrl}/event-bans/${eventId}/unban/${userId}`).subscribe({
       next: () => {
         this.bannedUsers = this.bannedUsers.filter(
-          b => b.user_id !== userId || b.event_id !== eventId
+          (b) => b.user_id !== userId || b.event_id !== eventId
         );
       },
-      error: err => console.error('Erreur débannissement:', err)
+      error: (err) => console.error('Erreur débannissement:', err)
     });
   }
 
@@ -170,24 +172,24 @@ export class UserSpaceComponent implements OnInit {
       return;
     }
 
-    this.http.patch(`${this.apiUrl}/users/${userId}/password`, {
-      password: this.newPassword
-    }).subscribe({
-      next: () => {
-        this.snackBar.open('Mot de passe mis à jour avec succès !', 'Fermer', {
-          duration: 3000,
-          panelClass: ['snackbar-success']
-        });
-        this.newPassword = '';
-        this.confirmPassword = '';
-      },
-      error: err => {
-        console.error('Erreur MAJ mot de passe', err);
-        this.snackBar.open('Erreur lors de la mise à jour du mot de passe.', 'Fermer', {
-          duration: 3000,
-          panelClass: ['snackbar-error']
-        });
-      }
-    });
+    this.http
+      .patch(`${this.apiUrl}/users/${userId}/password`, { password: this.newPassword })
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Mot de passe mis à jour avec succès !', 'Fermer', {
+            duration: 3000,
+            panelClass: ['snackbar-success']
+          });
+          this.newPassword = '';
+          this.confirmPassword = '';
+        },
+        error: (err) => {
+          console.error('Erreur MAJ mot de passe', err);
+          this.snackBar.open('Erreur lors de la mise à jour du mot de passe.', 'Fermer', {
+            duration: 3000,
+            panelClass: ['snackbar-error']
+          });
+        }
+      });
   }
 }
