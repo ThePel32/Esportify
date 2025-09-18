@@ -1,59 +1,193 @@
-# Esportify
+Esportify — Déploiement local
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.1.3.
+Application full-stack : Angular (frontend) + Node/Express (backend)
+Données : MySQL (comptes, événements, favoris, bans…) + MongoDB (chat)
 
-## Development server
+1) Prérequis
 
-To start a local development server, run:
+Node.js 18+ (recommandé : 18 LTS)
 
-```bash
-ng serve
-```
+npm 10+
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+MySQL 8 (ou Docker)
 
-## Code scaffolding
+MongoDB 6+ (ou Docker)
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+(optionnel) Angular CLI : npm i -g @angular/cli
 
-```bash
-ng generate component component-name
-```
+2) Démarrer les bases de données
+Option A — via Docker (recommandé)
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+À la racine du repo, créez docker-compose.yml :
 
-```bash
-ng generate --help
-```
+version: "3.9"
+services:
+  mysql:
+    image: mysql:8
+    container_name: esportify-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: esportify
+      TZ: UTC
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
 
-## Building
+  mongo:
+    image: mongo:6
+    container_name: esportify-mongo
+    ports:
+      - "27017:27017"
 
-To build the project run:
 
-```bash
-ng build
-```
+Lancez :
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+docker compose up -d
 
-## Running unit tests
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+MySQL : localhost:3306 (root/root), DB esportify
 
-```bash
-ng test
-```
+MongoDB : mongodb://localhost:27017
 
-## Running end-to-end tests
+Option B — installations locales
 
-For end-to-end (e2e) testing, run:
+Installez MySQL et créez une base esportify
 
-```bash
-ng e2e
-```
+Assurez-vous d’avoir MongoDB en écoute sur mongodb://localhost:27017
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+3) Backend (API)
+cd esportify-backend
+npm ci
 
-## Additional Resources
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Créez un fichier .env dans esportify-backend/ :
+
+# Réseau API
+PORT=3000
+CORS_ORIGINS=http://localhost:4200
+
+# JWT
+JWT_SECRET=change-me
+JWT_EXPIRES_IN=7d
+
+# MySQL (adapter si besoin)
+DISABLE_SQL=false
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=root
+MYSQL_DATABASE=esportify
+MYSQL_POOL_LIMIT=10
+MYSQL_CONNECT_TIMEOUT=10000
+
+# OU, si vous avez une URL JawsDB (Heroku)
+# JAWSDB_URL=mysql://user:pass@host:3306/dbname
+
+# MongoDB
+MONGO_URI=mongodb://localhost:27017/esportify
+
+
+(Dev) Vérification rapide des connexions : GET http://localhost:3000/api/db-check
+
+Tables minimales (MySQL)
+
+Si vos tables ne sont pas créées, exécutez ceci sur la DB esportify :
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(64) NOT NULL,
+  email VARCHAR(128) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  role ENUM('admin','organizer','user') DEFAULT 'user',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS favorites (
+  user_id INT NOT NULL,
+  game_key VARCHAR(64) NOT NULL,
+  PRIMARY KEY(user_id, game_key),
+  CONSTRAINT fk_fav_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS events (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(128) NOT NULL,
+  state ENUM('pending','validated','archived') DEFAULT 'validated',
+  images VARCHAR(255) NULL,
+  organizer_id INT NULL,
+  start_time_effective DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL
+);
+
+
+Lancez l’API :
+
+npm start
+# -> http://localhost:3000
+# Endpoints utiles: /api/health, /api/users/login, /api/users/signup, /api/users/profile
+
+4) Frontend (Angular)
+cd ../esportify-frontend
+npm ci
+
+
+Vérifiez src/environments/environment.ts (dev) :
+
+export const environment = {
+  production: false,
+  apiBaseUrl: 'http://localhost:3000/api',
+  apiUrl:     'http://localhost:3000/api'
+};
+
+
+Démarrez :
+
+npm start       # (alias de ng serve)
+# -> http://localhost:4200
+
+5) Premier test
+
+Ouvrez http://localhost:4200
+
+Créez un compte via S’inscrire
+
+Connectez-vous → un token JWT est stocké en local et le profil est chargé
+
+Accédez à Événements / Mon espace (favoris, infos, etc.)
+
+6) Dépannage express
+
+CORS : ajoutez l’origine dans .env → CORS_ORIGINS=http://localhost:4200
+
+Login OK mais UI vide :
+
+Nettoyez le stockage : localStorage.clear() dans la console du navigateur
+
+Rechargez puis reconnectez-vous
+
+MySQL refuse la connexion : vérifiez hôte/port/user/pass/DB dans .env
+
+Ports occupés : changez PORT (backend) ou utilisez --port pour Angular
+
+7) Scripts utiles
+# Backend
+cd esportify-backend
+npm start
+
+# Frontend
+cd esportify-frontend
+npm start
+
+# Docker (DBs)
+docker compose up -d
+docker compose down
+
+8) Arborescence
+.
+├─ esportify-backend/
+│  ├─ app/ (controllers, routes, middleware, config)
+│  ├─ server.js
+│  └─ .env
+└─ esportify-frontend/
+   └─ src/ (app, services, interceptors, environments)
